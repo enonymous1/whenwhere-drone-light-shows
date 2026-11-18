@@ -157,16 +157,23 @@ directory — paths resolve from the script's own location.
 node tests/smoke.mjs            # loads the page in headless Chrome and
                                 # asserts every formation's drone count,
                                 # the button labels, and no JS errors
-node --check tests/smoke.mjs    # syntax-check the test itself
+node tests/geometry.mjs         # unit tests for the pure geometry
+                                # (resample, resampleRuns, heartPair,
+                                # thinUniform, wordPoints) — 26 assertions
+                                # on window.WHENWHERE.geometry, no JS errors
+node --check tests/smoke.mjs    # syntax-check the tests themselves
+node --check tests/geometry.mjs
 ```
 
-The smoke test needs Chrome (set `CHROME_PATH` if it is not on the
-usual paths). It runs against the built `index.html` in this folder, so
+Both tests need Chrome (set `CHROME_PATH` if it is not on the
+usual paths). They run against the built `index.html` in this folder, so
 rebuild first if you changed the build script. In CI the workflow
 passes the setup-chrome binary explicitly (`CHROME_PATH` from the
 setup-chrome step's `chrome-path` output) — the runner's preinstalled
-Chrome failed to start under the test's flags in Nov 2026, so the test
-never guesses which Chrome to use.
+Chrome failed to start under the test's flags in Nov 2026, so the tests
+never guess which Chrome to use. The geometry test is mutation-checked:
+it fails on a word count of 20 per character instead of 25, and on a
+resampleRuns that interpolates across a break.
 
 ### Regenerating the screenshots and GIF
 
@@ -333,15 +340,14 @@ four geometry functions) were done 2026-11-18 and removed from this list.
 The version + changelog item was done 2026-11-18 and removed from this list.
 The `index.html` as source of truth item was done 2026-11-18 and removed from this list.
 The `studio.js` split was done 2026-11-18 and removed from this list.
+The unit tests were done 2026-11-18 and removed from this list —
+probing showed the hearts cross once in the current layout, not twice
+as the review guessed, so the test asserts the one observed crossing
+(one gap in the left heart, right heart continuous) rather than ≥ 2
+crossings.
 
 ### Longer term
 
-- **Unit tests for the pure geometry** (`heartPair`, `resampleRuns`,
-  `wordPoints`, `thinUniform`) — the `studio.js` split it needs was done
-  2026-11-18, and the functions are exposed as `window.WHENWHERE.geometry`.
-  Highest-value assertions: `resampleRuns` returns exactly `n` points
-  with none inside a gap circle; `heartPair` finds ≥ 2 crossings;
-  `wordPoints` returns exactly the target for a known string.
 - **Performance, when it matters:** `draw()` sets `shadowBlur = 12` per
   drone per frame — replace with a pre-rendered glow sprite when the
   page gets real mobile traffic (it changes the glow's look, so not
@@ -375,6 +381,7 @@ whenwhere-drone-light-shows/
 │   └── screenshots/            # hero, formation stills, assembly GIF (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
+│   ├── geometry.mjs            # CDP unit tests: pure geometry, 26 assertions
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
 ├── CHANGELOG.md                # one line per shipped change, dated
 ├── README.md

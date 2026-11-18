@@ -1,10 +1,11 @@
 # Deploy the WhenWhere drone light shows page to GitHub Pages.
 #
 # Every push to main runs tools/build.py (image optimization + checks),
-# runs the Formation Studio smoke test, and deploys the site — so the
-# live page is always current with the repo. Pull requests run the build
-# and the smoke test but do not deploy; they also fail if the committed
-# index.html differs from a fresh build, so the repo stays honest.
+# runs the Formation Studio smoke test and the geometry unit tests, and
+# deploys the site — so the live page is always current with the repo.
+# Pull requests run the build and both tests but do not deploy; they
+# also fail if the committed index.html differs from a fresh build, so
+# the repo stays honest.
 #
 # One-time setup (repo owner): Settings -> Pages -> Build and deployment
 # -> Source: GitHub Actions. Then push to main and watch this run.
@@ -69,6 +70,11 @@ jobs:
       # there — "DevTools endpoint never came up").
       - name: Smoke test the Formation Studio
         run: node tests/smoke.mjs
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+
+      - name: Geometry unit tests
+        run: node tests/geometry.mjs
         env:
           CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
 
