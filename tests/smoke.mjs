@@ -8,7 +8,10 @@
 //
 // No dependencies beyond Node >= 22 (built-in WebSocket client) and a
 // Chrome/Chromium binary. The Chrome path is taken from CHROME_PATH, or
-// from the usual install locations.
+// from the usual install locations. In CI the workflow sets CHROME_PATH
+// from the setup-chrome step's chrome-path output — that binary is the
+// one the action itself verified with --version, so use it rather than
+// whichever Chrome happens to be preinstalled on the runner.
 //
 // Usage:
 //   node tests/smoke.mjs [path/to/index.html]
@@ -24,12 +27,12 @@ const EXPECTED = { heart: 80, rings: 100, glass: 60, star: 200, finale: 240 };
 const WORDS = { LOVE: 100, 'E + J': 75, 2027: 100 };
 
 // CHROME_PATH wins, then PATH (browser-actions/setup-chrome in CI puts
-// google-chrome on PATH), then the usual install locations.
+// a binary named `chrome` on PATH), then the usual install locations.
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
   (() => {
     try {
-      return execSync('which google-chrome || which chromium || which chromium-browser',
+      return execSync('which google-chrome || which chromium || which chromium-browser || which chrome',
         { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
     } catch { return undefined; }
   })(),
@@ -45,15 +48,31 @@ function findChromeBinary() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function waitForJson(url, tries = 50) {
+// Wait for Chrome's DevTools endpoint, failing fast with a diagnosis if
+// Chrome dies first. A bare timeout hides the cause (a missing library,
+// a bad flag, no display) — the exit code and stderr tail name it.
+function stderrTail(stderr) {
+  const lines = stderr.trim().split('\n');
+  return lines.slice(-20).join('\n') || '(no stderr captured)';
+}
+
+async function waitForEndpoint(url, child, stderr, tries = 150) {
   for (let i = 0; i < tries; i++) {
+    if (child.exitCode !== null) {
+      throw new Error(
+        `Chrome exited before the DevTools endpoint came up ` +
+        `(code ${child.exitCode}${child.signalCode ? `, signal ${child.signalCode}` : ''}).\n` +
+        `Chrome stderr (last lines):\n${stderrTail(stderr())}`);
+    }
     try {
       const res = await fetch(url);
       if (res.ok) return await res.json();
     } catch { /* not up yet */ }
     await sleep(200);
   }
-  throw new Error(`DevTools endpoint never came up: ${url}`);
+  throw new Error(
+    `DevTools endpoint never came up: ${url}\n` +
+    `Chrome stderr (last lines):\n${stderrTail(stderr())}`);
 }
 
 async function main() {
@@ -67,15 +86,23 @@ async function main() {
   // earlier run (or another job on the same runner) answer the DevTools
   // probe and hand the test a blank page.
   const port = Number(process.env.CDP_PORT) || 9300 + Math.floor(Math.random() * 500);
+  // --headless is the current flag (old headless is gone; --headless=new
+  // is an alias that some builds no longer accept). --disable-dev-shm-usage
+  // is standard CI hardening: /dev/shm is small in containers.
   const child = spawn(chrome, [
-    '--headless=new', '--no-sandbox', '--disable-gpu',
+    '--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
     '--force-prefers-reduced-motion', 'about:blank',
-  ], { stdio: 'ignore' });
+  ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  let stderrText = '';
+  child.stderr.on('data', (d) => {
+    stderrText += d;
+    if (stderrText.length > 8000) stderrText = stderrText.slice(-8000);
+  });
 
   const failures = [];
   try {
-    await waitForJson(`http://127.0.0.1:${port}/json/version`);
+    await waitForEndpoint(`http://127.0.0.1:${port}/json/version`, child, () => stderrText);
     // Open the page as a new target.
     const target = await (await fetch(
       `http://127.0.0.1:${port}/json/new?${encodeURIComponent(pathToFileURL(PAGE).href)}`,

@@ -61,10 +61,17 @@ jobs:
           node-version: '22'
 
       - name: Set up Chrome
+        id: chrome
         uses: browser-actions/setup-chrome@v2
 
+      # Use the binary setup-chrome itself verified with --version: the
+      # runner image's preinstalled Chrome is a different binary and may
+      # not start under the test's flags (the Nov 17 run failed exactly
+      # there — "DevTools endpoint never came up").
       - name: Smoke test the Formation Studio
         run: node tests/smoke.mjs
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
 
       - name: Configure Pages
         if: github.event_name != 'pull_request'
