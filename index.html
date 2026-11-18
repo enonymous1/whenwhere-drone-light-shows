@@ -626,7 +626,9 @@
       /* ============ Formation Studio ============ */
       (function () {
         var canvas = document.getElementById('sky');
+        if (!canvas) return;
         var ctx = canvas.getContext('2d');
+        if (!ctx) return;
         var W = canvas.width, H = canvas.height;
         var nameEl = document.getElementById('shapeName');
         var countEl = document.getElementById('droneCount');
@@ -940,9 +942,11 @@
           if (btn.classList.contains('active')) {
             var w = (wordInput.value || ' ').toUpperCase();
             if (w.trim()) setFormation(wordPoints(w), '“' + w + '” — your words in the sky', PALETTES.word);
+            else setFormation([], 'Your words in the sky');
           }
         });
         document.getElementById('useDesignBtn').addEventListener('click', function () {
+          if (typeof currentName === 'undefined') return;
           var dream = document.getElementById('inDream');
           var line = 'Design we liked in the Formation Studio: ' + currentName + '. ';
           if (dream.value.indexOf(line) === -1) dream.value = (dream.value ? dream.value.replace(/\s+$/, ' ') : '') + line;
@@ -987,7 +991,7 @@
         var minDate = new Date(); minDate.setDate(minDate.getDate() + 14);
         var seasonStart = new Date('2027-01-01T00:00:00');
         if (seasonStart > minDate) minDate = seasonStart;
-        dateInput.min = minDate.toISOString().slice(0, 10);
+        dateInput.min = minDate.getFullYear() + '-' + String(minDate.getMonth() + 1).padStart(2, '0') + '-' + String(minDate.getDate()).padStart(2, '0');
 
         flexBox.addEventListener('change', function () {
           dateInput.disabled = flexBox.checked;
@@ -1097,7 +1101,7 @@
           } else fallback();
           function fallback() {
             var ta = document.createElement('textarea');
-            ta.value = text; document.body.appendChild(ta); ta.select();
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
             try { document.execCommand('copy'); done(); } catch (e) { msg.textContent = 'Select the text above and copy it manually.'; }
             document.body.removeChild(ta);
           }

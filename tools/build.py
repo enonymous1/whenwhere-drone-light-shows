@@ -260,6 +260,7 @@ def fix_js(html):
     # "Use this design" button: prefill the inquiry's dream field
     html = rep(html, "      })();\n\n      /* ============ Package shortcuts ============ */",
                """        document.getElementById('useDesignBtn').addEventListener('click', function () {
+          if (typeof currentName === 'undefined') return;
           var dream = document.getElementById('inDream');
           var line = 'Design we liked in the Formation Studio: ' + currentName + '. ';
           if (dream.value.indexOf(line) === -1) dream.value = (dream.value ? dream.value.replace(/\\s+$/, ' ') : '') + line;
@@ -296,7 +297,7 @@ def fix_js(html):
         var minDate = new Date(); minDate.setDate(minDate.getDate() + 14);
         var seasonStart = new Date('2027-01-01T00:00:00');
         if (seasonStart > minDate) minDate = seasonStart;
-        dateInput.min = minDate.toISOString().slice(0, 10);
+        dateInput.min = minDate.getFullYear() + '-' + String(minDate.getMonth() + 1).padStart(2, '0') + '-' + String(minDate.getDate()).padStart(2, '0');
 
         flexBox.addEventListener('change', function () {
           dateInput.disabled = flexBox.checked;
@@ -406,7 +407,7 @@ def fix_js(html):
           } else fallback();
           function fallback() {
             var ta = document.createElement('textarea');
-            ta.value = text; document.body.appendChild(ta); ta.select();
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
             try { document.execCommand('copy'); done(); } catch (e) { msg.textContent = 'Select the text above and copy it manually.'; }
             document.body.removeChild(ta);
           }

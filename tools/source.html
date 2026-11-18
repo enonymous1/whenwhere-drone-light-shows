@@ -595,7 +595,9 @@
       /* ============ Formation Studio ============ */
       (function () {
         var canvas = document.getElementById('sky');
+        if (!canvas) return;
         var ctx = canvas.getContext('2d');
+        if (!ctx) return;
         var W = canvas.width, H = canvas.height;
         var nameEl = document.getElementById('shapeName');
         var countEl = document.getElementById('droneCount');
@@ -708,6 +710,7 @@
           if (btn.classList.contains('active')) {
             var w = (wordInput.value || ' ').toUpperCase();
             if (w.trim()) setFormation(wordPoints(w), '“' + w + '” — your words in the sky');
+            else setFormation([], 'Your words in the sky');
           }
         });
       })();

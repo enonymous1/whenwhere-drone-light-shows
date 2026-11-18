@@ -303,22 +303,10 @@ either. A different event date, or waiting it out, goes through.
 Moved here from the Nov 12 staff review (`REVIEW.md`, deleted
 2026-11-18 — its fixes are in git history; only the still-open items
 survive below). Each was re-checked against the shipped page before
-moving it.
-
-### Small fixes
-
-- **Guard the studio canvas.** `getElementById('sky').getContext('2d')`
-  has no null check — if the canvas is ever absent, the throw kills the
-  whole script block (studio, shortcuts, and form share it).
-- **Clipboard fallback flashes.** The fallback `textarea` is appended
-  visibly; position it off-screen (`position: fixed; opacity: 0`).
-- **Clearing the custom-word input** leaves the last word on screen —
-  decide blank sky vs keep last word and make it explicit.
-- **Date minimum is UTC-based** (`toISOString().slice(0, 10)`) — near
-  midnight local it can land a day late; format the local date instead.
-- **"Use this design" reads bare `currentName`** — guard with
-  `typeof currentName !== 'undefined'` so a failed studio load does not
-  throw.
+moving it. The five small fixes (canvas guard, clipboard fallback,
+clear-word behaviour, UTC date minimum, `currentName` guard) were
+implemented 2026-11-18 and removed from this list — clearing the
+custom-word input now clears the sky to 0 drones.
 
 ### Documentation
 
