@@ -6,8 +6,8 @@ at the top of `index.html` and add a section below.
 
 ## v1.3.0 — 2026-11-18
 
-- 2026-11-18 — Word readability: spaces are now real gaps between words (they take no drones), so "BABY ME" reads as two words instead of "BABYME". The type is the largest bold size that fits the 900px stage (190px down to a 60px floor) instead of 190px for 5 characters and 130px beyond — 6–8 letter words render bigger, and a long word shrinks to fit instead of running off the stage. Drone counts are unchanged (25 per glyph, clamped 50–100).
-- 2026-11-18 — Geometry tests grow to 30 assertions: a space leaves a word-sized gap between the Y and M clusters of "BABY ME" (110px vs 54px without the space), and "CONGRATULATIONS" still returns 100 points inside the canvas.
+- 2026-11-18 — Word readability: spaces are now real gaps between words (they take no drones), so "MARRY ME" reads as two words instead of "MARRYME". The type is the largest bold size that fits the 900px stage (190px down to a 60px floor) instead of 190px for 5 characters and 130px beyond — 6–8 letter words render bigger, and a long word shrinks to fit instead of running off the stage. Drone counts are unchanged (25 per glyph, clamped 50–100).
+- 2026-11-18 — Geometry tests grow to 30 assertions: a space leaves a word-sized gap between the Y and M clusters of "MARRY ME" (102px vs 45px without the space), and "CONGRATULATIONS" still returns 100 points inside the canvas.
 
 ## v1.2.0 — 2026-11-18
 

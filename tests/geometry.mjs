@@ -170,20 +170,20 @@ const ASSERTIONS = `(() => {
     g.wordPoints('').length === 0 && g.wordPoints('   ').length === 0, "'' -> " + g.wordPoints('').length + ", '   ' -> " + g.wordPoints('   ').length);
   check("wordPoints('TEST') points inside the 900x520 canvas", inCanvas(g.wordPoints('TEST')), 'all inside');
 
-  // Spaces are gaps, not vanished: 'BABY ME' has the same 100 drones as
-  // 'BABYME' (a space takes no drones), and the gap between the Y and M
+  // Spaces are gaps, not vanished: 'MARRY ME' has the same 100 drones as
+  // 'MARRYME' (a space takes no drones), and the gap between the Y and M
   // clusters is a word space wider than a plain letter gap. Points come
   // back grouped by glyph (extra dots go to the first glyphs), so with
-  // 6 glyphs Y is points 51..67 and M is 68..83. A long word shrinks to
+  // 7 glyphs Y is points 58..71 and M is 72..85. A long word shrinks to
   // fit instead of running off the stage.
-  const babyMe = g.wordPoints('BABY ME'), babyMeNoSpace = g.wordPoints('BABYME');
-  check("wordPoints('BABY ME') still returns 100 (a space takes no drones)", babyMe.length === 100, babyMe.length);
+  const marryMe = g.wordPoints('MARRY ME'), marryMeNoSpace = g.wordPoints('MARRYME');
+  check("wordPoints('MARRY ME') still returns 100 (a space takes no drones)", marryMe.length === 100, marryMe.length);
   const boundaryGap = (pts) => {
-    const y = pts.slice(51, 68), m = pts.slice(68, 84);
+    const y = pts.slice(58, 72), m = pts.slice(72, 86);
     return Math.min(...m.map((p) => p.x)) - Math.max(...y.map((p) => p.x));
   };
-  const gapSpaced = boundaryGap(babyMe), gapPlain = boundaryGap(babyMeNoSpace);
-  check("wordPoints('BABY ME') leaves a word-sized gap between Y and M",
+  const gapSpaced = boundaryGap(marryMe), gapPlain = boundaryGap(marryMeNoSpace);
+  check("wordPoints('MARRY ME') leaves a word-sized gap between Y and M",
     gapSpaced > 80 && gapSpaced - gapPlain > 30,
     Math.round(gapSpaced * 10) / 10 + 'px vs ' + Math.round(gapPlain * 10) / 10 + 'px without the space');
   const congrats = g.wordPoints('CONGRATULATIONS');
