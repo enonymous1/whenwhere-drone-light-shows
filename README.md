@@ -132,7 +132,7 @@ script's own location.
 > repo (`tools/`), so the repo is self-contained and the GitHub Actions
 > workflow can rebuild the page on every push. The remaining structural
 > step is making `index.html` itself the source of truth instead of a
-> patch list over a frozen upload — see `REVIEW.md` §3.1.
+> patch list over a frozen upload — see [Open items](#open-items).
 
 ### Tests
 
@@ -298,6 +298,71 @@ either. A different event date, or waiting it out, goes through.
 - [ ] Add analytics if you want to measure which package or occasion
       drives inquiries.
 
+## Open items
+
+Moved here from the Nov 12 staff review (`REVIEW.md`, deleted
+2026-11-18 — its fixes are in git history; only the still-open items
+survive below). Each was re-checked against the shipped page before
+moving it.
+
+### Small fixes
+
+- **Guard the studio canvas.** `getElementById('sky').getContext('2d')`
+  has no null check — if the canvas is ever absent, the throw kills the
+  whole script block (studio, shortcuts, and form share it).
+- **Clipboard fallback flashes.** The fallback `textarea` is appended
+  visibly; position it off-screen (`position: fixed; opacity: 0`).
+- **Clearing the custom-word input** leaves the last word on screen —
+  decide blank sky vs keep last word and make it explicit.
+- **Date minimum is UTC-based** (`toISOString().slice(0, 10)`) — near
+  midnight local it can land a day late; format the local date instead.
+- **"Use this design" reads bare `currentName`** — guard with
+  `typeof currentName !== 'undefined'` so a failed studio load does not
+  throw.
+
+### Documentation
+
+- The form IIFE needs a short header comment explaining the
+  demo-mode/configured split; `setFormation`'s drone-reuse behavior
+  (old drones morph from their current position, new ones rise from
+  below the canvas) deserves one comment line; the four pure geometry
+  functions (`resample`, `resampleRuns`, `heartPair`, `wordPoints`)
+  deserve `@param`/`@returns` lines.
+
+### Longer term
+
+- **Make `index.html` the source of truth**, edited by hand, and shrink
+  the build script to what a generator should do: optimize images, run
+  the checks, and nothing else. The ~60 string replacements are a record
+  of a review, not a build system — keeping them forever means every
+  future edit pays the anchor-matching tax.
+- **Extract the studio JavaScript into `studio.js`** so it can be
+  linted, unit-tested, and given a real Content Security Policy (the page
+  currently needs `unsafe-inline` for its inline script).
+- **Unit tests for the pure geometry** (`heartPair`, `resampleRuns`,
+  `wordPoints`, `thinUniform`) — needs the `studio.js` split above.
+  Highest-value assertions: `resampleRuns` returns exactly `n` points
+  with none inside a gap circle; `heartPair` finds ≥ 2 crossings;
+  `wordPoints` returns exactly the target for a known string.
+- **Version + changelog.** Add a `<!-- v1.0.0 -->` comment and a short
+  `CHANGELOG.md` (one line per shipped change, dated) so the deployed
+  page can be traced to a build. Add `--check` and `--help` to the build
+  script at the same time.
+- **Performance, when it matters:** `draw()` sets `shadowBlur = 12` per
+  drone per frame — replace with a pre-rendered glow sprite when the
+  page gets real mobile traffic (it changes the glow's look, so not
+  casually). Add `srcset` with a 480 w variant when the photos are
+  replaced with real show photos.
+- **Magic numbers:** if the studio grows a sixth shape, extract a
+  `GEOMETRY` object with named fields (heart size, centers, tilt, gap
+  radius, crossing thresholds, spin, pulse).
+
+### Still to capture (needs real shows, cannot be faked)
+
+- **A real phone screenshot** of the studio on a small screen.
+- **A 15-second screen recording** of a full show night, if one exists
+  from a rehearsal — that belongs on the live site's hero, not here.
+
 ## Project structure
 
 ```text
@@ -318,7 +383,6 @@ whenwhere-drone-light-shows/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
 ├── README.md
-├── REVIEW.md                   # staff review: findings, fixes, recommendations
 └── LICENSE                     # © 2026 WhenWhere.biz, all rights reserved
 ```
 
