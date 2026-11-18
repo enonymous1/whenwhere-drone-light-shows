@@ -229,30 +229,49 @@
         // of allocation per keystroke for a 4-letter word. The glyph is drawn
         // centered, so points translate back by the same offset.
         /** Points for a word, rastered one character at a time on tight per-glyph canvases.
-            @param {string} text - the word to draw.
-            @returns {Array<{x: number, y: number}>} exactly target points (25 per character, clamped 50-100); 190px bold type up to 5 characters, 130px beyond; [] for empty or whitespace-only text. */
+            @param {string} text - the word to draw; spaces are kept as gaps (they take no drones).
+            @returns {Array<{x: number, y: number}>} exactly target points (25 per glyph, clamped 50-100); the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
         function wordPoints(text) {
           var chars = text.replace(/\s/g, '').split('');
           if (!chars.length) return [];
           var target = Math.max(50, Math.min(100, chars.length * 25));
-          var size = text.length > 5 ? 130 : 190;
           var mc = document.createElement('canvas').getContext('2d');
-          mc.font = '700 ' + size + 'px Marcellus, Georgia, serif';
-          var widths = chars.map(function (c) { return mc.measureText(c).width; });
-          var gap = size * .18;
-          var totalW = widths.reduce(function (a, b) { return a + b; }, 0) + gap * (chars.length - 1);
+          // Layout items: one per character of the original text, so a
+          // space keeps its place as a gap instead of vanishing (it takes
+          // no drones). Measure at 190px, then shrink the type until the
+          // whole phrase fits the stage — short words stay big, long words
+          // shrink instead of running off the edges.
+          var MAXW = W - 40;
+          var size = 190;
+          var items, gap, totalW;
+          function measure() {
+            mc.font = '700 ' + size + 'px Marcellus, Georgia, serif';
+            gap = size * .18;
+            var spaceW = mc.measureText(' ').width;
+            items = text.split('').map(function (c) {
+              return /\s/.test(c) ? { space: true, w: spaceW } : { c: c, w: mc.measureText(c).width };
+            });
+            totalW = items.reduce(function (a, it) { return a + it.w; }, 0) + gap * (items.length - 1);
+          }
+          measure();
+          while (totalW > MAXW && size > 60) {
+            size = Math.max(60, Math.floor(size * MAXW / totalW));
+            measure();
+          }
           var x = W / 2 - totalW / 2;
           var per = Math.floor(target / chars.length), extra = target - per * chars.length;
-          var pts = [];
-          chars.forEach(function (c, idx) {
+          var pts = [], gi = 0;
+          items.forEach(function (it) {
+            if (it.space) { x += it.w + gap; return; }
+            var idx = gi++;
             var n = per + (idx < extra ? 1 : 0);
-            var tw = Math.ceil(widths[idx]) + 16, th = Math.ceil(size * 1.5);
+            var tw = Math.ceil(it.w) + 16, th = Math.ceil(size * 1.5);
             var off = document.createElement('canvas'); off.width = tw; off.height = th;
             var o = off.getContext('2d');
             o.font = '700 ' + size + 'px Marcellus, Georgia, serif';
             o.textAlign = 'center'; o.textBaseline = 'middle';
             o.fillStyle = '#fff';
-            o.fillText(c, tw / 2, th / 2 + 6);
+            o.fillText(it.c, tw / 2, th / 2 + 6);
             var img = null;
             try { img = o.getImageData(0, 0, tw, th).data; } catch (e) { img = null; }
             var cp = [];
@@ -262,9 +281,9 @@
               }
             }
             var thinned = thinUniform(cp, n);
-            var cx = x + widths[idx] / 2;
+            var cx = x + it.w / 2;
             thinned.forEach(function (p) { pts.push({ x: p.x - tw / 2 + cx, y: p.y - th / 2 + H / 2 }); });
-            x += widths[idx] + gap;
+            x += it.w + gap;
           });
           return pts;
         }

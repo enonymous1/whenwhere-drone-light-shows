@@ -130,7 +130,7 @@ python3 tools/build.py --check   # exit 0 if index.html matches a fresh build, 1
 python3 tools/build.py --help
 ```
 
-The deployed page carries a `<!-- whenwhere-drone-light-shows v1.2.0 -->`
+The deployed page carries a `<!-- whenwhere-drone-light-shows v1.3.0 -->`
 comment at the top so it can be traced to a build; releases are listed
 in [CHANGELOG.md](CHANGELOG.md). To release a new version, bump that
 comment in `index.html` and add a section to the changelog.
