@@ -1,7 +1,7 @@
 // Unit tests for the pure geometry in studio.js.
 //
 // The geometry functions (resample, resampleRuns, heartPair, thinUniform,
-// wordPoints) are exposed on the page as window.WHENWHERE.geometry, so this
+// wordPoints, skeletonize) are exposed on the page as window.WHENWHERE.geometry, so this
 // test loads the page in headless Chrome over the DevTools Protocol and
 // asserts on them there — the same harness as tests/smoke.mjs, no extra
 // dependencies beyond Node >= 22 (built-in WebSocket client) and a
@@ -23,6 +23,9 @@
 //   the jump assertions only run at 80 and 200.
 // - wordPoints returns exactly its target (25 per character, clamped
 //   50-100) for known strings, including the clamp edges and empty input.
+// - skeletonize thins a binary grid to its centerline (a block to its
+//   center, a bar to its middle line) — wordPoints relies on it to put
+//   the drones on the stroke, one drone wide.
 //
 // Usage:
 //   node tests/geometry.mjs [path/to/index.html]
@@ -189,6 +192,27 @@ const ASSERTIONS = `(() => {
   const congrats = g.wordPoints('CONGRATULATIONS');
   check("wordPoints('CONGRATULATIONS') returns 100", congrats.length === 100, congrats.length);
   check("wordPoints('CONGRATULATIONS') stays inside the canvas", inCanvas(congrats), 'all inside');
+
+  // skeletonize: Zhang-Suen thinning — a solid block collapses to its
+  // center, a bar to its middle line. wordPoints relies on this to put
+  // the drones on the stroke centerline, one wide.
+  const countOnes = (grid) => grid.flat().reduce((a, v) => a + v, 0);
+  const block5 = Array.from({ length: 7 }, (_, r) => Array.from({ length: 7 }, (_, c) => (r >= 1 && r <= 5 && c >= 1 && c <= 5 ? 1 : 0)));
+  const skel5 = g.skeletonize(block5);
+  check('skeletonize thins a 5x5 block to its single center pixel', countOnes(skel5) === 1 && skel5[3][3] === 1, countOnes(skel5) + ' pixels left');
+  const bar = Array.from({ length: 5 }, (_, r) => Array.from({ length: 11 }, (_, c) => (r >= 1 && r <= 3 && c >= 1 && c <= 9 ? 1 : 0)));
+  const skelBar = g.skeletonize(bar);
+  // Zhang-Suen also eats a pixel or two off each end while it peels the
+  // rows (probed 2026-11-18: a 3x9 bar leaves a 6-pixel middle line, not
+  // 9), so the assertion is the line's place and shape, not its length.
+  const midCols = skelBar[2].map((v, c) => (v ? c : -1)).filter((c) => c >= 0);
+  check('skeletonize thins a 3x9 bar to a line in its middle row',
+    countOnes(skelBar) === 6 && midCols.length === 6 && midCols[5] - midCols[0] === 5 &&
+    skelBar.every((row, r) => r === 2 || row.every((v) => v === 0)),
+    countOnes(skelBar) + ' pixels left, row 2 cols ' + midCols.join(','));
+  const block3 = Array.from({ length: 5 }, (_, r) => Array.from({ length: 5 }, (_, c) => (r >= 1 && r <= 3 && c >= 1 && c <= 3 ? 1 : 0)));
+  const skel3 = g.skeletonize(block3);
+  check('skeletonize thins a 3x3 block to its center pixel', countOnes(skel3) === 1 && skel3[2][2] === 1, countOnes(skel3) + ' pixels left');
 
   return results;
 })()`;

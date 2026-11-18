@@ -38,8 +38,10 @@
            could end up denser than the other and dots wobbled off the
            outline. Outline shapes are now placed evenly along their true
            contour by arc length; words are drawn one character at a time
-           as filled glyphs thinned one point per grid cell, so identical
-           glyphs get identical dots. Hearts interlock on a diagonal with
+           as single-line skeletons - each glyph is rastered, thinned to
+           its stroke centerline, and the drones sit on that line one
+           wide, so identical glyphs get identical dots. Hearts interlock
+           on a diagonal with
            a deep overlap: every crossing along one heart's outline is
            found and the under-heart alternates at each crossing, and the
            gaps are real - resampleRuns() never interpolates dots across
@@ -223,14 +225,52 @@
           }
           return out.slice(0, target);
         }
+        // Thins a binary grid to its 1px-wide skeleton (Zhang-Suen
+        // thinning). The grid is an array of rows of 0/1 and is modified
+        // in place. wordPoints thins each glyph's raster to its stroke
+        // centerline, so the drones trace the letter one drone wide
+        // instead of filling the stroke - a bright light stands on its
+        // own and needs no 3-4 drones lumped together for bold text.
+        function skeletonize(grid) {
+          var rows = grid.length, cols = grid[0].length;
+          function neighbors(r, c) {
+            return [grid[r - 1][c], grid[r - 1][c + 1], grid[r][c + 1], grid[r + 1][c + 1], grid[r + 1][c], grid[r + 1][c - 1], grid[r][c - 1], grid[r - 1][c - 1]];
+          }
+          function transitions(n) {
+            var count = 0;
+            for (var i = 0; i < 8; i++) if (n[i] === 0 && n[(i + 1) % 8] === 1) count++;
+            return count;
+          }
+          var changed = true;
+          while (changed) {
+            changed = false;
+            for (var step = 0; step < 2; step++) {
+              var toDelete = [];
+              for (var r = 1; r < rows - 1; r++) {
+                for (var c = 1; c < cols - 1; c++) {
+                  if (!grid[r][c]) continue;
+                  var n = neighbors(r, c);
+                  var b = n.reduce(function (a, v) { return a + v; }, 0);
+                  if (b < 2 || b > 6) continue;
+                  if (transitions(n) !== 1) continue;
+                  if (step === 0) { if (n[0] * n[2] * n[4] !== 0) continue; if (n[2] * n[4] * n[6] !== 0) continue; }
+                  else { if (n[0] * n[2] * n[6] !== 0) continue; if (n[0] * n[4] * n[6] !== 0) continue; }
+                  toDelete.push([r, c]);
+                }
+              }
+              if (toDelete.length) { changed = true; toDelete.forEach(function (q) { grid[q[0]][q[1]] = 0; }); }
+            }
+          }
+          return grid;
+        }
         // One character at a time, each rastered on a tight canvas just big
         // enough for the glyph (not the full 900x520 stage): wordPoints runs
         // on every keystroke, and a full-stage canvas per character was ~2MB
         // of allocation per keystroke for a 4-letter word. The glyph is drawn
         // centered, so points translate back by the same offset.
-        /** Points for a word, rastered one character at a time on tight per-glyph canvases.
+        /** Points for a word, rastered one character at a time on tight per-glyph canvases and thinned to the stroke centerline.
             @param {string} text - the word to draw; spaces are kept as gaps (they take no drones).
-            @returns {Array<{x: number, y: number}>} exactly target points (25 per glyph, clamped 50-100); the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
+            @returns {Array<{x: number, y: number}>} exactly target points (25 per glyph, clamped 50-100); each glyph is thinned to its skeleton, so the drones trace the letter one drone wide; the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
         function wordPoints(text) {
           var chars = text.replace(/\s/g, '').split('');
           if (!chars.length) return [];
@@ -276,8 +316,18 @@
             try { img = o.getImageData(0, 0, tw, th).data; } catch (e) { img = null; }
             var cp = [];
             if (img) {
+              // Binary grid at the 4px sampling step, with a zero border
+              // (the glyph is centered with padding, so the outer ring is
+              // empty and the thinning has a border to stop at).
+              var gw = Math.floor((tw - 4) / 4) + 1, gh = Math.floor((th - 4) / 4) + 1;
+              var grid = [];
+              for (var gy = 0; gy < gh + 2; gy++) grid.push(new Array(gw + 2).fill(0));
               for (var y = 4; y < th; y += 4) for (var xx = 4; xx < tw; xx += 4) {
-                if (img[(Math.floor(y) * tw + Math.floor(xx)) * 4 + 3] > 110) cp.push({ x: xx, y: y });
+                if (img[(Math.floor(y) * tw + Math.floor(xx)) * 4 + 3] > 110) grid[Math.floor((y - 4) / 4) + 1][Math.floor((xx - 4) / 4) + 1] = 1;
+              }
+              skeletonize(grid);
+              for (var sy = 1; sy < gh + 1; sy++) for (var sx = 1; sx < gw + 1; sx++) {
+                if (grid[sy][sx]) cp.push({ x: (sx - 1) * 4 + 4, y: (sy - 1) * 4 + 4 });
               }
             }
             var thinned = thinUniform(cp, n);
@@ -372,7 +422,7 @@
         });
         // Exposed for tests: the pure geometry, without the DOM.
         window.WHENWHERE = window.WHENWHERE || {};
-        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints };
+        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize };
       })();
 
       /* ============ Package shortcuts ============ */
