@@ -27,10 +27,11 @@ to view it) with:
 - **Three packages** — The Moment, The Signature Show, Show + Party (with
   DJ & MC), plus how-it-works steps, a drones-vs-fireworks comparison, and
   an FAQ (FAA Part 107 licensed pilots, insured operations).
-- **Inquiry form** — submits to a Google Form when one is connected (see
-  [Connecting the Google Form](#connecting-the-google-form-inquiries)).
-  Until then it runs in **demo mode**: submitting builds the inquiry to
-  copy or download, and the page says so.
+- **Inquiry form** — saves to a private Sheet and emails you through an
+  Apps Script backend when one is connected (see
+  [Connecting the inquiry form](#connecting-the-inquiry-form-apps-script)),
+  the same setup as the main site. Until then it runs in **demo mode**:
+  submitting builds the inquiry to copy or download, and the page says so.
 
 ![The fleet assembling the interlocking hearts](docs/screenshots/formation-assembly.gif)
 
@@ -89,7 +90,7 @@ pip install Pillow
 
 There are no other dependencies — the page is plain HTML, CSS, and
 JavaScript, and its only external requests are Google Fonts (Marcellus +
-Jost) and, once connected, the Google Form.
+Jost) and, once connected, the Apps Script backend.
 
 ## Local Development
 
@@ -174,14 +175,14 @@ from the config block it inserts):
 
 ```js
 var WHENWHERE_CONFIG = {
-  googleForm: { formResponseUrl: '', entries: { /* entry.XXXXXXXX per field */ } }
+  INQUIRY_ENDPOINT: '' // paste the deployed Apps Script Web app URL here
 };
 ```
 
 - **No business inbox is set up yet**, so the page lists no email address:
   the brand and footer link to the main site
   (`https://enonymous1.github.io/whenwhere-biz-main-site/`), and
-  inquiries arrive through the connected Google Form below. If a real
+  inquiries arrive through the connected Apps Script backend below. If a real
   business inbox is added later, that is when a contact email belongs
   here.
 - **Fleet counts** are the single source of truth in `FLEET` (in the
@@ -191,7 +192,7 @@ var WHENWHERE_CONFIG = {
 ## Deployment
 
 Hosted on GitHub Pages via GitHub Actions — free, fast, versioned in
-git, and no backend needed (the form posts straight to a Google Form).
+git, and the form posts to a free Apps Script Web app (no server to run).
 The workflow (`.github/workflows/pages.yml`) rebuilds `index.html` from
 source, runs the smoke test, and deploys the freshly built site on every
 push to `main`. The live page is always current with the repo: you never
@@ -222,61 +223,47 @@ When the full site is ready, move these files under
 today, so social cards will not resolve until the move (the page itself
 works fine on Pages in the meantime).
 
-## Connecting the Google Form (inquiries)
+## Connecting the inquiry form (Apps Script)
 
-The page is wired for Google Forms but ships in **demo mode**: with no
-form configured, submitting shows the inquiry to copy/download and says
-so ("Demo mode: no form is connected yet…"). To go live:
+Same setup as the main site. The form ships in **demo mode**: with no
+endpoint configured, submitting shows the inquiry to copy/download and
+says so ("Demo mode: no inquiry endpoint is connected yet…"). To go live:
 
-1. Go to <https://forms.google.com> → Blank form → title
-   **"WhenWhere Drone Light Shows — Inquiry"**.
-2. Add these questions, all short-answer except where noted:
-   1. Your name (required)
-   2. Email (required)
-   3. Phone
-   4. Event type (multiple choice: Wedding / Vineyard / winery celebration /
-      Corporate / brand event / Festival / community celebration /
-      Alumni / university event / Proposal / Private party / birthday /
-      Venue or planner — partnership / Something else)
-   5. Event date (date question; add "Flexible / not sure yet" as the
-      question description, or accept the text the page sends)
-   6. Venue / town
-   7. Expected guests (multiple choice: Under 50 / 50–150 / 150–300 /
-      300–1,000 / Over 1,000)
-   8. Rough budget for the show (multiple choice: Under $5,000 /
-      $5,000–$10,000 / $10,000–$20,000 / Over $20,000)
-   9. Package you're eyeing (multiple choice: The Moment /
-      The Signature Show / Show + Party)
-   10. What would you love to see in the sky? (paragraph)
-   11. Where are you in planning? (multiple choice: Ready to book /
-       Planning ahead / Just curious)
-   12. Is this a surprise? (multiple choice: Yes / No)
-3. **Responses tab → Link to Sheets** (optional, recommended) so every
-   inquiry lands in a spreadsheet.
-4. Get the entry IDs: **⋮ → Get pre-filled link**, fill any value in each
-   question, generate the link, and copy the `entry.XXXXXXXX` value for
-   each question from the URL.
-5. In the build script, find `WHENWHERE_CONFIG.googleForm` and paste:
-   - `formResponseUrl`: your form's URL with `/viewform` replaced by
-     `/formResponse`, e.g.
-     `https://docs.google.com/forms/d/e/XXXX/formResponse`
-   - each `entries.<field>`: its `entry.XXXXXXXX`
+1. Create a new **private** Google Sheet, e.g. "WhenWhere Drone
+   Inquiries". This is where inquiries land — keep it private, it holds
+   visitor contact details.
+2. In that Sheet: **Extensions → Apps Script**, delete the default
+   `Code.gs` contents, and paste in `docs/apps-script/Code.gs` from
+   this repo.
+3. In the script, change the one setting at the top, `NOTIFY_EMAIL`,
+   to the personal email you want notifications sent to. It accepts
+   several addresses separated by commas.
+4. **Deploy → New deployment → Web app** — Execute as: Me, Who has
+   access: Anyone. Copy the Web app URL.
+5. In `tools/build.py`, find `WHENWHERE_CONFIG` and paste the URL as
+   `INQUIRY_ENDPOINT`.
 6. Rebuild (`python3 tools/build.py`) and push to `main` — the workflow
-   rebuilds, smoke-tests, and redeploys automatically — then submit a test
-   inquiry from the live page. It should appear under the form's
-   **Responses** tab within seconds. The page shows "Thank you" on success.
+   rebuilds, smoke-tests, and redeploys automatically — then submit a
+   test inquiry from the live page. It should appear as a row in the
+   Sheet's **Inquiries** tab within seconds, and the notification email
+   ("New drone light show inquiry — …") should arrive with all 12
+   fields. The page shows "Thank you" on success.
 
-One honest limitation: the submission uses `fetch(..., { mode: 'no-cors' })`,
-so the browser cannot see the response — a successful-looking "Thank you"
-means the request was sent, not that Google accepted it. Verify with the
-test inquiry in step 6; if the form URL or an entry ID is wrong, nothing
-will arrive and the page will not know.
+From then on the form saves straight to the private Sheet and emails
+you — reply from that personal Gmail. If you change the script after
+deploying, **Deploy → Manage deployments → edit the deployment and
+pick the new version**, or the live URL keeps running the old code.
+
+Spam guard: the script drops a repeat of the same email + event date
+inside 5 minutes (same "ok" back, no second row or email), and the
+form itself won't re-send from the same browser inside 5 minutes
+either. A different event date, or waiting it out, goes through.
 
 ## Before launch checklist
 
-- [ ] Connect the Google Form (above) and test one live submission.
-      Inquiries arrive through the form — no business inbox exists yet,
-      so the page lists no email address.
+- [ ] Connect the inquiry form (above) and test one live submission.
+      Inquiries arrive through the Apps Script backend — no business
+      inbox exists yet, so the page lists no email address.
 - [ ] Check the canonical / `og:image` URLs still point at the final home
       once the page moves to `whenwhere.biz` (they already say
       `whenwhere.biz/drone-light-shows/`).
