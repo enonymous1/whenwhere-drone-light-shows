@@ -122,6 +122,18 @@ python3 tools/build.py
 # node --check: OK
 ```
 
+Check the committed page without rebuilding it, and see the usage:
+
+```bash
+python3 tools/build.py --check   # exit 0 if index.html matches a fresh build, 1 if stale
+python3 tools/build.py --help
+```
+
+The deployed page carries a `<!-- whenwhere-drone-light-shows v1.0.0 -->`
+comment at the top so it can be traced to a build; releases are listed
+in [CHANGELOG.md](CHANGELOG.md). To release a new version, bump that
+comment in `tools/source.html` and add a section to the changelog.
+
 The build fails loudly (non-zero exit) if any replacement anchor is
 missing, and it validates the result: it runs the built inline script
 through `node --check` when Node is available and asserts the fleet
@@ -314,6 +326,7 @@ implemented 2026-11-18 and removed from this list — clearing the
 custom-word input now clears the sky to 0 drones. The Documentation
 items (form IIFE header comment, `setFormation` comment, JSDoc on the
 four geometry functions) were done 2026-11-18 and removed from this list.
+The version + changelog item was done 2026-11-18 and removed from this list.
 
 ### Longer term
 
@@ -330,10 +343,6 @@ four geometry functions) were done 2026-11-18 and removed from this list.
   Highest-value assertions: `resampleRuns` returns exactly `n` points
   with none inside a gap circle; `heartPair` finds ≥ 2 crossings;
   `wordPoints` returns exactly the target for a known string.
-- **Version + changelog.** Add a `<!-- v1.0.0 -->` comment and a short
-  `CHANGELOG.md` (one line per shipped change, dated) so the deployed
-  page can be traced to a build. Add `--check` and `--help` to the build
-  script at the same time.
 - **Performance, when it matters:** `draw()` sets `shadowBlur = 12` per
   drone per frame — replace with a pre-rendered glow sprite when the
   page gets real mobile traffic (it changes the glow's look, so not
@@ -368,6 +377,7 @@ whenwhere-drone-light-shows/
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
+├── CHANGELOG.md                # one line per shipped change, dated
 ├── README.md
 └── LICENSE                     # © 2026 WhenWhere.biz, all rights reserved
 ```

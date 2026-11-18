@@ -9,8 +9,13 @@ instead of silently shipping the old text.
 Run from anywhere: `python3 tools/build.py` from the repo root.
 The GitHub Actions workflow (`.github/workflows/pages.yml`) runs this on
 every push to main and deploys the result to Pages.
+`--check` rebuilds in memory and exits non-zero if the committed
+index.html differs (the same check CI runs on pull requests), without
+writing anything. `--help` shows the usage.
 """
+import argparse
 import base64
+import difflib
 import io
 import os
 import pathlib
@@ -68,7 +73,13 @@ def _validate_built_html(html):
     print("node --check: OK")
 
 
-def main():
+def build(write_assets=True):
+    """Build the page from tools/source.html; return the HTML string.
+
+    Validates the result (node --check + fleet counts) before returning.
+    With write_assets=False (used by --check) nothing is written to disk:
+    the photos are encoded in memory and only their sizes are used.
+    """
     html = SRC.read_text(encoding="utf-8")
     ASSETS.mkdir(parents=True, exist_ok=True)
 
@@ -88,9 +99,13 @@ def main():
         else:       # cards display ~360px wide; 900w is plenty at 2x
             im2 = im.resize((900, round(900 * im.height / im.width)), Image.LANCZOS)
         path = ASSETS / f"{NAMES[i]}.jpg"
-        im2.save(path, "JPEG", quality=80, progressive=True, optimize=True)
+        buf = io.BytesIO()
+        im2.save(buf, "JPEG", quality=80, progressive=True, optimize=True)
+        data = buf.getvalue()
+        if write_assets:
+            path.write_bytes(data)
         w, h = im2.size
-        print(f"{NAMES[i]}.jpg {im.size} -> {w}x{h}, {path.stat().st_size // 1024}KB (was {len(raw) // 1024}KB)")
+        print(f"{NAMES[i]}.jpg {im.size} -> {w}x{h}, {len(data) // 1024}KB (was {len(raw) // 1024}KB)")
         if i == 0:
             new_tags.append(
                 f'<img class="bg" src="assets/hero.jpg" alt="{alt}" fetchpriority="high" width="{w}" height="{h}" />')
@@ -213,10 +228,35 @@ def main():
     html = fix_reduced_motion(html)
     html = fix_studio_sampling(html)
 
-    (OUT / "index.html").write_text(html, encoding="utf-8")
-    print("index.html written:", len(html), "chars")
     _validate_built_html(html)
     return html
+
+
+def main(argv=None):
+    """Build the page, or --check it against the committed copy."""
+    parser = argparse.ArgumentParser(
+        description="Build the WhenWhere drone light shows page (index.html) from tools/source.html.")
+    parser.add_argument("--check", action="store_true",
+                        help="do not write anything; exit 0 if index.html matches a fresh build, 1 if it is stale (prints the first differences)")
+    args = parser.parse_args(argv)
+    html = build(write_assets=not args.check)
+    out = OUT / "index.html"
+    if args.check:
+        current = out.read_text(encoding="utf-8") if out.exists() else ""
+        if current == html:
+            print("index.html is up to date")
+            return 0
+        print("index.html is stale - run `python3 tools/build.py` to rebuild. First differences:")
+        diff = list(difflib.unified_diff(
+            current.splitlines(), html.splitlines(),
+            fromfile="index.html (committed)", tofile="index.html (fresh build)", lineterm=""))
+        print("\n".join(diff[:30]))
+        if len(diff) > 30:
+            print(f"... ({len(diff) - 30} more diff lines)")
+        return 1
+    out.write_text(html, encoding="utf-8")
+    print("index.html written:", len(html), "chars")
+    return 0
 
 
 def fix_js(html):
@@ -800,4 +840,4 @@ def fix_studio_sampling(html):
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
