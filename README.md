@@ -1,6 +1,6 @@
 # WhenWhere Drone Light Shows
 
-![Hero — a drone light show over a festival crowd](docs/screenshots/hero.png)
+![Hero — a drone light show over a festival crowd](docs/screenshots/hero.jpg)
 
 Custom drone light shows for weddings, vineyard celebrations, alumni
 weekends, corporate events, and festivals across Charlottesville and
@@ -9,12 +9,13 @@ through an inquiry form, and can preview formations in an interactive
 Formation Studio that draws each design with the drone count it actually
 needs.
 
-**Live site (planned):** <https://enonymous1.github.io/whenwhere-drone-light-shows/>
-— GitHub Pages, deployed from this repo (see [Deployment](#deployment)).
+**Live site:** <https://enonymous1.github.io/whenwhere-drone-light-shows/>
+— GitHub Pages, deployed from this repo (see [Deployment](#deployment));
+the latest deploy went green.
 
 ## Description
 
-A single static page (`index.html`, ~67 KB, no framework, no build step
+A single static page (`index.html`, ~71 KB, no framework, no build step
 to view it) with:
 
 - **Hero + six occasion cards** — weddings, vineyards & wineries,
@@ -28,10 +29,12 @@ to view it) with:
   DJ & MC), plus how-it-works steps, a drones-vs-fireworks comparison, and
   an FAQ (FAA Part 107 licensed pilots, insured operations).
 - **Inquiry form** — saves to a private Sheet and emails you through an
-  Apps Script backend when one is connected (see
+  Apps Script backend (see
   [Connecting the inquiry form](#connecting-the-inquiry-form-apps-script)),
-  the same setup as the main site. Until then it runs in **demo mode**:
-  submitting builds the inquiry to copy or download, and the page says so.
+  the same setup as the main site; the endpoint is connected, so the
+  live form works end to end. With no endpoint configured it falls back
+  to **demo mode**: submitting builds the inquiry to copy or download,
+  and the page says so.
 
 ![The fleet assembling the interlocking hearts](docs/screenshots/formation-assembly.gif)
 
@@ -142,7 +145,11 @@ node --check tests/smoke.mjs    # syntax-check the test itself
 
 The smoke test needs Chrome (set `CHROME_PATH` if it is not on the
 usual paths). It runs against the built `index.html` in this folder, so
-rebuild first if you changed the build script.
+rebuild first if you changed the build script. In CI the workflow
+passes the setup-chrome binary explicitly (`CHROME_PATH` from the
+setup-chrome step's `chrome-path` output) — the runner's preinstalled
+Chrome failed to start under the test's flags in Nov 2026, so the test
+never guesses which Chrome to use.
 
 ### Regenerating the screenshots and GIF
 
@@ -165,7 +172,11 @@ EOF
 
 Settled-formation stills are plain headless screenshots with
 `--force-prefers-reduced-motion` (which snaps the fleet to its final
-positions), cropped to the stage.
+positions), cropped to the stage. The hero still is a plain headless
+screenshot of the top of the page at 1280×900, served over a local
+server so the photo and fonts load — capture it against `file://` and
+the hero photo comes out as a broken image (that is what the old
+`hero.png` showed).
 
 ### Configuration — the two things to set before launch
 
@@ -175,9 +186,14 @@ from the config block it inserts):
 
 ```js
 var WHENWHERE_CONFIG = {
-  INQUIRY_ENDPOINT: '' // paste the deployed Apps Script Web app URL here
+  // the deployed Apps Script Web app URL — set in tools/build.py
+  INQUIRY_ENDPOINT: '<the deployed Apps Script Web app URL>'
 };
 ```
+
+The endpoint is connected: the live form saves to the private Sheet and
+emails you. If the Apps Script deployment is ever replaced, paste the
+new URL as `INQUIRY_ENDPOINT` in `tools/build.py`, rebuild, and push.
 
 - **No business inbox is set up yet**, so the page lists no email address:
   the brand and footer link to the main site
@@ -225,9 +241,13 @@ works fine on Pages in the meantime).
 
 ## Connecting the inquiry form (Apps Script)
 
-Same setup as the main site. The form ships in **demo mode**: with no
-endpoint configured, submitting shows the inquiry to copy/download and
-says so ("Demo mode: no inquiry endpoint is connected yet…"). To go live:
+Same setup as the main site — and it is connected: `INQUIRY_ENDPOINT`
+is set in `tools/build.py`, so the live form saves to the private Sheet
+and emails you. The steps below are the record of how it was connected
+(and how to redo it if the deployment is ever replaced). With no
+endpoint configured the form falls back to **demo mode**: submitting
+shows the inquiry to copy/download and says so ("Demo mode: no inquiry
+endpoint is connected yet…"). To connect (or reconnect):
 
 1. Create a new **private** Google Sheet, e.g. "WhenWhere Drone
    Inquiries". This is where inquiries land — keep it private, it holds
@@ -254,6 +274,10 @@ you — reply from that personal Gmail. If you change the script after
 deploying, **Deploy → Manage deployments → edit the deployment and
 pick the new version**, or the live URL keeps running the old code.
 
+**Still to do:** submit one test inquiry from the live page (and
+delete the test row from the Sheet afterwards) — the endpoint is wired,
+but no live submission has been confirmed yet.
+
 Spam guard: the script drops a repeat of the same email + event date
 inside 5 minutes (same "ok" back, no second row or email), and the
 form itself won't re-send from the same browser inside 5 minutes
@@ -261,7 +285,8 @@ either. A different event date, or waiting it out, goes through.
 
 ## Before launch checklist
 
-- [ ] Connect the inquiry form (above) and test one live submission.
+- [ ] Test one live submission from the live page (the form is
+      connected — see above) and delete the test row afterwards.
       Inquiries arrive through the Apps Script backend — no business
       inbox exists yet, so the page lists no email address.
 - [ ] Check the canonical / `og:image` URLs still point at the final home
