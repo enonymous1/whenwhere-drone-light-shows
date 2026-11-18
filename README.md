@@ -311,16 +311,9 @@ survive below). Each was re-checked against the shipped page before
 moving it. The five small fixes (canvas guard, clipboard fallback,
 clear-word behaviour, UTC date minimum, `currentName` guard) were
 implemented 2026-11-18 and removed from this list — clearing the
-custom-word input now clears the sky to 0 drones.
-
-### Documentation
-
-- The form IIFE needs a short header comment explaining the
-  demo-mode/configured split; `setFormation`'s drone-reuse behavior
-  (old drones morph from their current position, new ones rise from
-  below the canvas) deserves one comment line; the four pure geometry
-  functions (`resample`, `resampleRuns`, `heartPair`, `wordPoints`)
-  deserve `@param`/`@returns` lines.
+custom-word input now clears the sky to 0 drones. The Documentation
+items (form IIFE header comment, `setFormation` comment, JSDoc on the
+four geometry functions) were done 2026-11-18 and removed from this list.
 
 ### Longer term
 

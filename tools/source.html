@@ -649,6 +649,7 @@
         }
 
         var drones = [], targets = [], startTime = 0, currentName = '';
+        // Drone reuse: drones that already exist morph from their current position; new ones rise from below the canvas.
         function setFormation(pts, name) {
           targets = pts;
           currentName = name;

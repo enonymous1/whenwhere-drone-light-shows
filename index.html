@@ -669,6 +669,10 @@
           }
           return pts;
         }
+        /** Resample a contour to exactly n points, evenly spaced by arc length.
+            @param {Array<{x: number, y: number}>} pts - points along the contour.
+            @param {number} n - how many points to return.
+            @returns {Array<{x: number, y: number}>} n points, or [] when the contour has no length or n <= 0. */
         function resample(pts, n) {
           var L = [0];
           for (var i = 1; i < pts.length; i++) L.push(L[i-1] + Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y));
@@ -695,7 +699,10 @@
           return dense;
         }
         function runLen(r) { var L = 0; for (var i = 1; i < r.length; i++) L += Math.hypot(r[i].x-r[i-1].x, r[i].y-r[i-1].y); return L; }
-        // resample that never interpolates across a break: split into runs, share dots by run length
+        /** Resample without interpolating across a break: split the contour into runs, share dots by run length.
+            @param {Array<{x: number, y: number}>} pts - contour points; a jump over 25px between consecutive points starts a new run.
+            @param {number} n - total points wanted across all runs.
+            @returns {Array<{x: number, y: number}>} n points, none interpolated across a break; falls back to resample() when there are no runs. */
         function resampleRuns(pts, n) {
           var runs = [[]];
           for (var i = 0; i < pts.length; i++) {
@@ -716,6 +723,9 @@
           runs.forEach(function (r, i) { out = out.concat(resample(r, shares[i])); });
           return out;
         }
+        /** Two interlocking hearts, tilted toward each other on a diagonal.
+            @param {number} n - total drones across both hearts.
+            @returns {Array<{x: number, y: number}>} n points (left heart + right heart); the under-heart alternates at each crossing, and the crossings are real gaps, not interpolated dots. */
         function heartPair(n) {
           var s = 100;
           function tilt(dense, cx, cy, a) { var co = Math.cos(a), si = Math.sin(a); return dense.map(function (p) { var dx = p.x-cx, dy = p.y-cy; return { x: cx+dx*co-dy*si, y: cy+dx*si+dy*co }; }); }
@@ -834,6 +844,9 @@
         // on every keystroke, and a full-stage canvas per character was ~2MB
         // of allocation per keystroke for a 4-letter word. The glyph is drawn
         // centered, so points translate back by the same offset.
+        /** Points for a word, rastered one character at a time on tight per-glyph canvases.
+            @param {string} text - the word to draw.
+            @returns {Array<{x: number, y: number}>} exactly target points (25 per character, clamped 50-100); 190px bold type up to 5 characters, 130px beyond; [] for empty or whitespace-only text. */
         function wordPoints(text) {
           var chars = text.replace(/\s/g, '').split('');
           if (!chars.length) return [];
@@ -873,6 +886,7 @@
         }
 
         var drones = [], targets = [], startTime = 0, currentName = '';
+        // Drone reuse: drones that already exist morph from their current position; new ones rise from below the canvas.
         function setFormation(pts, name, palette) {
           targets = pts;
           currentName = name;
@@ -969,6 +983,12 @@
       });
 
       /* ============ Inquiry form ============ */
+      /* Two modes, chosen by WHENWHERE_CONFIG.INQUIRY_ENDPOINT (set in fix_js() step 10a):
+         configured (endpoint set) - submit POSTs the 12 fields to the Apps Script web app, which
+         appends a row to the private Sheet and sends the notification email; the page shows a short
+         thank-you. Demo mode (endpoint blank) - no network call; the inquiry text is built in the
+         result panel for copy/download instead. A 5-minute localStorage cooldown (wwDroneLastInquiry)
+         plus an in-flight guard stop double submits. */
       (function () {
         var form = document.getElementById('inquiryForm');
         var dateInput = document.getElementById('inDate');
