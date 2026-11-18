@@ -225,9 +225,9 @@ def fix_js(html):
                """    <script>
       /* ============ Config: the thing to set before launch ============ */
       var WHENWHERE_CONFIG = {
-        // Paste the deployed Apps Script Web app URL here (see README.md).
+        // Deployed Apps Script Web app URL (see README.md).
         // Leave blank to keep the copy/download fallback (demo mode).
-        INQUIRY_ENDPOINT: ''
+        INQUIRY_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxGXFDzmwqyUB3vUu-pex2y6VfSR27AMCUbZffagkcWP0SiOaI_IUml0viK1ScUeOE1/exec'
       };
       /* ============ Formation Studio ============ */""")
 
