@@ -265,9 +265,14 @@ endpoint is connected yet…"). To connect (or reconnect):
 6. Rebuild (`python3 tools/build.py`) and push to `main` — the workflow
    rebuilds, smoke-tests, and redeploys automatically — then submit a
    test inquiry from the live page. It should appear as a row in the
-   Sheet's **Inquiries** tab within seconds, and the notification email
+   Sheet's **Inquiries** tab within seconds, under the header row in
+   row 1 (the script writes the headers when the tab is still empty;
+   if the sheet already has rows, insert a row at the top for the
+   headers instead of typing over row 1), and the notification email
    ("New drone light show inquiry — …") should arrive with all 12
-   fields. The page shows "Thank you" on success.
+   fields. The page shows a short "Thank you" on success — the full
+   details only appear in demo mode or if the send fails, so the
+   visitor can copy them.
 
 From then on the form saves straight to the private Sheet and emails
 you — reply from that personal Gmail. If you change the script after

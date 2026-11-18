@@ -20,7 +20,8 @@
  *    private Sheet and emails you. Reply from that personal Gmail.
  *
  * The script creates an 'Inquiries' tab on first submit if it does
- * not exist yet. It appends one row per inquiry, in this order:
+ * not exist yet. The first row is a header row, written when the tab
+ * is still empty. It appends one row per inquiry, in this order:
  *   Submitted | Name | Email | Phone | Type | Date | Venue |
  *   Guests | Budget | Package | Stage | Surprise | Dream
  *
@@ -74,6 +75,15 @@ function doPost(e) {
 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('Inquiries') || ss.insertSheet('Inquiries');
+  /* First row is the header. It is written once, when the tab is still
+     empty — a sheet that already has rows keeps whatever headers it
+     has, so this never duplicates them. If you are adding headers to
+     an existing sheet by hand, insert a row at the top instead of
+     typing over row 1. */
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Submitted', 'Name', 'Email', 'Phone', 'Type', 'Date',
+      'Venue', 'Guests', 'Budget', 'Package', 'Stage', 'Surprise', 'Dream']);
+  }
   sheet.appendRow([new Date(), p.name || '', p.email || '', p.phone || '',
     p.type || '', p.date || '', p.venue || '', p.guests || '',
     p.budget || '', p.pkg || '', p.stage || '', p.surprise || '',

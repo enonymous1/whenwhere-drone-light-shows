@@ -317,7 +317,7 @@ def fix_js(html):
             : sendFailed
               ? "We couldn't send it automatically — please copy it below and send it to us through the main site, and we'll take it from there."
               : 'Copy it into an email or message to WhenWhere, or download it to send later. The sooner it reaches us, the sooner your date is on the founding-season list.';
-          document.getElementById('resultActions').style.display = sent ? 'none' : 'flex';
+          document.getElementById('resultActions').style.display = sent ? 'none' : 'flex';\n          document.getElementById('resultText').style.display = sent ? 'none' : '';
           var panel = document.getElementById('resultPanel');
           panel.classList.add('show');
           panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
