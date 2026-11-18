@@ -160,7 +160,7 @@ def main():
                "<li>Venues &amp; planners: ask about partnering for your clients</li>\n            </ul>",
                """<li>Venues &amp; planners: ask about partnering for your clients</li>
             </ul>
-            <p class="contact-line">Questions first? Email <a data-contact-email href="mailto:hello@whenwhere.biz">hello@whenwhere.biz</a> or visit the main site at <a href="https://whenwhere.biz">whenwhere.biz</a>.</p>""")
+            <p class="contact-line">Questions first? Visit the <a href="https://enonymous1.github.io/whenwhere-biz-main-site/">main site</a>.</p>""")
 
     # ---------- 7. form fields ----------
     html = rep(html,
@@ -201,9 +201,9 @@ def main():
     html = rep(html, '              <div class="row">\n                <button class="btn" type="button" id="copyBtn">Copy my inquiry</button>',
                '              <div class="row" id="resultActions">\n                <button class="btn" type="button" id="copyBtn">Copy my inquiry</button>')
 
-    # ---------- 9. footer: contact + copyright ----------
-    html = rep(html, '<a href="https://whenwhere.biz">Visit the main site →</a>',
-               '<span><a data-contact-email href="mailto:hello@whenwhere.biz">hello@whenwhere.biz</a> · <a href="https://whenwhere.biz">Visit the main site →</a></span><span>© 2026 WhenWhere.biz</span>')
+    # ---------- 9. footer: copyright ----------
+    html = rep(html, '<a href="https://enonymous1.github.io/whenwhere-biz-main-site/">Visit the main site →</a>',
+               '<span><a href="https://enonymous1.github.io/whenwhere-biz-main-site/">Visit the main site →</a></span><span>© 2026 WhenWhere.biz</span>')
 
     # ---------- 10. JS: config + studio density/colours + form wiring ----------
     html = fix_js(html)
@@ -223,9 +223,8 @@ def fix_js(html):
     # 10a. CONFIG block right after <script>
     html = rep(html, "    <script>\n      /* ============ Formation Studio ============ */",
                """    <script>
-      /* ============ Config: the two things to set before launch ============ */
+      /* ============ Config: the thing to set before launch ============ */
       var WHENWHERE_CONFIG = {
-        contactEmail: 'hello@whenwhere.biz', // TODO: confirm this is the right inbox
         googleForm: {
           // 1) Create the Google Form (questions + entry IDs are in README.md)
           //    and paste its formResponse URL here.
@@ -236,13 +235,6 @@ def fix_js(html):
                      guests: '', budget: '', pkg: '', dream: '', stage: '', surprise: '' }
         }
       };
-      /* The contact email lives in WHENWHERE_CONFIG only: every mailto link
-         and visible address on the page is synced from it at load, so the
-         address can never drift between the sidebar, footer and config. */
-      document.querySelectorAll('[data-contact-email]').forEach(function (a) {
-        a.href = 'mailto:' + WHENWHERE_CONFIG.contactEmail;
-        a.textContent = WHENWHERE_CONFIG.contactEmail;
-      });
       /* ============ Formation Studio ============ */""")
 
     # 10b. Studio: larger glowing dots (r 3.4 -> 4.2, blur 9 -> 12) + one palette per shape
@@ -320,7 +312,7 @@ def fix_js(html):
           document.getElementById('resultDesc').textContent = sent
             ? "Your inquiry is in — we'll come back with availability and honest guidance on what your budget can do, usually within two working days."
             : sendFailed
-              ? "We couldn't send it automatically — please copy it below and email it to " + (cfg.contactEmail || 'WhenWhere') + ", and we'll take it from there."
+              ? "We couldn't send it automatically — please copy it below and send it to us through the main site, and we'll take it from there."
               : 'Copy it into an email or message to WhenWhere, or download it to send later. The sooner it reaches us, the sooner your date is on the founding-season list.';
           document.getElementById('resultActions').style.display = sent ? 'none' : 'flex';
           var panel = document.getElementById('resultPanel');

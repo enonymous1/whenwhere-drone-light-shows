@@ -50,7 +50,7 @@
       .lede{color:var(--muted);max-width:64ch;font-size:1.08rem}
       /* ---------- nav ---------- */
       nav{position:sticky;top:0;z-index:50;background:#060a1a;background:color-mix(in srgb, var(--night) 92%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid #232c58}
-      .nav-in{display:flex;align-items:center;gap:18px;max-width:1160px;margin:0 auto;padding:12px 20px}
+      .nav-in{display:flex;align-items:center;gap:18px;padding:12px 28px}
       .brand{color:#fff;text-decoration:none;font-family:"Marcellus",serif;font-size:1.15rem;letter-spacing:.04em;white-space:nowrap}
       .brand em{font-style:normal;color:var(--gold-bright)}
       .brand small{display:block;font-family:"Jost",sans-serif;font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;color:var(--night-muted)}
@@ -199,7 +199,7 @@
   <body>
     <nav aria-label="Page">
       <div class="nav-in">
-        <a class="brand" href="https://whenwhere.biz">When<em>Where</em>.biz<small>Drone Light Shows</small></a>
+        <a class="brand" href="https://enonymous1.github.io/whenwhere-biz-main-site/">When<em>Where</em>.biz<small>Drone Light Shows</small></a>
         <div class="nav-links">
           <a href="#occasions">Occasions</a>
           <a href="#studio">What we can draw</a>
@@ -478,7 +478,7 @@
               <li>Planning a surprise? Tick the box in the form and we'll keep it quiet</li>
               <li>Venues &amp; planners: ask about partnering for your clients</li>
             </ul>
-            <p class="contact-line">Questions first? Email <a data-contact-email href="mailto:hello@whenwhere.biz">hello@whenwhere.biz</a> or visit the main site at <a href="https://whenwhere.biz">whenwhere.biz</a>.</p>
+            <p class="contact-line">Questions first? Visit the <a href="https://enonymous1.github.io/whenwhere-biz-main-site/">main site</a>.</p>
           </div>
           <div>
             <form class="inquiry" id="inquiryForm" novalidate>
@@ -596,14 +596,13 @@
     <footer>
       <div class="wrap">
         <span>WhenWhere.biz — event production, DJ &amp; MC, and now drone light shows · Charlottesville &amp; Central Virginia</span>
-        <span><a data-contact-email href="mailto:hello@whenwhere.biz">hello@whenwhere.biz</a> · <a href="https://whenwhere.biz">Visit the main site →</a></span><span>© 2026 WhenWhere.biz</span>
+        <span><a href="https://enonymous1.github.io/whenwhere-biz-main-site/">Visit the main site →</a></span><span>© 2026 WhenWhere.biz</span>
       </div>
     </footer>
 
     <script>
-      /* ============ Config: the two things to set before launch ============ */
+      /* ============ Config: the thing to set before launch ============ */
       var WHENWHERE_CONFIG = {
-        contactEmail: 'hello@whenwhere.biz', // TODO: confirm this is the right inbox
         googleForm: {
           // 1) Create the Google Form (questions + entry IDs are in README.md)
           //    and paste its formResponse URL here.
@@ -614,13 +613,6 @@
                      guests: '', budget: '', pkg: '', dream: '', stage: '', surprise: '' }
         }
       };
-      /* The contact email lives in WHENWHERE_CONFIG only: every mailto link
-         and visible address on the page is synced from it at load, so the
-         address can never drift between the sidebar, footer and config. */
-      document.querySelectorAll('[data-contact-email]').forEach(function (a) {
-        a.href = 'mailto:' + WHENWHERE_CONFIG.contactEmail;
-        a.textContent = WHENWHERE_CONFIG.contactEmail;
-      });
       /* ============ Formation Studio ============ */
       (function () {
         var canvas = document.getElementById('sky');
@@ -997,7 +989,7 @@
           document.getElementById('resultDesc').textContent = sent
             ? "Your inquiry is in — we'll come back with availability and honest guidance on what your budget can do, usually within two working days."
             : sendFailed
-              ? "We couldn't send it automatically — please copy it below and email it to " + (cfg.contactEmail || 'WhenWhere') + ", and we'll take it from there."
+              ? "We couldn't send it automatically — please copy it below and send it to us through the main site, and we'll take it from there."
               : 'Copy it into an email or message to WhenWhere, or download it to send later. The sooner it reaches us, the sooner your date is on the founding-season list.';
           document.getElementById('resultActions').style.display = sent ? 'none' : 'flex';
           var panel = document.getElementById('resultPanel');

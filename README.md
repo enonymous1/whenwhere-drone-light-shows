@@ -174,14 +174,16 @@ from the config block it inserts):
 
 ```js
 var WHENWHERE_CONFIG = {
-  contactEmail: 'hello@whenwhere.biz', // TODO: confirm this is the right inbox
   googleForm: { formResponseUrl: '', entries: { /* entry.XXXXXXXX per field */ } }
 };
 ```
 
-- **Contact email** is the single source of truth: every `mailto:` link
-  and visible address on the page is synced from it at load. Change it
-  here and nowhere else.
+- **No business inbox is set up yet**, so the page lists no email address:
+  the brand and footer link to the main site
+  (`https://enonymous1.github.io/whenwhere-biz-main-site/`), and
+  inquiries arrive through the connected Google Form below. If a real
+  business inbox is added later, that is when a contact email belongs
+  here.
 - **Fleet counts** are the single source of truth in `FLEET` (in the
   studio script): the count tags on the formation buttons are filled
   from it at load, so the labels can never drift from the real counts.
@@ -272,9 +274,9 @@ will arrive and the page will not know.
 
 ## Before launch checklist
 
-- [ ] Confirm `hello@whenwhere.biz` is the inbox that should receive
-      inquiries — change it in `WHENWHERE_CONFIG.contactEmail` only.
 - [ ] Connect the Google Form (above) and test one live submission.
+      Inquiries arrive through the form — no business inbox exists yet,
+      so the page lists no email address.
 - [ ] Check the canonical / `og:image` URLs still point at the final home
       once the page moves to `whenwhere.biz` (they already say
       `whenwhere.biz/drone-light-shows/`).
