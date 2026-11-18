@@ -22,8 +22,9 @@
  * The script creates an 'Inquiries' tab on first submit if it does
  * not exist yet. The first row is a header row, written when the tab
  * is still empty. It appends one row per inquiry, in this order:
- *   Submitted | Name | Email | Phone | Type | Date | Venue |
- *   Guests | Budget | Package | Stage | Surprise | Dream
+ *   Submitted Date | Name | Email | Phone | Event Type | Event Date |
+ *   Venue/Town | Expected guests | Budget Estimate | Package | Stage |
+ *   isSurprise | Would love to see
  *
  * The notification email is sent twice over: a plain-text body for
  * clients that can't render HTML, and an htmlBody laid out like the
@@ -81,8 +82,9 @@ function doPost(e) {
      an existing sheet by hand, insert a row at the top instead of
      typing over row 1. */
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Submitted', 'Name', 'Email', 'Phone', 'Type', 'Date',
-      'Venue', 'Guests', 'Budget', 'Package', 'Stage', 'Surprise', 'Dream']);
+    sheet.appendRow(['Submitted Date', 'Name', 'Email', 'Phone', 'Event Type',
+      'Event Date', 'Venue/Town', 'Expected guests', 'Budget Estimate',
+      'Package', 'Stage', 'isSurprise', 'Would love to see']);
   }
   sheet.appendRow([new Date(), p.name || '', p.email || '', p.phone || '',
     p.type || '', p.date || '', p.venue || '', p.guests || '',
