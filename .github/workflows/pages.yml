@@ -1,9 +1,8 @@
 # Deploy the WhenWhere drone light shows page to GitHub Pages.
 #
-# Every push to main rebuilds index.html from tools/source.html
-# (tools/build.py), runs the Formation Studio smoke test, and deploys the
-# freshly built site — so the live page is always current with the repo,
-# even if the committed index.html is stale. Pull requests run the build
+# Every push to main runs tools/build.py (image optimization + checks),
+# runs the Formation Studio smoke test, and deploys the site — so the
+# live page is always current with the repo. Pull requests run the build
 # and the smoke test but do not deploy; they also fail if the committed
 # index.html differs from a fresh build, so the repo stays honest.
 #

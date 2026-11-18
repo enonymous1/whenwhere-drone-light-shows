@@ -2,7 +2,11 @@
 
 All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
-at the top of `tools/source.html` and add a section below.
+at the top of `index.html` and add a section below.
+
+## v1.1.0 — 2026-11-18
+
+- 2026-11-18 — `index.html` is the source of truth: the ~60 string replacements and the frozen `tools/source.html` upload are gone; `tools/build.py` now only optimizes images and runs the checks.
 
 ## v1.0.0 — 2026-11-18
 

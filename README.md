@@ -107,18 +107,19 @@ python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
-### Rebuilding the page — read this first
+### Editing the page
 
-**`index.html` is generated output. Do not edit it by hand** — the next
-build overwrites it. The source of truth is `tools/build.py`, which reads
-the original page upload (`tools/source.html`), extracts its 7 inline
-photos to `assets/`, and applies the review fixes as assertion-checked
-string replacements. To change the page, edit the build script (or the
-source) and rebuild:
+**`index.html` is the source of truth — edit it by hand.** The build
+script (`tools/build.py`) only optimizes the photos and checks the
+result: it downsizes any referenced photo over spec (hero 1248px wide,
+occasion cards 900px; JPEG quality 80, progressive), syncs each
+`<img>` tag's width and height to the file on disk, and validates the
+page. To swap a photo, drop the replacement into `assets/` under the
+same name and rebuild:
 
 ```bash
 python3 tools/build.py
-# index.html written: ~68,000 chars
+# index.html written: ~73,500 chars
 # node --check: OK
 ```
 
@@ -129,22 +130,16 @@ python3 tools/build.py --check   # exit 0 if index.html matches a fresh build, 1
 python3 tools/build.py --help
 ```
 
-The deployed page carries a `<!-- whenwhere-drone-light-shows v1.0.0 -->`
+The deployed page carries a `<!-- whenwhere-drone-light-shows v1.1.0 -->`
 comment at the top so it can be traced to a build; releases are listed
 in [CHANGELOG.md](CHANGELOG.md). To release a new version, bump that
-comment in `tools/source.html` and add a section to the changelog.
+comment in `index.html` and add a section to the changelog.
 
-The build fails loudly (non-zero exit) if any replacement anchor is
-missing, and it validates the result: it runs the built inline script
-through `node --check` when Node is available and asserts the fleet
-counts are present. Run it from any directory — paths resolve from the
-script's own location.
-
-> **Architecture note:** the generator and its input now live in this
-> repo (`tools/`), so the repo is self-contained and the GitHub Actions
-> workflow can rebuild the page on every push. The remaining structural
-> step is making `index.html` itself the source of truth instead of a
-> patch list over a frozen upload — see [Open items](#open-items).
+The build fails loudly (non-zero exit) on a missing or corrupt photo,
+and it validates the result: it runs the inline scripts through
+`node --check` when Node is available and asserts the fleet counts are
+present. A rebuild with nothing changed is a no-op. Run it from any
+directory — paths resolve from the script's own location.
 
 ### Tests
 
@@ -327,14 +322,10 @@ custom-word input now clears the sky to 0 drones. The Documentation
 items (form IIFE header comment, `setFormation` comment, JSDoc on the
 four geometry functions) were done 2026-11-18 and removed from this list.
 The version + changelog item was done 2026-11-18 and removed from this list.
+The `index.html` as source of truth item was done 2026-11-18 and removed from this list.
 
 ### Longer term
 
-- **Make `index.html` the source of truth**, edited by hand, and shrink
-  the build script to what a generator should do: optimize images, run
-  the checks, and nothing else. The ~60 string replacements are a record
-  of a review, not a build system — keeping them forever means every
-  future edit pays the anchor-matching tax.
 - **Extract the studio JavaScript into `studio.js`** so it can be
   linted, unit-tested, and given a real Content Security Policy (the page
   currently needs `unsafe-inline` for its inline script).
@@ -367,8 +358,7 @@ whenwhere-drone-light-shows/
 │       └── pages.yml           # build + smoke test + deploy on push to main
 ├── index.html                  # the page (GENERATED — see Local Development)
 ├── tools/
-│   ├── build.py                # the generator (source of truth for index.html)
-│   └── source.html             # the original page upload the generator reads
+│   └── build.py                # image optimization + checks (index.html is the source of truth)
 ├── assets/                     # photos (hero + 6 occasion cards, optimized JPEG)
 │   ├── hero.jpg                # hero (1248×832, 161 KB)
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
