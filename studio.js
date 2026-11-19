@@ -409,14 +409,24 @@
         });
 
         var wordInput = document.getElementById('customWord');
+        // One place that turns the word box into a formation: the
+        // shape button, the input listener, and the fonts-ready
+        // re-render all call this, so the label can never drift
+        // between them. Returns false when there is no word to draw
+        // (blank box) instead of drawing anything.
+        function drawWord(fallback) {
+          var w = (wordInput.value || fallback).toUpperCase();
+          if (!w.trim()) return false;
+          setFormation(wordPoints(w), '“' + w + '” — your words in the sky', PALETTES.word);
+          return true;
+        }
         document.querySelectorAll('.shape-btn').forEach(function (btn) {
           btn.addEventListener('click', function () {
             document.querySelectorAll('.shape-btn').forEach(function (b) { b.classList.remove('active'); });
             btn.classList.add('active');
             var key = btn.getAttribute('data-shape');
             if (key === 'word') {
-              var w = (wordInput.value || 'LOVE').toUpperCase();
-              setFormation(wordPoints(w), '“' + w + '” — your words in the sky', PALETTES.word);
+              drawWord('LOVE');
             } else {
               setFormation(SHAPES[key].points(FLEET[key]), SHAPES[key].name, PALETTES[key]);
             }
@@ -424,11 +434,7 @@
         });
         wordInput.addEventListener('input', function () {
           var btn = document.getElementById('wordBtn');
-          if (btn.classList.contains('active')) {
-            var w = (wordInput.value || ' ').toUpperCase();
-            if (w.trim()) setFormation(wordPoints(w), '“' + w + '” — your words in the sky', PALETTES.word);
-            else setFormation([], 'Your words in the sky');
-          }
+          if (btn.classList.contains('active') && !drawWord(' ')) setFormation([], 'Your words in the sky');
         });
         // If the word tool is used before Marcellus finishes loading,
         // the glyphs rasterize in the Georgia fallback and the dots
@@ -437,10 +443,7 @@
         if (document.fonts && document.fonts.ready) {
           document.fonts.ready.then(function () {
             var btn = document.getElementById('wordBtn');
-            if (btn && btn.classList.contains('active')) {
-              var w = (wordInput.value || ' ').toUpperCase();
-              if (w.trim()) setFormation(wordPoints(w), '“' + w + '” — your words in the sky', PALETTES.word);
-            }
+            if (btn && btn.classList.contains('active')) drawWord(' ');
           });
         }
         document.getElementById('useDesignBtn').addEventListener('click', function () {
@@ -524,10 +527,7 @@
           panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        form.addEventListener('submit', function (ev) {
-          ev.preventDefault();
-          if (inFlight) return; /* double-click / double-Enter while sending */
-          setNote();
+        function validateForm() {
           var ok = true;
           ok = mark('f-name', !val('inName')) && ok;
           var email = val('inEmail');
@@ -536,8 +536,12 @@
           var flex = flexBox.checked;
           var dateBad = !flex && (!val('inDate') || val('inDate') < dateInput.min);
           ok = mark('f-date', dateBad) && ok;
-          if (!ok) { var bad = document.querySelector('.field.invalid input, .field.invalid select'); if (bad) bad.focus(); return; }
-
+          if (!ok) { var bad = document.querySelector('.field.invalid input, .field.invalid select'); if (bad) bad.focus(); }
+          return ok;
+        }
+        function collectInquiry() {
+          var email = val('inEmail');
+          var flex = flexBox.checked;
           var pkg = (form.querySelector('input[name="pkg"]:checked') || {}).value || 'Not specified yet';
           var stage = (form.querySelector('input[name="stage"]:checked') || {}).value || 'Not specified yet';
           var surprise = document.getElementById('inSurprise').checked ? 'Yes' : 'No';
@@ -560,25 +564,6 @@
             'Surprise: ' + surprise,
             val('inDream') ? 'In the sky, we would love to see: ' + val('inDream') : null
           ].filter(Boolean).join('\n');
-
-          if (!configured) { showResult(first, lines, false, false); return; }
-
-          /* Spam guard (browser side): one send per browser per 5 minutes.
-             The server enforces the same window, so this is just the
-             friendly version — no second POST at all. */
-          var lastSent = 0;
-          try { lastSent = +localStorage.getItem(CFG.INQUIRY_KEY) || 0; } catch (e) { lastSent = 0; }
-          if (Date.now() - lastSent < COOLDOWN_MS) {
-            if (note) note.textContent = "Your inquiry is already in. It was sent a few minutes ago — we've got it, and we'll reply from our personal email, usually within two working days.";
-            if (note) note.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            return;
-          }
-
-          /* Live mode: POST to the Apps Script endpoint, which appends a row
-             to the private Sheet and emails a notification. Replies come
-             from our personal email. */
-          inFlight = true;
-          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
           var params = new URLSearchParams();
           params.set('name', val('inName')); params.set('email', email);
           params.set('phone', val('inPhone')); params.set('type', val('inType'));
@@ -586,7 +571,15 @@
           params.set('guests', val('inGuests')); params.set('budget', val('inBudget'));
           params.set('pkg', pkg); params.set('dream', val('inDream'));
           params.set('stage', stage); params.set('surprise', surprise);
-          fetch(endpoint, { method: 'POST', body: params })
+          return { first: first, lines: lines, params: params };
+        }
+        function sendInquiry(inquiry) {
+          /* Live mode: POST to the Apps Script endpoint, which appends a row
+             to the private Sheet and emails a notification. Replies come
+             from our personal email. */
+          inFlight = true;
+          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
+          fetch(endpoint, { method: 'POST', body: inquiry.params })
             .then(function (res) { return res.text(); })
             .then(function (text) {
               // Apps Script always answers HTTP 200, even when doPost
@@ -599,13 +592,33 @@
               if (data) { if (data.ok !== true) throw new Error('send failed'); }
               else if (text.trim() !== 'ok') throw new Error('send failed');
               try { localStorage.setItem(CFG.INQUIRY_KEY, String(Date.now())); } catch (e) {}
-              showResult(first, lines, true, false);
+              showResult(inquiry.first, inquiry.lines, true, false);
             })
-            .catch(function () { showResult(first, lines, false, true); })
+            .catch(function () { showResult(inquiry.first, inquiry.lines, false, true); })
             .finally(function () {
               inFlight = false;
               if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send my inquiry'; }
             });
+        }
+        form.addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          if (inFlight) return; /* double-click / double-Enter while sending */
+          setNote();
+          if (!validateForm()) return;
+          var inquiry = collectInquiry();
+          if (!configured) { showResult(inquiry.first, inquiry.lines, false, false); return; }
+
+          /* Spam guard (browser side): one send per browser per 5 minutes.
+             The server enforces the same window, so this is just the
+             friendly version — no second POST at all. */
+          var lastSent = 0;
+          try { lastSent = +localStorage.getItem(CFG.INQUIRY_KEY) || 0; } catch (e) { lastSent = 0; }
+          if (Date.now() - lastSent < COOLDOWN_MS) {
+            if (note) note.textContent = "Your inquiry is already in. It was sent a few minutes ago — we've got it, and we'll reply from our personal email, usually within two working days.";
+            if (note) note.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return;
+          }
+          sendInquiry(inquiry);
         });
 
         document.getElementById('copyBtn').addEventListener('click', function () {
