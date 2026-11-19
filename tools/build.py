@@ -6,9 +6,9 @@ what is left of the generator: it makes sure every photo the page
 references meets the site's spec (hero at most 1248px wide, occasion
 cards at most 900px; JPEG quality 80, progressive), syncs each <img>
 tag's width and height attributes to the file on disk, and validates
-the page (studio.js through `node --check`, the fleet counts, and that
-no inline executable script remains — the Content Security Policy
-allows script-src 'self' only).
+the page (config.js and studio.js through `node --check`, the fleet
+counts, and that no inline executable script remains — the Content
+Security Policy allows script-src 'self' only).
 
 Photos already at spec are left byte-for-byte alone, so a rebuild with
 nothing changed is a no-op. Drop a replacement photo into assets/ and
@@ -110,37 +110,44 @@ def optimize_images(html, write=True):
 def _validate_built_html(html):
     """Fail the build if the shipped page is broken.
 
-    The page is hand-edited and its JavaScript lives in studio.js, so a
-    typo there would ship silently without this. Check the page loads
-    studio.js, carries no inline executable script (the Content Security
-    Policy allows script-src 'self' only), and run studio.js through
-    `node --check` when node is available; also assert the fleet counts
-    made it into the page.
+    The page is hand-edited and its JavaScript lives in config.js (the
+    launch settings) and studio.js (the machinery), so a typo in either
+    would ship silently without this. Check the page loads config.js
+    before studio.js, carries no inline executable script (the Content
+    Security Policy allows script-src 'self' only), and run both files
+    through `node --check` when node is available; also assert the fleet
+    counts made it into the page.
     """
     # the button labels are filled from FLEET at load, so check the wiring
     # (data-fleet spans) in the page and the source (the FLEET map) in
-    # studio.js, not a literal "80 drones" string, which appears in
+    # config.js, not a literal "80 drones" string, which appears in
     # neither.
     for key, count in (("heart", 80), ("rings", 100), ("glass", 60),
                        ("star", 200), ("finale", 240)):
         assert f'data-fleet="{key}"' in html, f"fleet button missing for {key}"
+    assert '<script src="config.js">' in html, "index.html does not load config.js"
     assert '<script src="studio.js">' in html, "index.html does not load studio.js"
+    assert html.index('<script src="config.js">') < html.index('<script src="studio.js">'), \
+        "config.js must load before studio.js"
     for m in re.finditer(r"<script\b[^>]*>", html):
         tag = m.group(0)
         assert "src=" in tag or "application/ld+json" in tag, \
             f"inline executable <script> found — move it to studio.js (CSP allows script-src 'self' only): {tag[:80]!r}"
-    studio = BASE / "studio.js"
-    assert studio.is_file(), "studio.js missing"
-    studio_text = studio.read_text(encoding="utf-8")
+    config = BASE / "config.js"
+    assert config.is_file(), "config.js missing"
+    config_text = config.read_text(encoding="utf-8")
     for key, count in (("heart", 80), ("rings", 100), ("glass", 60),
                        ("star", 200), ("finale", 240)):
-        assert f"{key}: {count}" in studio_text, f"FLEET count missing for {key}"
+        assert f"{key}: {count}" in config_text, f"FLEET count missing for {key}"
+    studio = BASE / "studio.js"
+    assert studio.is_file(), "studio.js missing"
     node = shutil.which("node")
     if not node:
         print("WARNING: node not found — skipping JS syntax check (install node to enable it)")
         return
-    r = subprocess.run([node, "--check", str(studio)], capture_output=True, text=True)
-    assert r.returncode == 0, f"studio.js failed node --check:\n{r.stderr}"
+    for js in (config, studio):
+        r = subprocess.run([node, "--check", str(js)], capture_output=True, text=True)
+        assert r.returncode == 0, f"{js.name} failed node --check:\n{r.stderr}"
     print("node --check: OK")
 
 

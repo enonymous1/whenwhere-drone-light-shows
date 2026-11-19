@@ -225,8 +225,8 @@ new URL as `INQUIRY_ENDPOINT` in `studio.js` and push.
   inquiries arrive through the connected Apps Script backend below. If a real
   business inbox is added later, that is when a contact email belongs
   here.
-- **Fleet counts** are the single source of truth in `FLEET` (in the
-  studio script): the count tags on the formation buttons are filled
+- **Fleet counts** are the single source of truth in `FLEET` (in
+  `config.js`): the count tags on the formation buttons are filled
   from it at load, so the labels can never drift from the real counts.
 
 ## Deployment
@@ -372,6 +372,7 @@ whenwhere-drone-light-shows/
 │   └── workflows/
 │       └── pages.yml           # build + smoke test + deploy on push to main
 ├── index.html                  # the page (source of truth — see Local Development)
+├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates)
 ├── studio.js                   # page JavaScript (studio, form, shortcuts, nav)
 ├── tools/
 │   └── build.py                # image optimization + checks (index.html is the source of truth)

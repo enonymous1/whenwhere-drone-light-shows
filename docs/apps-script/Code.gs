@@ -14,8 +14,8 @@
  *      Execute as: Me
  *      Who has access: Anyone
  * 5. Copy the Web app URL and paste it as INQUIRY_ENDPOINT in
- *    tools/build.py (WHENWHERE_CONFIG, at the top of the form script),
- *    then rebuild (python3 tools/build.py) and push.
+ *    config.js (WHENWHERE_CONFIG, at the top of the file), then rebuild
+ *    (python3 tools/build.py) and push.
  * 6. Push the site once. From then on the form saves straight to the
  *    private Sheet and emails you. Reply from that personal Gmail.
  *

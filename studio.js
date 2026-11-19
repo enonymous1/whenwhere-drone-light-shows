@@ -1,12 +1,14 @@
 /* WhenWhere drone light shows — page JavaScript (Formation Studio, inquiry form,
    package shortcuts, mobile nav). Extracted from index.html 2026-11-18: the page
    carries no inline executable scripts, so script-src 'self' holds. */
-      /* ============ Config: the thing to set before launch ============ */
-      var WHENWHERE_CONFIG = {
-        // Deployed Apps Script Web app URL (see README.md).
-        // Leave blank to keep the copy/download fallback (demo mode).
-        INQUIRY_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxGXFDzmwqyUB3vUu-pex2y6VfSR27AMCUbZffagkcWP0SiOaI_IUml0viK1ScUeOE1/exec'
-      };
+      /* ============ Config ============ */
+      // The launch settings live in config.js, loaded before this file:
+      // endpoint, fleet counts, palettes, cooldown, earliest date. This
+      // file holds the machinery and has no defaults for them — if
+      // config.js is missing, fail loudly instead of rendering with
+      // stale numbers.
+      var CFG = window.WHENWHERE_CONFIG;
+      if (!CFG) throw new Error('WHENWHERE_CONFIG is missing — config.js did not load');
       /* ============ Formation Studio ============ */
       (function () {
         var canvas = document.getElementById('sky');
@@ -22,16 +24,9 @@
         var stars = [];
         for (var i = 0; i < 90; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.3 + .3, p: Math.random() * Math.PI * 2 });
 
-        var COLORS = ['#ffd166', '#8fd8ff', '#ff7d9c', '#7dffcb', '#c9a7ff', '#ffffff', '#ffb36b'];
-        var FLEET = { heart: 80, rings: 100, glass: 60, star: 200, finale: 240 };
-        var PALETTES = {
-          heart: ['#ff7d9c', '#ff4d6d', '#ffb3c1', '#ffffff'],
-          rings: ['#ffd166', '#e3b356', '#fff3c4', '#ffffff'],
-          glass: ['#8fd8ff', '#bfe9ff', '#ffffff', '#7dffcb'],
-          star: ['#ffd166', '#ff7d9c', '#8fd8ff', '#ffffff'],
-          word: ['#ffd166', '#ffffff', '#e3b356'],
-          finale: ['#ffd166', '#ff7d9c', '#8fd8ff', '#ffffff']
-        };
+        var COLORS = CFG.COLORS;
+        var FLEET = CFG.FLEET;
+        var PALETTES = CFG.PALETTES;
 
         /* ---- Even drone placement (2026-11-12): the old raster + stride
            thinning picked dots in row-major order, so one side of a shape
@@ -475,21 +470,20 @@
       });
 
       /* ============ Inquiry form ============ */
-      /* Two modes, chosen by WHENWHERE_CONFIG.INQUIRY_ENDPOINT (set at the top of this file):
+      /* Two modes, chosen by CFG.INQUIRY_ENDPOINT (config.js):
          configured (endpoint set) - submit POSTs the 12 fields to the Apps Script web app, which
          appends a row to the private Sheet and sends the notification email; the page shows a short
          thank-you. Demo mode (endpoint blank) - no network call; the inquiry text is built in the
-         result panel for copy/download instead. A 5-minute localStorage cooldown (wwDroneLastInquiry)
+         result panel for copy/download instead. A localStorage cooldown (config INQUIRY_KEY)
          plus an in-flight guard stop double submits. */
       (function () {
         var form = document.getElementById('inquiryForm');
         var dateInput = document.getElementById('inDate');
         var flexBox = document.getElementById('inFlexDate');
         var note = document.getElementById('formNote');
-        var cfg = (typeof WHENWHERE_CONFIG !== 'undefined') ? WHENWHERE_CONFIG : {};
-        var endpoint = (cfg.INQUIRY_ENDPOINT || '').trim();
+        var endpoint = (CFG.INQUIRY_ENDPOINT || '').trim();
         var configured = !!endpoint;
-        var COOLDOWN_MS = 5 * 60 * 1000;
+        var COOLDOWN_MS = CFG.COOLDOWN_MS;
         var inFlight = false;
         var submitBtn = form.querySelector('button[type="submit"]');
         function setNote() {
@@ -500,8 +494,8 @@
         setNote();
 
         // Founding season starts in 2027, and shows still need 14 days' lead time.
-        var minDate = new Date(); minDate.setDate(minDate.getDate() + 14);
-        var seasonStart = new Date('2027-01-01T00:00:00');
+        var minDate = new Date(); minDate.setDate(minDate.getDate() + CFG.DATE_MIN_DAYS_AHEAD);
+        var seasonStart = new Date(CFG.DATE_MIN_FLOOR + 'T00:00:00');
         if (seasonStart > minDate) minDate = seasonStart;
         dateInput.min = minDate.getFullYear() + '-' + String(minDate.getMonth() + 1).padStart(2, '0') + '-' + String(minDate.getDate()).padStart(2, '0');
 
@@ -573,7 +567,7 @@
              The server enforces the same window, so this is just the
              friendly version — no second POST at all. */
           var lastSent = 0;
-          try { lastSent = +localStorage.getItem('wwDroneLastInquiry') || 0; } catch (e) { lastSent = 0; }
+          try { lastSent = +localStorage.getItem(CFG.INQUIRY_KEY) || 0; } catch (e) { lastSent = 0; }
           if (Date.now() - lastSent < COOLDOWN_MS) {
             if (note) note.textContent = "Your inquiry is already in. It was sent a few minutes ago — we've got it, and we'll reply from our personal email, usually within two working days.";
             if (note) note.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -604,7 +598,7 @@
               try { data = JSON.parse(text); } catch (e) { data = null; }
               if (data) { if (data.ok !== true) throw new Error('send failed'); }
               else if (text.trim() !== 'ok') throw new Error('send failed');
-              try { localStorage.setItem('wwDroneLastInquiry', String(Date.now())); } catch (e) {}
+              try { localStorage.setItem(CFG.INQUIRY_KEY, String(Date.now())); } catch (e) {}
               showResult(first, lines, true, false);
             })
             .catch(function () { showResult(first, lines, false, true); })
