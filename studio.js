@@ -432,6 +432,15 @@
             }
           });
         });
+        // Clicking (or tabbing) into the word box means the visitor
+        // wants to see their words — activate the word shape the
+        // same way clicking its button would. The guard keeps an
+        // already-active word shape from re-drawing when the box
+        // is clicked into to edit.
+        wordInput.addEventListener('focus', function () {
+          var btn = document.getElementById('wordBtn');
+          if (!btn.classList.contains('active')) btn.click();
+        });
         wordInput.addEventListener('input', function () {
           var btn = document.getElementById('wordBtn');
           if (btn.classList.contains('active') && !drawWord(' ')) setFormation([], 'Your words in the sky');

@@ -4,6 +4,10 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## v1.4.5 — 2026-11-19
+
+- 2026-11-19 — Clicking (or tabbing) into the Your-words box now activates the Your words shape the same way clicking its button would, so the visitor sees their text right away instead of typing into a box that does nothing until the button is picked. Clicking in while the shape is already active does nothing extra — no re-draw.
+
 ## v1.4.4 — 2026-11-19
 
 - 2026-11-19 — Readability: the word-rendering call is now one `drawWord(fallback)` helper used by the shape-button click, the input listener, and the fonts-ready re-render, so the label can never drift between them (it returns false on a blank box instead of drawing). The submit handler is split into `validateForm()` (marks fields, focuses the first bad one), `collectInquiry()` (fields + result text + POST params), and `sendInquiry()` (the fetch and the result panel) — the handler itself now reads as validate → collect → cooldown check → send. No behavior change.
