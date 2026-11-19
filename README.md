@@ -159,8 +159,8 @@ node tests/smoke.mjs            # loads the page in headless Chrome and
                                 # the button labels, and no JS errors
 node tests/geometry.mjs         # unit tests for the pure geometry
                                 # (resample, resampleRuns, heartPair,
-                                # thinUniform, wordPoints, skeletonize)
-                                # — 33 assertions on
+                                # thinUniform, wordPoints, skeletonize,
+                                # finalePts) — 36 assertions on
                                 # window.WHENWHERE.geometry, no JS errors
 node --check tests/smoke.mjs    # syntax-check the tests themselves
 node --check tests/geometry.mjs

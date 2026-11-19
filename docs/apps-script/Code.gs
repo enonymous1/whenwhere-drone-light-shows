@@ -36,10 +36,17 @@
  * Web app URL keeps running the old code.
  *
  * Spam guard: one inquiry per email + event date per 5 minutes. A
- * repeat inside that window gets the same 'ok' back, but no second
- * row and no second email. The form itself also blocks a re-send
- * from the same browser for 5 minutes — the server check is the one
- * that can't be bypassed by posting straight at the endpoint.
+ * repeat inside that window gets {"ok":true,"duplicate":true} back,
+ * but no second row and no second email — the page treats that as
+ * success, because the inquiry is already in. The form itself also
+ * blocks a re-send from the same browser for 5 minutes — the server
+ * check is the one that can't be bypassed by posting straight at the
+ * endpoint.
+ *
+ * Answers are JSON ({"ok":true} / {"ok":false,"error":...}) because
+ * Apps Script always returns HTTP 200 — the page reads the body, not
+ * the status. Values are sanitized before appendRow so a leading =,
+ * + - or @ can't run as a formula in the Sheet.
  */
 /* ---- Settings: change this one line, nothing else ----
    To notify more than one person, list addresses separated by
@@ -52,7 +59,33 @@ function esc(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/* JSON answer — Apps Script always returns HTTP 200, even when doPost
+   rejects the submission, so the body is the verdict, not the status.
+   The page parses this and only shows "thank you" when ok is true. */
+function jsonOut(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* Sheets formula injection: a value starting with =, +, - or @ (or a
+   tab / carriage return) is read as a formula when the Sheet is opened.
+   Prefix such values with a single quote so a hostile dream or name
+   field can't run code in the leads Sheet. The quote is a display
+   marker, not part of the value. */
+function safeCell(v) {
+  var s = String(v == null ? '' : v);
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+}
+
 function doPost(e) {
+  try {
+    return doPostInner(e);
+  } catch (err) {
+    return jsonOut({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function doPostInner(e) {
   var p = (e && e.parameter) || {};
 
   /* Spam guard — drop a repeat of the same email + event date inside
@@ -67,7 +100,7 @@ function doPost(e) {
     var haveLock = false;
     try { haveLock = lock.tryLock(5000); } catch (err) { haveLock = false; }
     try {
-      if (cache.get(throttleKey)) return ContentService.createTextOutput('ok');
+      if (cache.get(throttleKey)) return jsonOut({ ok: true, duplicate: true });
       cache.put(throttleKey, '1', 300);
     } finally {
       if (haveLock) { try { lock.releaseLock(); } catch (err2) {} }
@@ -86,10 +119,11 @@ function doPost(e) {
       'Event Date', 'Venue/Town', 'Expected guests', 'Budget Estimate',
       'Package', 'Stage', 'isSurprise', 'Would love to see']);
   }
-  sheet.appendRow([new Date(), p.name || '', p.email || '', p.phone || '',
-    p.type || '', p.date || '', p.venue || '', p.guests || '',
-    p.budget || '', p.pkg || '', p.stage || '', p.surprise || '',
-    p.dream || '']);
+  sheet.appendRow([new Date(), safeCell(p.name), safeCell(p.email),
+    safeCell(p.phone), safeCell(p.type), safeCell(p.date),
+    safeCell(p.venue), safeCell(p.guests), safeCell(p.budget),
+    safeCell(p.pkg), safeCell(p.stage), safeCell(p.surprise),
+    safeCell(p.dream)]);
 
   var fields = [
     ['Name', p.name], ['Email', p.email], ['Phone', p.phone],
@@ -145,5 +179,5 @@ function doPost(e) {
   MailApp.sendEmail(NOTIFY_EMAIL,
     'New drone light show inquiry — ' + (p.type || 'event'), text,
     { htmlBody: html, replyTo: p.email || '', name: 'WhenWhere.biz' });
-  return ContentService.createTextOutput('ok');
+  return jsonOut({ ok: true });
 }

@@ -1,7 +1,8 @@
 // Unit tests for the pure geometry in studio.js.
 //
 // The geometry functions (resample, resampleRuns, heartPair, thinUniform,
-// wordPoints, skeletonize) are exposed on the page as window.WHENWHERE.geometry, so this
+// wordPoints, skeletonize, finalePts) are exposed on the page as
+// window.WHENWHERE.geometry, so this
 // test loads the page in headless Chrome over the DevTools Protocol and
 // asserts on them there — the same harness as tests/smoke.mjs, no extra
 // dependencies beyond Node >= 22 (built-in WebSocket client) and a
@@ -26,6 +27,8 @@
 // - skeletonize thins a binary grid to its centerline (a block to its
 //   center, a bar to its middle line) — wordPoints relies on it to put
 //   the drones on the stroke, one drone wide.
+// - finalePts returns exactly n points (it used to ignore n and always
+//   output 240), and they stay inside the canvas.
 //
 // Usage:
 //   node tests/geometry.mjs [path/to/index.html]
@@ -213,6 +216,14 @@ const ASSERTIONS = `(() => {
   const block3 = Array.from({ length: 5 }, (_, r) => Array.from({ length: 5 }, (_, c) => (r >= 1 && r <= 3 && c >= 1 && c <= 3 ? 1 : 0)));
   const skel3 = g.skeletonize(block3);
   check('skeletonize thins a 3x3 block to its center pixel', countOnes(skel3) === 1 && skel3[2][2] === 1, countOnes(skel3) + ' pixels left');
+
+  // finalePts: the count is exactly n, and the points stay inside the
+  // 900x520 canvas at both the shipped count and a smaller one.
+  const fin240 = g.finalePts(240);
+  check('finalePts(240) returns 240 points', fin240.length === 240, fin240.length);
+  const fin120 = g.finalePts(120);
+  check('finalePts(120) returns 120 points', fin120.length === 120, fin120.length);
+  check('finalePts points stay inside the canvas', inCanvas(fin240) && inCanvas(fin120), 'all inside');
 
   return results;
 })()`;

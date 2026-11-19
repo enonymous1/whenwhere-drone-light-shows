@@ -172,11 +172,18 @@
         }
         function finalePts(n) {
           var cx = W/2, cy = H/2;
-          var pts = circlePts(cx, cy, 175, 95).concat(circlePts(cx, cy, 118, 65));
-          pts = pts.concat(circlePts(cx, cy, 15, 8));
+          // Split n across the four parts in the same proportions as the
+          // 240-drone original (95 + 65 + 8 + 72); the remainder goes to
+          // the rays so the total is exactly n.
+          var outer = Math.round(n * 95 / 240), mid = Math.round(n * 65 / 240), core = Math.round(n * 8 / 240);
+          var rays = n - outer - mid - core;
+          var pts = circlePts(cx, cy, 175, outer).concat(circlePts(cx, cy, 118, mid));
+          pts = pts.concat(circlePts(cx, cy, 15, core));
+          var perRay = Math.floor(rays / 12), extra = rays - perRay * 12;
           for (var k = 0; k < 12; k++) {
             var a = k*Math.PI/6 - Math.PI/2;
-            for (var j = 0; j < 6; j++) {
+            var count = perRay + (k < extra ? 1 : 0);
+            for (var j = 0; j < count; j++) {
               var r = 95 + j*22;
               pts.push({ x: cx+Math.cos(a)*r, y: cy+Math.sin(a)*r });
             }
@@ -338,10 +345,9 @@
           return pts;
         }
 
-        var drones = [], targets = [], startTime = 0, currentName = '';
+        var drones = [], startTime = 0, currentName = '';
         // Drone reuse: drones that already exist morph from their current position; new ones rise from below the canvas.
         function setFormation(pts, name, palette) {
-          targets = pts;
           currentName = name;
           nameEl.textContent = name;
           countEl.textContent = pts.length + ' drones — ' + (pts.length > 100 ? 'a larger show; extra lead time to secure additional units' : 'fits our 100-drone opening fleet');
@@ -379,9 +385,26 @@
             ctx.beginPath(); ctx.arc(d.x, d.y, 4.2, 0, Math.PI * 2); ctx.fill();
           });
           ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-          if (!reduced) requestAnimationFrame(draw);
+          queueDraw();
         }
-        requestAnimationFrame(draw);
+        // Pause when the canvas scrolls out of view: rAF already stops
+        // when the tab is hidden, but it keeps drawing while the user
+        // is down at the form. The observer restarts the loop when the
+        // sky comes back into view; drawQueued keeps the restart from
+        // starting a second loop while one is already running.
+        var skyVisible = true, drawQueued = false;
+        function queueDraw() {
+          if (drawQueued || reduced || !skyVisible) return;
+          drawQueued = true;
+          requestAnimationFrame(function (ts) { drawQueued = false; draw(ts); });
+        }
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver(function (entries) {
+            skyVisible = entries[0].isIntersecting;
+            if (skyVisible) queueDraw();
+          }).observe(canvas);
+        }
+        queueDraw();
         setFormation(SHAPES.heart.points(FLEET.heart), SHAPES.heart.name, PALETTES.heart);
         // Fleet counts on the buttons come from FLEET, not from hardcoded
         // HTML, so the button labels can never drift from the real counts.
@@ -412,8 +435,21 @@
             else setFormation([], 'Your words in the sky');
           }
         });
+        // If the word tool is used before Marcellus finishes loading,
+        // the glyphs rasterize in the Georgia fallback and the dots
+        // stay put even after the font arrives — re-render once when
+        // the fonts are ready, if the word shape is still active.
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(function () {
+            var btn = document.getElementById('wordBtn');
+            if (btn && btn.classList.contains('active')) {
+              var w = (wordInput.value || ' ').toUpperCase();
+              if (w.trim()) setFormation(wordPoints(w), '“' + w + '” — your words in the sky', PALETTES.word);
+            }
+          });
+        }
         document.getElementById('useDesignBtn').addEventListener('click', function () {
-          if (typeof currentName === 'undefined') return;
+          if (!currentName) return;
           var dream = document.getElementById('inDream');
           var line = 'Design we liked in the Formation Studio: ' + currentName + '. ';
           if (dream.value.indexOf(line) === -1) dream.value = (dream.value ? dream.value.replace(/\s+$/, ' ') : '') + line;
@@ -422,7 +458,7 @@
         });
         // Exposed for tests: the pure geometry, without the DOM.
         window.WHENWHERE = window.WHENWHERE || {};
-        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize };
+        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts };
       })();
 
       /* ============ Package shortcuts ============ */
@@ -557,8 +593,17 @@
           params.set('pkg', pkg); params.set('dream', val('inDream'));
           params.set('stage', stage); params.set('surprise', surprise);
           fetch(endpoint, { method: 'POST', body: params })
-            .then(function (res) { if (!res.ok) throw new Error('send failed'); return res.text(); })
-            .then(function () {
+            .then(function (res) { return res.text(); })
+            .then(function (text) {
+              // Apps Script always answers HTTP 200, even when doPost
+              // rejects the submission — so the body is the verdict, not
+              // the status. The new endpoint returns JSON {"ok": ...};
+              // the pre-JSON endpoint answers plain 'ok', which still
+              // counts as success until it is redeployed.
+              var data = null;
+              try { data = JSON.parse(text); } catch (e) { data = null; }
+              if (data) { if (data.ok !== true) throw new Error('send failed'); }
+              else if (text.trim() !== 'ok') throw new Error('send failed');
               try { localStorage.setItem('wwDroneLastInquiry', String(Date.now())); } catch (e) {}
               showResult(first, lines, true, false);
             })
