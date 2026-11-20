@@ -1,7 +1,8 @@
 // Unit tests for the pure geometry in studio.js.
 //
 // The geometry functions (resample, resampleRuns, heartPair, thinUniform,
-// wordPoints, skeletonize, finalePts) are exposed on the page as
+// wordPoints, skeletonize, finalePts, allocateCounts, separatePoints) are
+// exposed on the page as
 // window.WHENWHERE.geometry, so this
 // test loads the page in headless Chrome over the DevTools Protocol and
 // asserts on them there — the same harness as tests/smoke.mjs, no extra
@@ -22,8 +23,10 @@
 //   threshold separates a real gap from normal resample spacing (~15px
 //   at 80 drones); at small counts (37) normal spacing exceeds it, so
 //   the jump assertions only run at 80 and 200.
-// - wordPoints returns exactly its target (25 per character, clamped
-//   50-100) for known strings, including the clamp edges and empty input.
+// - wordPoints returns exactly its target (clamped 50-100) for known
+//   strings, including the clamp edges and empty input, split across
+//   glyphs in proportion to their stroke lengths, with no two dots
+//   closer than the minimum gap.
 // - skeletonize thins a binary grid to its centerline (a block to its
 //   center, a bar to its middle line) — wordPoints relies on it to put
 //   the drones on the stroke, one drone wide.
@@ -164,7 +167,7 @@ const ASSERTIONS = `(() => {
   check('thinUniform returns no duplicates', new Set(thinned.map((p) => p.x + ',' + p.y)).size === thinned.length, thinned.length + ' unique');
   check('thinUniform returns a short input whole', g.thinUniform([{ x: 1, y: 1 }, { x: 2, y: 2 }], 100).length === 2, '2 points in, 2 out');
 
-  // wordPoints: exactly the target (25 per character, clamped 50-100).
+  // wordPoints: exactly the target (clamped 50-100).
   const words = { TEST: 100, LOVE: 100, 2027: 100, 'E + J': 75 };
   for (const [word, target] of Object.entries(words)) {
     const got = g.wordPoints(word).length;
@@ -178,23 +181,76 @@ const ASSERTIONS = `(() => {
 
   // Spaces are gaps, not vanished: 'MARRY ME' has the same 100 drones as
   // 'MARRYME' (a space takes no drones), and the gap between the Y and M
-  // clusters is a word space wider than a plain letter gap. Points come
-  // back grouped by glyph (extra dots go to the first glyphs), so with
-  // 7 glyphs Y is points 58..71 and M is 72..85. A long word shrinks to
-  // fit instead of running off the stage.
+  // clusters is a word space wider than a plain letter gap. The gap is
+  // found as the largest jump in sorted x, not by glyph indices — the
+  // split is proportional now, so glyph boundaries move. Thresholds
+  // from probed values in both fonts (Marcellus 106.3 vs 60.7px, the
+  // fallback serif 83.5 vs 55.2px). A long word shrinks to fit instead
+  // of running off the stage.
   const marryMe = g.wordPoints('MARRY ME'), marryMeNoSpace = g.wordPoints('MARRYME');
   check("wordPoints('MARRY ME') still returns 100 (a space takes no drones)", marryMe.length === 100, marryMe.length);
-  const boundaryGap = (pts) => {
-    const y = pts.slice(58, 72), m = pts.slice(72, 86);
-    return Math.min(...m.map((p) => p.x)) - Math.max(...y.map((p) => p.x));
+  const largestGap = (pts) => {
+    const xs = pts.map((p) => p.x).sort((a, b) => a - b);
+    let g = 0;
+    for (let i = 1; i < xs.length; i++) g = Math.max(g, xs[i] - xs[i - 1]);
+    return g;
   };
-  const gapSpaced = boundaryGap(marryMe), gapPlain = boundaryGap(marryMeNoSpace);
+  const gapSpaced = largestGap(marryMe), gapPlain = largestGap(marryMeNoSpace);
   check("wordPoints('MARRY ME') leaves a word-sized gap between Y and M",
-    gapSpaced > 80 && gapSpaced - gapPlain > 30,
+    gapSpaced > 75 && gapSpaced - gapPlain > 20,
     Math.round(gapSpaced * 10) / 10 + 'px vs ' + Math.round(gapPlain * 10) / 10 + 'px without the space');
   const congrats = g.wordPoints('CONGRATULATIONS');
   check("wordPoints('CONGRATULATIONS') returns 100", congrats.length === 100, congrats.length);
   check("wordPoints('CONGRATULATIONS') stays inside the canvas", inCanvas(congrats), 'all inside');
+
+  // allocateCounts: the budget splits in proportion to stroke length
+  // and sums exactly to the target. A glyph with any stroke keeps at
+  // least 1 dot; a glyph with no stroke gets 0.
+  check('allocateCounts splits a budget in proportion to stroke length',
+    JSON.stringify(g.allocateCounts([44, 104, 60, 68], 100)) === JSON.stringify([16, 38, 22, 24]),
+    JSON.stringify(g.allocateCounts([44, 104, 60, 68], 100)));
+  check('allocateCounts sums exactly to the target',
+    g.allocateCounts([10, 20, 30], 60).reduce((a, b) => a + b, 0) === 60, 'sum');
+  check('allocateCounts keeps at least 1 dot for a tiny glyph',
+    JSON.stringify(g.allocateCounts([100, 1], 50)) === JSON.stringify([49, 1]),
+    JSON.stringify(g.allocateCounts([100, 1], 50)));
+  check('allocateCounts gives 0 dots to a glyph with no stroke',
+    JSON.stringify(g.allocateCounts([10, 0, 10], 40)) === JSON.stringify([20, 0, 20]),
+    JSON.stringify(g.allocateCounts([10, 0, 10], 40)));
+
+  // separatePoints: a close pair is pushed to the minimum gap, along
+  // their connecting vector (dots on a straight stroke stay on it),
+  // and an already-separated set is left alone.
+  const closePair = g.separatePoints([{ x: 0, y: 0 }, { x: 5, y: 0 }, { x: 100, y: 0 }], 10);
+  check('separatePoints pushes a close pair to the minimum gap',
+    Math.abs(Math.hypot(closePair[1].x - closePair[0].x, closePair[1].y - closePair[0].y) - 10) < 1e-9,
+    Math.round(Math.hypot(closePair[1].x - closePair[0].x, closePair[1].y - closePair[0].y) * 100) / 100 + 'px');
+  check('separatePoints keeps dots on a straight stroke',
+    closePair[0].y === 0 && closePair[1].y === 0, 'y ' + closePair[0].y + ', ' + closePair[1].y);
+  check('separatePoints leaves an already-separated set alone',
+    JSON.stringify(g.separatePoints([{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 40, y: 0 }], 10)) ===
+    JSON.stringify([{ x: 0, y: 0 }, { x: 20, y: 0 }, { x: 40, y: 0 }]), 'unchanged');
+
+  // End to end: the thin I gets fewer drones than the long W (the old
+  // equal split gave them 25 each), and no two LOVE dots sit closer
+  // than the minimum gap (the old code's closest pair was 8px). The
+  // IW split is found the same way as the word gap — largest jump in
+  // sorted x — and holds in both fonts (Marcellus 10 vs 40, the
+  // fallback serif 16 vs 34).
+  const iw = g.wordPoints('IW');
+  const iwXs = iw.map((p) => p.x).sort((a, b) => a - b);
+  let iwGap = 0, iwAt = -1;
+  for (let i = 1; i < iwXs.length; i++) { if (iwXs[i] - iwXs[i - 1] > iwGap) { iwGap = iwXs[i] - iwXs[i - 1]; iwAt = i; } }
+  check("wordPoints('IW') gives the long W more drones than the thin I",
+    iwAt > 0 && iwGap > 30 && (iw.length - iwAt) - iwAt >= 15,
+    'I ' + iwAt + ' vs W ' + (iw.length - iwAt) + ', gap ' + Math.round(iwGap * 10) / 10 + 'px');
+  const love = g.wordPoints('LOVE');
+  let loveMin = Infinity;
+  for (let i = 0; i < love.length; i++) for (let j = i + 1; j < love.length; j++) {
+    loveMin = Math.min(loveMin, dist(love[i], love[j]));
+  }
+  check("wordPoints('LOVE') keeps every pair of dots at least 10px apart",
+    loveMin >= 10, Math.round(loveMin * 100) / 100 + 'px');
 
   // skeletonize: Zhang-Suen thinning — a solid block collapses to its
   // center, a bar to its middle line. wordPoints relies on this to put

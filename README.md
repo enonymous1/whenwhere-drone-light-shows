@@ -51,7 +51,7 @@ secure additional units. The studio caption says so per design.
 | Interlocking hearts | 80 | fits the opening fleet |
 | Wedding rings | 100 | uses the full opening fleet |
 | Wine glass | 60 | fits the opening fleet |
-| Your words (initials / dates) | ~25 per character, 50–100 | fits the opening fleet |
+| Your words (initials / dates) | split by stroke length, 50–100 | fits the opening fleet |
 | Starburst | 200 | larger show — extra lead time |
 | Grand finale (twin rings + 12 radiating spikes) | 240 | larger show — extra lead time |
 
@@ -160,7 +160,8 @@ node tests/smoke.mjs            # loads the page in headless Chrome and
 node tests/geometry.mjs         # unit tests for the pure geometry
                                 # (resample, resampleRuns, heartPair,
                                 # thinUniform, wordPoints, skeletonize,
-                                # finalePts) — 36 assertions on
+                                # finalePts, allocateCounts,
+                                # separatePoints) — 45 assertions on
                                 # window.WHENWHERE.geometry, no JS errors
 node --check tests/smoke.mjs    # syntax-check the tests themselves
 node --check tests/geometry.mjs

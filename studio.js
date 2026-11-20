@@ -265,6 +265,71 @@
           }
           return grid;
         }
+        // Dots closer than this merge into one smear: 2.5x the 4.2px
+        // drone radius used in draw(). separatePoints enforces it.
+        var MIN_DOT_GAP = 10.5;
+        // Splits a dot budget across glyphs in proportion to their stroke
+        // lengths (skeleton pixel counts), so a wide letter gets more
+        // drones than a narrow one and the density stays even across the
+        // word. Returns shares that sum exactly to total: a glyph with
+        // any stroke gets at least 1 dot (it never silently vanishes),
+        // a glyph with no stroke gets 0, and the leftover from rounding
+        // goes to the largest remainders.
+        function allocateCounts(lengths, total) {
+          var sum = 0, i;
+          for (i = 0; i < lengths.length; i++) sum += lengths[i];
+          if (sum <= 0 || total <= 0) return lengths.map(function () { return 0; });
+          var shares = lengths.map(function (L) {
+            return L > 0 ? Math.max(1, Math.floor(total * L / sum)) : 0;
+          });
+          var have = shares.reduce(function (a, b) { return a + b; }, 0);
+          var order = lengths.map(function (L, idx) { return idx; }).sort(function (a, b) {
+            var ra = total * lengths[a] / sum - Math.floor(total * lengths[a] / sum);
+            var rb = total * lengths[b] / sum - Math.floor(total * lengths[b] / sum);
+            return rb - ra;
+          });
+          var k = 0;
+          while (have < total) { shares[order[k % order.length]]++; have++; k++; }
+          // The min-1 rule can overshoot a small budget — take back from
+          // the largest shares, never below 1. (For real inputs the
+          // budget is 50-100 across at most 9 glyphs, so there is always
+          // room; the loop still terminates if every share is already 1.)
+          var big = lengths.map(function (L, idx) { return idx; }).sort(function (a, b) { return shares[b] - shares[a]; });
+          while (have > total) {
+            var took = false;
+            for (var j = 0; j < big.length; j++) {
+              if (shares[big[j]] > 1) { shares[big[j]]--; have--; took = true; if (have <= total) break; }
+            }
+            if (!took) break;
+          }
+          return shares;
+        }
+        // Pushes apart dots closer than minDist so they never overlap.
+        // Pairwise repulsion, repeated until a pass moves nothing (a
+        // push can shove a dot toward a third one, so one pass is not
+        // enough in a dense cluster); dots on a straight stroke stay on
+        // it, since the push runs along their connecting vector.
+        // Mutates the array in place (like skeletonize mutates its grid)
+        // and returns it.
+        function separatePoints(pts, minDist) {
+          for (var pass = 0; pass < 20; pass++) {
+            var moved = false;
+            for (var i = 0; i < pts.length; i++) {
+              for (var j = i + 1; j < pts.length; j++) {
+                var dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
+                var d2 = dx * dx + dy * dy;
+                if (d2 >= minDist * minDist || d2 === 0) continue;
+                var d = Math.sqrt(d2), push = (minDist - d) / 2;
+                var ux = dx / d, uy = dy / d;
+                pts[i].x -= ux * push; pts[i].y -= uy * push;
+                pts[j].x += ux * push; pts[j].y += uy * push;
+                moved = true;
+              }
+            }
+            if (!moved) break;
+          }
+          return pts;
+        }
         // One character at a time, each rastered on a tight canvas just big
         // enough for the glyph (not the full 900x520 stage): wordPoints runs
         // on every keystroke, and a full-stage canvas per character was ~2MB
@@ -272,7 +337,7 @@
         // centered, so points translate back by the same offset.
         /** Points for a word, rastered one character at a time on tight per-glyph canvases and thinned to the stroke centerline.
             @param {string} text - the word to draw; spaces are kept as gaps (they take no drones).
-            @returns {Array<{x: number, y: number}>} exactly target points (25 per glyph, clamped 50-100); each glyph is thinned to its skeleton, so the drones trace the letter one drone wide; the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
+            @returns {Array<{x: number, y: number}>} exactly target points (clamped 50-100), split across glyphs in proportion to their stroke lengths, with dots kept at least the minimum gap apart; each glyph is thinned to its skeleton, so the drones trace the letter one drone wide; the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
         function wordPoints(text) {
           var chars = text.replace(/\s/g, '').split('');
           if (!chars.length) return [];
@@ -301,12 +366,11 @@
             measure();
           }
           var x = W / 2 - totalW / 2;
-          var per = Math.floor(target / chars.length), extra = target - per * chars.length;
-          var pts = [], gi = 0;
+          // Pass 1: rasterize + skeletonize every glyph, keeping its
+          // stroke length (the skeleton pixel count) for the split.
+          var glyphs = [];
           items.forEach(function (it) {
             if (it.space) { x += it.w + gap; return; }
-            var idx = gi++;
-            var n = per + (idx < extra ? 1 : 0);
             var tw = Math.ceil(it.w) + 16, th = Math.ceil(size * 1.5);
             var off = document.createElement('canvas'); off.width = tw; off.height = th;
             var o = off.getContext('2d');
@@ -332,10 +396,16 @@
                 if (grid[sy][sx]) cp.push({ x: (sx - 1) * 4 + 4, y: (sy - 1) * 4 + 4 });
               }
             }
-            var thinned = thinUniform(cp, n);
-            var cx = x + it.w / 2;
-            thinned.forEach(function (p) { pts.push({ x: p.x - tw / 2 + cx, y: p.y - th / 2 + H / 2 }); });
+            glyphs.push({ cp: cp, cx: x + it.w / 2, tw: tw, th: th });
             x += it.w + gap;
+          });
+          // Pass 2: split the budget in proportion to stroke length,
+          // then thin + separate each glyph to its share.
+          var shares = allocateCounts(glyphs.map(function (gl) { return gl.cp.length; }), target);
+          var pts = [];
+          glyphs.forEach(function (gl, idx) {
+            var thinned = separatePoints(thinUniform(gl.cp, shares[idx]), MIN_DOT_GAP);
+            thinned.forEach(function (p) { pts.push({ x: p.x - gl.tw / 2 + gl.cx, y: p.y - gl.th / 2 + H / 2 }); });
           });
           return pts;
         }
@@ -465,7 +535,7 @@
         });
         // Exposed for tests: the pure geometry, without the DOM.
         window.WHENWHERE = window.WHENWHERE || {};
-        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts };
+        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts, allocateCounts: allocateCounts, separatePoints: separatePoints };
       })();
 
       /* ============ Package shortcuts ============ */
