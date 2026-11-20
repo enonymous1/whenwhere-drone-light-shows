@@ -268,6 +268,12 @@
         // Dots closer than this merge into one smear: 2.5x the 4.2px
         // drone radius used in draw(). separatePoints enforces it.
         var MIN_DOT_GAP = 10.5;
+        // Raster sampling step for wordPoints, in px: the glyph is
+        // sampled into a binary grid every SAMPLE_STEP px, then thinned
+        // to its stroke centerline. Smaller step = finer skeleton and
+        // straighter diagonals, at ~4x the grid per halving (2px costs
+        // ~2ms more per keystroke than the original 4px).
+        var SAMPLE_STEP = 2;
         // Splits a dot budget across glyphs in proportion to their stroke
         // lengths (skeleton pixel counts), so a wide letter gets more
         // drones than a narrow one and the density stays even across the
@@ -382,18 +388,18 @@
             try { img = o.getImageData(0, 0, tw, th).data; } catch (e) { img = null; }
             var cp = [];
             if (img) {
-              // Binary grid at the 4px sampling step, with a zero border
+              // Binary grid at the sampling step, with a zero border
               // (the glyph is centered with padding, so the outer ring is
               // empty and the thinning has a border to stop at).
-              var gw = Math.floor((tw - 4) / 4) + 1, gh = Math.floor((th - 4) / 4) + 1;
+              var gw = Math.floor((tw - SAMPLE_STEP) / SAMPLE_STEP) + 1, gh = Math.floor((th - SAMPLE_STEP) / SAMPLE_STEP) + 1;
               var grid = [];
               for (var gy = 0; gy < gh + 2; gy++) grid.push(new Array(gw + 2).fill(0));
-              for (var y = 4; y < th; y += 4) for (var xx = 4; xx < tw; xx += 4) {
-                if (img[(Math.floor(y) * tw + Math.floor(xx)) * 4 + 3] > 110) grid[Math.floor((y - 4) / 4) + 1][Math.floor((xx - 4) / 4) + 1] = 1;
+              for (var y = SAMPLE_STEP; y < th; y += SAMPLE_STEP) for (var xx = SAMPLE_STEP; xx < tw; xx += SAMPLE_STEP) {
+                if (img[(Math.floor(y) * tw + Math.floor(xx)) * 4 + 3] > 110) grid[Math.floor((y - SAMPLE_STEP) / SAMPLE_STEP) + 1][Math.floor((xx - SAMPLE_STEP) / SAMPLE_STEP) + 1] = 1;
               }
               skeletonize(grid);
               for (var sy = 1; sy < gh + 1; sy++) for (var sx = 1; sx < gw + 1; sx++) {
-                if (grid[sy][sx]) cp.push({ x: (sx - 1) * 4 + 4, y: (sy - 1) * 4 + 4 });
+                if (grid[sy][sx]) cp.push({ x: (sx - 1) * SAMPLE_STEP + SAMPLE_STEP, y: (sy - 1) * SAMPLE_STEP + SAMPLE_STEP });
               }
             }
             glyphs.push({ cp: cp, cx: x + it.w / 2, tw: tw, th: th });
