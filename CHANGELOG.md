@@ -4,6 +4,10 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Docs — 2026-11-20 (no version bump)
+
+- 2026-11-20 — The word readability floor is now recorded in `docs/readability-floor.md` (with the probe renders in `docs/readability-floor/`): 25px spacing is the minimum at which a letter still reads (30px loses short features, 40px breaks letters), with a per-letter table for all A–Z + 0–9 (I needs 5 dots, Q needs 20) and per-word totals showing the 100-drone budget clears the floor for every probed word but only buys the dense 15px level for words of 4 glyphs or fewer. No page change.
+
 ## v1.4.7 — 2026-11-20
 
 - 2026-11-20 — Word skeletons are sampled at 2px instead of 4px (`SAMPLE_STEP`, next to `MIN_DOT_GAP` in studio.js): the raster grid is 4x denser, so the thinned centerline follows curves and diagonals more closely — the O reads rounder, the V arms straighter. The dots are 8.4px wide with a 12px glow, so the gain is subtle rather than dramatic; the measured cost is ~2ms per keystroke (MARRY ME 5.7 → 7.5ms median) and every other metric is unchanged (LOVE still 16/38/22/25, closest pair 10.48px, IW 10/40, MARRY ME gaps 104/61). All 45 geometry assertions pass with no threshold changes.

@@ -68,6 +68,9 @@ finales with extra lead time), and the "How far ahead" FAQ notes that
 gold, woven), the grand finale (twin rings + 12 spikes, slowly rotating),
 and your words (LOVE).*
 
+Word legibility is measured, not assumed: the minimum dots per letter and
+per word are recorded in [docs/readability-floor.md](docs/readability-floor.md).
+
 ## Prerequisites
 
 To **view** the page you need nothing but a browser. To **rebuild** it
@@ -381,6 +384,8 @@ whenwhere-drone-light-shows/
 │   ├── hero.jpg                # hero (1248×832, 161 KB)
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
 ├── docs/
+│   ├── readability-floor.md    # measured minimum dots per letter/word (25px floor)
+│   ├── readability-floor/      # probe renders behind that table
 │   └── screenshots/            # hero, formation stills, assembly GIF (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
