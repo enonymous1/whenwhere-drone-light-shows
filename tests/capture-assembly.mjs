@@ -11,8 +11,12 @@
 // Chrome/Chromium binary (CHROME_PATH, or the usual install locations).
 //
 // Usage:
-//   node tests/capture-assembly.mjs [shape] [out-dir]
-//   shape defaults to "heart"; out-dir defaults to /tmp/ww-gif/frames
+//   node tests/capture-assembly.mjs [shape] [out-dir] [settle-ms]
+//   shape defaults to "heart"; out-dir defaults to /tmp/ww-gif/frames;
+//   settle-ms (default 0) waits that long after clicking before the first
+//   frame, so a settled formation's own motion (the finale's rotation)
+//   can be captured instead of the assembly. The finale takes ~2s to
+//   assemble (1.5s ease + up to 0.55s stagger), so use 3000 for it.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -21,6 +25,7 @@ import { pathToFileURL } from 'node:url';
 
 const SHAPE = process.argv[2] || 'heart';
 const OUT_DIR = resolve(process.argv[3] || '/tmp/ww-gif/frames');
+const SETTLE_MS = Number(process.argv[4] || 0);
 const PAGE = resolve('index.html');
 
 const CHROME_CANDIDATES = [
@@ -84,12 +89,39 @@ async function main() {
       if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.text);
       return r.result?.result?.value;
     };
+    // Poll an expression until it is truthy (or the timeout hits). The
+    // click below must wait for studio.js to finish: the shape buttons
+    // exist in the DOM before their listeners are attached, so a click
+    // fired too early is silently a no-op and the capture shows the
+    // default hearts instead of the requested shape (caught 2026-11-20
+    // on the finale). window.WHENWHERE.geometry is set after the button
+    // wiring, so its presence means a click will work.
+    const waitFor = async (expression, timeoutMs, label) => {
+      const deadline = Date.now() + timeoutMs;
+      for (;;) {
+        if (await evaluate(expression)) return;
+        if (Date.now() > deadline) throw new Error(`Timed out waiting for: ${label}`);
+        await sleep(100);
+      }
+    };
     await send('Runtime.enable');
     await send('Page.enable');
+    await waitFor(`window.WHENWHERE && window.WHENWHERE.geometry`, 15000, 'studio.js to finish (window.WHENWHERE.geometry)');
     // The studio canvas sits at roughly (430, 2700)-(1210, 3260) in a
     // 1280x7400 window; capture just that region each frame.
     const clip = { x: 430, y: 2700, width: 780, height: 560, scale: 1 };
     await evaluate(`document.querySelector('[data-shape="${SHAPE}"]').click();`);
+    // Fail loud if the requested shape did not activate: the hearts are
+    // the default, so a missed click would otherwise capture the wrong
+    // formation without any error. (The readiness wait above should make
+    // this unreachable; it is here to catch a regression, not to retry.)
+    if (SHAPE !== 'heart') {
+      await waitFor(`document.getElementById('shapeName').textContent !== 'Interlocking hearts'`, 5000, `shape "${SHAPE}" to activate`);
+    }
+    // With a settle delay, the fleet finishes assembling first, so the
+    // frames show the settled formation's own motion (the finale's
+    // rotation) instead of the flight in.
+    if (SETTLE_MS > 0) await sleep(SETTLE_MS);
     // Assembly takes ~2s (1.5s ease + up to 0.55s stagger); capture a frame
     // every 200ms, plus a settled frame at the end.
     for (let i = 0; i <= 14; i++) {

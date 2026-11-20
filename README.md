@@ -62,7 +62,7 @@ finales with extra lead time), and the "How far ahead" FAQ notes that
 200+ finales need the earliest possible word.
 
 ![Interlocking hearts — 80 drones](docs/screenshots/formation-hearts.png)
-![Grand finale — 240 drones](docs/screenshots/formation-finale.png)
+![Grand finale — 240 drones, rotating](docs/screenshots/formation-finale.gif)
 ![Your words: LOVE — 100 drones](docs/screenshots/formation-love.png)
 
 *Three formations as drawn in the studio: interlocking hearts (rose +
@@ -199,6 +199,23 @@ import pathlib
 frames = sorted(pathlib.Path('/tmp/ww-gif/frames').glob('frame-*.png'))
 imgs = [Image.open(f).convert('RGB').resize((640, 459), Image.LANCZOS) for f in frames]
 imgs[0].save('docs/screenshots/formation-assembly.gif', save_all=True,
+             append_images=imgs[1:], duration=200, loop=0, optimize=True)
+EOF
+```
+
+The finale GIF is the same recipe, with a settle delay so the frames
+show the settled formation's rotation instead of the assembly (the
+finale takes ~2s to assemble; it rotates at 0.15 rad/s, a full turn
+in ~42s, so 3s of frames shows the 12 spikes sweep ~26°):
+
+```bash
+node tests/capture-assembly.mjs finale /tmp/ww-gif/finale-frames 3000
+python3 - <<'EOF'
+from PIL import Image
+import pathlib
+frames = sorted(pathlib.Path('/tmp/ww-gif/finale-frames').glob('frame-*.png'))
+imgs = [Image.open(f).convert('RGB').resize((640, 459), Image.LANCZOS) for f in frames]
+imgs[0].save('docs/screenshots/formation-finale.gif', save_all=True,
              append_images=imgs[1:], duration=200, loop=0, optimize=True)
 EOF
 ```
@@ -396,7 +413,7 @@ whenwhere-drone-light-shows/
 ├── docs/
 │   ├── readability-floor.md    # measured minimum dots per letter/word (25px floor)
 │   ├── readability-floor/      # probe renders behind that table
-│   └── screenshots/            # hero, formation stills, assembly GIF (for this README)
+│   └── screenshots/            # hero, formation stills, assembly + finale GIFs (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
 │   ├── geometry.mjs            # CDP unit tests: pure geometry, 45 assertions
