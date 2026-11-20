@@ -265,15 +265,28 @@
           }
           return grid;
         }
-        // Dots closer than this merge into one smear: 2.5x the 4.2px
-        // drone radius used in draw(). separatePoints enforces it.
-        var MIN_DOT_GAP = 10.5;
-        // Raster sampling step for wordPoints, in px: the glyph is
-        // sampled into a binary grid every SAMPLE_STEP px, then thinned
-        // to its stroke centerline. Smaller step = finer skeleton and
-        // straighter diagonals, at ~4x the grid per halving (2px costs
-        // ~2ms more per keystroke than the original 4px).
-        var SAMPLE_STEP = 2;
+        // Tunable word-pipeline settings. wordPoints reads these live,
+        // and they are exposed as window.WHENWHERE.tuning for the
+        // readability lab (tools/readability-lab.html) — the lab changes
+        // them without reloading and the page re-renders. Defaults are
+        // the shipped values; nothing else reads them.
+        var TUNING = {
+          font: 'Marcellus, Georgia, serif', weight: 700,
+          size: 190, sizeMin: 60, maxW: W - 40,
+          perGlyph: 25, targetMin: 50, targetMax: 100,
+          // Dots closer than minGap merge into one smear: 2.5x the 4.2px
+          // drone radius used in draw(). separatePoints enforces it.
+          minGap: 10.5,
+          // Raster sampling step, in px: the glyph is sampled into a
+          // binary grid every sampleStep px, then thinned to its stroke
+          // centerline. Smaller step = finer skeleton and straighter
+          // diagonals, at ~4x the grid per halving (2px costs ~2ms more
+          // per keystroke than the original 4px).
+          sampleStep: 2,
+          // Raster alpha threshold: a grid cell is ink when the glyph
+          // pixel's alpha is above this (0-255).
+          threshold: 110
+        };
         // Splits a dot budget across glyphs in proportion to their stroke
         // lengths (skeleton pixel counts), so a wide letter gets more
         // drones than a narrow one and the density stays even across the
@@ -341,24 +354,59 @@
         // on every keystroke, and a full-stage canvas per character was ~2MB
         // of allocation per keystroke for a 4-letter word. The glyph is drawn
         // centered, so points translate back by the same offset.
+        // Rasterize + skeletonize one glyph at the given size; returns
+        // { cp, tw, th } in the glyph's own canvas coords. wordPoints
+        // calls this per glyph; the readability lab calls it directly to
+        // render any letter at any count.
+        function glyphSkeleton(ch, size) {
+          var mc2 = document.createElement('canvas').getContext('2d');
+          mc2.font = TUNING.weight + ' ' + size + 'px ' + TUNING.font;
+          var tw = Math.ceil(mc2.measureText(ch).width) + 16, th = Math.ceil(size * 1.5);
+          var off = document.createElement('canvas'); off.width = tw; off.height = th;
+          var o = off.getContext('2d');
+          o.font = TUNING.weight + ' ' + size + 'px ' + TUNING.font;
+          o.textAlign = 'center'; o.textBaseline = 'middle';
+          o.fillStyle = '#fff';
+          o.fillText(ch, tw / 2, th / 2 + 6);
+          var img = null;
+          try { img = o.getImageData(0, 0, tw, th).data; } catch (e) { img = null; }
+          var cp = [];
+          if (img) {
+            // Binary grid at the sampling step, with a zero border
+            // (the glyph is centered with padding, so the outer ring is
+            // empty and the thinning has a border to stop at).
+            var step = TUNING.sampleStep;
+            var gw = Math.floor((tw - step) / step) + 1, gh = Math.floor((th - step) / step) + 1;
+            var grid = [];
+            for (var gy = 0; gy < gh + 2; gy++) grid.push(new Array(gw + 2).fill(0));
+            for (var y = step; y < th; y += step) for (var xx = step; xx < tw; xx += step) {
+              if (img[(Math.floor(y) * tw + Math.floor(xx)) * 4 + 3] > TUNING.threshold) grid[Math.floor((y - step) / step) + 1][Math.floor((xx - step) / step) + 1] = 1;
+            }
+            skeletonize(grid);
+            for (var sy = 1; sy < gh + 1; sy++) for (var sx = 1; sx < gw + 1; sx++) {
+              if (grid[sy][sx]) cp.push({ x: (sx - 1) * step + step, y: (sy - 1) * step + step });
+            }
+          }
+          return { cp: cp, tw: tw, th: th };
+        }
         /** Points for a word, rastered one character at a time on tight per-glyph canvases and thinned to the stroke centerline.
             @param {string} text - the word to draw; spaces are kept as gaps (they take no drones).
             @returns {Array<{x: number, y: number}>} exactly target points (clamped 50-100), split across glyphs in proportion to their stroke lengths, with dots kept at least the minimum gap apart; each glyph is thinned to its skeleton, so the drones trace the letter one drone wide; the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
         function wordPoints(text) {
           var chars = text.replace(/\s/g, '').split('');
           if (!chars.length) return [];
-          var target = Math.max(50, Math.min(100, chars.length * 25));
+          var target = Math.max(TUNING.targetMin, Math.min(TUNING.targetMax, chars.length * TUNING.perGlyph));
           var mc = document.createElement('canvas').getContext('2d');
           // Layout items: one per character of the original text, so a
           // space keeps its place as a gap instead of vanishing (it takes
           // no drones). Measure at 190px, then shrink the type until the
           // whole phrase fits the stage — short words stay big, long words
           // shrink instead of running off the edges.
-          var MAXW = W - 40;
-          var size = 190;
+          var MAXW = TUNING.maxW;
+          var size = TUNING.size;
           var items, gap, totalW;
           function measure() {
-            mc.font = '700 ' + size + 'px Marcellus, Georgia, serif';
+            mc.font = TUNING.weight + ' ' + size + 'px ' + TUNING.font;
             gap = size * .18;
             var spaceW = mc.measureText(' ').width;
             items = text.split('').map(function (c) {
@@ -367,8 +415,8 @@
             totalW = items.reduce(function (a, it) { return a + it.w; }, 0) + gap * (items.length - 1);
           }
           measure();
-          while (totalW > MAXW && size > 60) {
-            size = Math.max(60, Math.floor(size * MAXW / totalW));
+          while (totalW > MAXW && size > TUNING.sizeMin) {
+            size = Math.max(TUNING.sizeMin, Math.floor(size * MAXW / totalW));
             measure();
           }
           var x = W / 2 - totalW / 2;
@@ -377,32 +425,8 @@
           var glyphs = [];
           items.forEach(function (it) {
             if (it.space) { x += it.w + gap; return; }
-            var tw = Math.ceil(it.w) + 16, th = Math.ceil(size * 1.5);
-            var off = document.createElement('canvas'); off.width = tw; off.height = th;
-            var o = off.getContext('2d');
-            o.font = '700 ' + size + 'px Marcellus, Georgia, serif';
-            o.textAlign = 'center'; o.textBaseline = 'middle';
-            o.fillStyle = '#fff';
-            o.fillText(it.c, tw / 2, th / 2 + 6);
-            var img = null;
-            try { img = o.getImageData(0, 0, tw, th).data; } catch (e) { img = null; }
-            var cp = [];
-            if (img) {
-              // Binary grid at the sampling step, with a zero border
-              // (the glyph is centered with padding, so the outer ring is
-              // empty and the thinning has a border to stop at).
-              var gw = Math.floor((tw - SAMPLE_STEP) / SAMPLE_STEP) + 1, gh = Math.floor((th - SAMPLE_STEP) / SAMPLE_STEP) + 1;
-              var grid = [];
-              for (var gy = 0; gy < gh + 2; gy++) grid.push(new Array(gw + 2).fill(0));
-              for (var y = SAMPLE_STEP; y < th; y += SAMPLE_STEP) for (var xx = SAMPLE_STEP; xx < tw; xx += SAMPLE_STEP) {
-                if (img[(Math.floor(y) * tw + Math.floor(xx)) * 4 + 3] > 110) grid[Math.floor((y - SAMPLE_STEP) / SAMPLE_STEP) + 1][Math.floor((xx - SAMPLE_STEP) / SAMPLE_STEP) + 1] = 1;
-              }
-              skeletonize(grid);
-              for (var sy = 1; sy < gh + 1; sy++) for (var sx = 1; sx < gw + 1; sx++) {
-                if (grid[sy][sx]) cp.push({ x: (sx - 1) * SAMPLE_STEP + SAMPLE_STEP, y: (sy - 1) * SAMPLE_STEP + SAMPLE_STEP });
-              }
-            }
-            glyphs.push({ cp: cp, cx: x + it.w / 2, tw: tw, th: th });
+            var gl = glyphSkeleton(it.c, size);
+            glyphs.push({ cp: gl.cp, cx: x + it.w / 2, tw: gl.tw, th: gl.th });
             x += it.w + gap;
           });
           // Pass 2: split the budget in proportion to stroke length,
@@ -410,7 +434,7 @@
           var shares = allocateCounts(glyphs.map(function (gl) { return gl.cp.length; }), target);
           var pts = [];
           glyphs.forEach(function (gl, idx) {
-            var thinned = separatePoints(thinUniform(gl.cp, shares[idx]), MIN_DOT_GAP);
+            var thinned = separatePoints(thinUniform(gl.cp, shares[idx]), TUNING.minGap);
             thinned.forEach(function (p) { pts.push({ x: p.x - gl.tw / 2 + gl.cx, y: p.y - gl.th / 2 + H / 2 }); });
           });
           return pts;
@@ -541,7 +565,8 @@
         });
         // Exposed for tests: the pure geometry, without the DOM.
         window.WHENWHERE = window.WHENWHERE || {};
-        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts, allocateCounts: allocateCounts, separatePoints: separatePoints };
+        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts, allocateCounts: allocateCounts, separatePoints: separatePoints, glyphSkeleton: glyphSkeleton };
+        window.WHENWHERE.tuning = TUNING;
       })();
 
       /* ============ Package shortcuts ============ */

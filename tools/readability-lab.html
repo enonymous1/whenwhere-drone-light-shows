@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Readability Lab — WhenWhere Formation Studio</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #faf7f0; --surface: #fff; --text: #1c1a16; --muted: #6b6455;
+    --line: #e0d8c8; --gold: #b98a1d; --gold-bright: #d9a441;
+    --ok: #2e7d32; --warn: #b26a00; --bad: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #080c1d; --surface: #0e1430; --text: #f2ead8; --muted: #9aa3c0;
+      --line: #26305c; --gold: #e3b356; --gold-bright: #d9a441;
+      --ok: #7bc47f; --warn: #e3b356; --bad: #ef9a9a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; }
+  header, section { max-width: 1080px; margin: 0 auto; padding: 16px; }
+  h1 { margin: 0 0 4px; font-size: 26px; }
+  h2 { margin: 24px 0 8px; font-size: 19px; }
+  p { margin: 6px 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  code { font: 14px ui-monospace, monospace; }
+  #status { font-weight: 600; }
+  #status.err { color: var(--bad); }
+  .controls {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px 20px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px;
+  }
+  .controls label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .controls label output { font-weight: 400; color: var(--muted); margin-left: 6px; }
+  .controls input[type="range"], .controls select, .controls input[type="text"] {
+    width: 100%; accent-color: var(--gold); font: inherit; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px;
+  }
+  .controls input[type="range"] { border: none; padding: 0; }
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1; font: inherit; padding: 6px 0; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer;
+  }
+  .seg button.on { background: var(--gold); border-color: var(--gold); color: #fff; }
+  #reset {
+    font: inherit; padding: 8px 16px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--surface); color: var(--text); cursor: pointer;
+  }
+  #reset:hover { border-color: var(--gold); }
+  canvas { display: block; max-width: 100%; border: 1px solid var(--line); border-radius: 10px; background: #080c1d; }
+  .legend { font-size: 14px; color: var(--muted); }
+  .legend b.ok { color: var(--ok); } .legend b.warn { color: var(--warn); } .legend b.bad { color: var(--bad); }
+  #wordReadout { font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Readability Lab</h1>
+  <p>Diagnostic for the Formation Studio word renderer. It drives the
+  <strong>real page</strong> (hidden below) — every render uses the live
+  <code>wordPoints</code> pipeline, so what you see here is what the page
+  draws. Serve the repo over HTTP (<code>python3 -m http.server</code>) —
+  <code>file://</code> blocks the iframe.</p>
+  <p id="status">Loading the page…</p>
+</header>
+
+<section class="controls" id="controls">
+  <div>
+    <label for="font">Font <output id="fontOut"></output></label>
+    <select id="font"></select>
+  </div>
+  <div>
+    <label for="size">Type size <output id="sizeOut"></output></label>
+    <input type="range" id="size" min="60" max="190" step="1" value="190">
+  </div>
+  <div>
+    <label for="perGlyph">Dots per glyph <output id="perGlyphOut"></output></label>
+    <input type="range" id="perGlyph" min="5" max="40" step="1" value="25">
+  </div>
+  <div>
+    <label for="minGap">Minimum dot gap <output id="minGapOut"></output></label>
+    <input type="range" id="minGap" min="5" max="20" step="0.5" value="10.5">
+  </div>
+  <div>
+    <label>Sampling step <output id="stepOut"></output></label>
+    <div class="seg" id="stepSeg">
+      <button type="button" data-step="2" class="on">2px</button>
+      <button type="button" data-step="4">4px</button>
+    </div>
+  </div>
+  <div>
+    <label for="threshold">Raster threshold <output id="thresholdOut"></output></label>
+    <input type="range" id="threshold" min="80" max="160" step="1" value="110">
+  </div>
+  <div>
+    <label for="word">Word preview</label>
+    <input type="text" id="word" value="LOVE" maxlength="15" autocomplete="off">
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <button type="button" id="reset">Reset to shipped values</button>
+  </div>
+</section>
+
+<section>
+  <h2>All letters — <span id="gridSummary"></span></h2>
+  <p class="legend">Label colour is the spacing at the current settings:
+  <b class="ok">≤ 20px solid</b> · <b class="warn">20–25px at the floor</b> ·
+  <b class="bad">&gt; 25px below the floor</b> (see
+  <a href="../docs/readability-floor.md">docs/readability-floor.md</a>).</p>
+  <canvas id="grid"></canvas>
+</section>
+
+<section>
+  <h2>Word preview</h2>
+  <canvas id="stage" width="900" height="520"></canvas>
+  <p id="wordReadout"></p>
+  <p class="muted">The preview uses the page's own budget formula with the
+  current dots-per-glyph setting; the floor is summed per glyph at the
+  word's fitted size.</p>
+</section>
+
+<iframe id="page" src="../index.html" style="display:none" title="live page (hidden)"></iframe>
+
+<script>
+(function () {
+  var frame = document.getElementById('page');
+  var statusEl = document.getElementById('status');
+  var gridCv = document.getElementById('grid');
+  var stageCv = document.getElementById('stage');
+  var gridCtx = gridCv.getContext('2d');
+  var stageCtx = stageCv.getContext('2d');
+  var CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var FONTS = [
+    { label: 'Marcellus 700', family: 'Marcellus', weight: 700, stack: 'Marcellus, Georgia, serif', css2: 'family=Marcellus' },
+    { label: 'Inter 800', family: 'Inter', weight: 800, stack: 'Inter, sans-serif', css2: 'family=Inter:wght@800' },
+    { label: 'Archivo Black 400', family: 'Archivo Black', weight: 400, stack: 'Archivo Black, sans-serif', css2: 'family=Archivo+Black' },
+    { label: 'Oswald 700', family: 'Oswald', weight: 700, stack: 'Oswald, sans-serif', css2: 'family=Oswald:wght@700' },
+    { label: 'Roboto 900', family: 'Roboto', weight: 900, stack: 'Roboto, sans-serif', css2: 'family=Roboto:wght@900' },
+    { label: 'Montserrat 800', family: 'Montserrat', weight: 800, stack: 'Montserrat, sans-serif', css2: 'family=Montserrat:wght@800' },
+    { label: 'Poppins 700', family: 'Poppins', weight: 700, stack: 'Poppins, sans-serif', css2: 'family=Poppins:wght@700' },
+    { label: 'Bebas Neue 400', family: 'Bebas Neue', weight: 400, stack: 'Bebas Neue, sans-serif', css2: 'family=Bebas+Neue' },
+    { label: 'Roboto Mono 700', family: 'Roboto Mono', weight: 700, stack: 'Roboto Mono, monospace', css2: 'family=Roboto+Mono:wght@700' },
+    { label: 'Space Mono 700', family: 'Space Mono', weight: 700, stack: 'Space Mono, monospace', css2: 'family=Space+Mono:wght@700' },
+    { label: 'Playfair Display 800', family: 'Playfair Display', weight: 800, stack: 'Playfair Display, Georgia, serif', css2: 'family=Playfair+Display:wght@800' },
+    { label: 'Merriweather 900', family: 'Merriweather', weight: 900, stack: 'Merriweather, Georgia, serif', css2: 'family=Merriweather:wght@900' }
+  ];
+  var DEFAULTS = { font: 0, size: 190, perGlyph: 25, minGap: 10.5, sampleStep: 2, threshold: 110, word: 'LOVE' };
+  var state = { font: 0, size: 190, perGlyph: 25, minGap: 10.5, sampleStep: 2, threshold: 110, word: 'LOVE' };
+  var geo = null, tuning = null, frameDoc = null, ready = false, timer = null;
+
+  function cssVar(name) {
+    return getComputedStyle(document.body).getPropertyValue(name).trim();
+  }
+  function drawDots(ctx, pts, ox, oy) {
+    for (var i = 0; i < pts.length; i++) {
+      ctx.beginPath();
+      ctx.arc(pts[i].x + ox, pts[i].y + oy, 4.2, 0, Math.PI * 2);
+      ctx.fillStyle = i % 3 === 0 ? '#fff' : '#e3b356';
+      ctx.shadowColor = '#e3b356'; ctx.shadowBlur = 12;
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+  }
+  // Resolve when a face of the given family is actually loaded in the
+  // iframe. fonts.load() alone is not enough: if the family's
+  // stylesheet has not arrived yet there is no face to load, it
+  // resolves at once, and the grid renders in the fallback serif
+  // (Georgia) with wrong floor numbers. Poll the face status instead.
+  function whenFontReady(f) {
+    return new Promise(function (resolve) {
+      var tries = 0;
+      var tick = function () {
+        // Re-issue the load on every tick: if the face only just
+        // appeared (its stylesheet arrived after ensureFont ran), the
+        // earlier load() found nothing to load and the face sits at
+        // 'unloaded' until something asks for it. load() is idempotent
+        // once the face is loaded.
+        try { frameDoc.fonts.load(f.weight + ' ' + state.size + 'px "' + f.family + '"'); } catch (e) {}
+        var loaded = false;
+        try {
+          frameDoc.fonts.forEach(function (face) {
+            if (face.family === f.family && face.status === 'loaded') loaded = true;
+          });
+        } catch (e) { loaded = false; }
+        if (loaded || ++tries > 100) resolve();
+        else setTimeout(tick, 100);
+      };
+      tick();
+    });
+  }
+  function ensureFont(f) {
+    var id = 'lab-font-' + f.family.replace(/\s+/g, '-');
+    if (!frameDoc.getElementById(id)) {
+      var link = frameDoc.createElement('link');
+      link.id = id; link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?' + f.css2 + '&display=swap';
+      frameDoc.head.appendChild(link);
+    }
+    return frameDoc.fonts.load(f.weight + ' ' + state.size + 'px "' + f.family + '"')
+      .catch(function () { return null; })
+      .then(function () { return frameDoc.fonts.ready; });
+  }
+  function applySettings() {
+    var f = FONTS[state.font];
+    tuning.font = f.stack; tuning.weight = f.weight;
+    tuning.size = state.size; tuning.perGlyph = state.perGlyph;
+    tuning.minGap = state.minGap; tuning.sampleStep = state.sampleStep;
+    tuning.threshold = state.threshold;
+  }
+  function fittedSize(word) {
+    // The page's fit-to-width rule, replicated for the floor readout:
+    // measure at the slider size, shrink until the phrase fits 860px.
+    var mc = frameDoc.createElement('canvas').getContext('2d');
+    var size = state.size, totalW = 0, gap = 0;
+    var measure = function () {
+      var f = FONTS[state.font];
+      mc.font = f.weight + ' ' + size + 'px ' + f.stack;
+      gap = size * 0.18;
+      totalW = 0;
+      for (var i = 0; i < word.length; i++) totalW += mc.measureText(word[i]).width;
+      totalW += gap * (word.length - 1);
+    };
+    measure();
+    while (totalW > 860 && size > 60) { size = Math.max(60, Math.floor(size * 860 / totalW)); measure(); }
+    return size;
+  }
+  function renderGrid() {
+    var cellW = 170, labelH = 34;
+    var cellH = Math.ceil(state.size * 1.5) + labelH + 10;
+    var cols = 6, rows = Math.ceil(CHARS.length / cols);
+    gridCv.width = cols * cellW; gridCv.height = rows * cellH;
+    gridCtx.fillStyle = '#080c1d'; gridCtx.fillRect(0, 0, gridCv.width, gridCv.height);
+    var ok = cssVar('--ok'), warn = cssVar('--warn'), bad = cssVar('--bad');
+    var below = 0;
+    for (var i = 0; i < CHARS.length; i++) {
+      var ch = CHARS[i];
+      var sk = geo.glyphSkeleton(ch, state.size);
+      var stroke = sk.cp.length * tuning.sampleStep;
+      var n = state.perGlyph;
+      var copy = sk.cp.map(function (p) { return { x: p.x, y: p.y }; });
+      var pts = geo.separatePoints(geo.thinUniform(copy, n), tuning.minGap);
+      var spacing = stroke / n;
+      var col = i % cols, row = Math.floor(i / cols);
+      var ox = col * cellW + (cellW - sk.tw) / 2;
+      var oy = row * cellH + labelH + (cellH - labelH - sk.th) / 2;
+      drawDots(gridCtx, pts, ox, oy);
+      var color = spacing <= 20 ? ok : spacing <= 25 ? warn : bad;
+      if (spacing > 25) below++;
+      gridCtx.fillStyle = color;
+      gridCtx.font = '600 15px system-ui, sans-serif';
+      gridCtx.textAlign = 'center';
+      gridCtx.fillText(ch + ' · ' + n + ' dots · ' + Math.round(spacing) + 'px', col * cellW + cellW / 2, row * cellH + 20);
+    }
+    document.getElementById('gridSummary').textContent =
+      state.perGlyph + ' dots/glyph · ' + below + ' of 36 below the 25px floor';
+  }
+  function renderWord() {
+    var word = (state.word || 'LOVE').toUpperCase();
+    var pts = geo.wordPoints(word);
+    stageCtx.fillStyle = '#080c1d'; stageCtx.fillRect(0, 0, 900, 520);
+    drawDots(stageCtx, pts, 0, 0);
+    var size = fittedSize(word), floor = 0;
+    for (var i = 0; i < word.length; i++) {
+      if (/\s/.test(word[i])) continue;
+      var sk = geo.glyphSkeleton(word[i], size);
+      floor += Math.max(1, Math.round(sk.cp.length * tuning.sampleStep / 25));
+    }
+    document.getElementById('wordReadout').textContent =
+      word + ' — ' + pts.length + ' drones · 25px floor ' + floor +
+      ' · ' + (pts.length / Math.max(1, floor)).toFixed(1) + '× above the floor' +
+      ' (type ' + size + 'px)';
+  }
+  function render() {
+    if (!ready) return;
+    applySettings();
+    renderGrid();
+    renderWord();
+  }
+  function scheduleRender() {
+    // A control event can fire before the hidden page is ready (seen in
+    // the ship check: an 'input' during load reached here with frameDoc
+    // still null and threw). Drop it — waitForFrame renders the initial
+    // state once the frame is ready, and later events work normally.
+    if (!ready) return;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      var f = FONTS[state.font];
+      ensureFont(f).then(function () { return whenFontReady(f); }).then(render);
+    }, 150);
+  }
+  function bind(id, key, parse) {
+    var el = document.getElementById(id);
+    var out = document.getElementById(id + 'Out');
+    var show = function () { if (out) out.textContent = String(state[key]); };
+    el.addEventListener('input', function () { state[key] = parse(el.value); show(); scheduleRender(); });
+    show();
+    return el;
+  }
+  // Controls.
+  var fontSel = document.getElementById('font');
+  FONTS.forEach(function (f, i) {
+    var o = document.createElement('option');
+    o.value = i; o.textContent = f.label; fontSel.appendChild(o);
+  });
+  fontSel.addEventListener('change', function () { state.font = +fontSel.value; scheduleRender(); });
+  bind('size', 'size', function (v) { return +v; });
+  bind('perGlyph', 'perGlyph', function (v) { return +v; });
+  bind('minGap', 'minGap', function (v) { return +v; });
+  bind('threshold', 'threshold', function (v) { return +v; });
+  var wordEl = document.getElementById('word');
+  wordEl.addEventListener('input', function () { state.word = wordEl.value; scheduleRender(); });
+  document.getElementById('stepSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.sampleStep = +b.dataset.step;
+    document.querySelectorAll('#stepSeg button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    scheduleRender();
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { font: 0, size: 190, perGlyph: 25, minGap: 10.5, sampleStep: 2, threshold: 110, word: 'LOVE' };
+    fontSel.value = '0';
+    document.getElementById('size').value = '190';
+    document.getElementById('perGlyph').value = '25';
+    document.getElementById('minGap').value = '10.5';
+    document.getElementById('threshold').value = '110';
+    wordEl.value = 'LOVE';
+    document.querySelectorAll('#stepSeg button').forEach(function (x) { x.classList.toggle('on', x.dataset.step === '2'); });
+    document.querySelectorAll('.controls output').forEach(function () {});
+    document.getElementById('sizeOut').textContent = '190';
+    document.getElementById('perGlyphOut').textContent = '25';
+    document.getElementById('minGapOut').textContent = '10.5';
+    document.getElementById('thresholdOut').textContent = '110';
+    scheduleRender();
+  });
+  // Wait for the hidden page, then render.
+  function waitForFrame() {
+    try {
+      var w = frame.contentWindow;
+      if (w && w.WHENWHERE && w.WHENWHERE.geometry && w.WHENWHERE.tuning) {
+        geo = w.WHENWHERE.geometry;
+        tuning = w.WHENWHERE.tuning;
+        frameDoc = w.document;
+        ready = true;
+        statusEl.textContent = 'Ready — driving the live page. Move a control and the grid re-renders from the real pipeline.';
+        // Render only once the current font is actually loaded in the
+        // iframe — otherwise the first grid measures the fallback serif
+        // and the floor numbers are wrong (Georgia gave LOVE a floor of
+        // 56, Marcellus gives 45).
+        ensureFont(FONTS[state.font])
+          .then(function () { return whenFontReady(FONTS[state.font]); })
+          .then(render);
+        return;
+      }
+    } catch (e) {
+      statusEl.textContent = 'The lab cannot reach the page — serve the repo over HTTP (python3 -m http.server). file:// blocks the iframe.';
+      statusEl.classList.add('err');
+      return;
+    }
+    setTimeout(waitForFrame, 250);
+  }
+  frame.addEventListener('load', waitForFrame);
+  waitForFrame();
+})();
+</script>
+</body>
+</html>

@@ -4,6 +4,11 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## v1.4.8 — 2026-11-20
+
+- 2026-11-20 — Readability Lab: a standalone diagnostic page at `tools/readability-lab.html` (public at `/tools/readability-lab.html` once deployed — the deploy ships the whole repo). It drives the real page through a hidden iframe, so every render uses the live `wordPoints` pipeline: font (12 sampled faces), type size, dots per glyph, minimum dot gap, sampling step (2/4px) and raster threshold controls, an A–Z + 0–9 live grid with per-letter spacing coloured against the 25px floor, and a word preview with the drone count, floor total and margin. Serve the repo over HTTP to use it — `file://` blocks the iframe.
+- 2026-11-20 — `studio.js`: the word-pipeline tuning is hoisted into `window.WHENWHERE.tuning` (font, weight, size, perGlyph, minGap, sampleStep, threshold), read live by `wordPoints`; `glyphSkeleton(ch, size)` is factored out of `wordPoints` and exposed on the geometry export. No behaviour change — the defaults are the shipped values and the geometry tests pass unchanged (45/45).
+
 ## Docs — 2026-11-20 (no version bump)
 
 - 2026-11-20 — The word readability floor is now recorded in `docs/readability-floor.md` (with the probe renders in `docs/readability-floor/`): 25px spacing is the minimum at which a letter still reads (30px loses short features, 40px breaks letters), with a per-letter table for all A–Z + 0–9 (I needs 5 dots, Q needs 20) and per-word totals showing the 100-drone budget clears the floor for every probed word but only buys the dense 15px level for words of 4 glyphs or fewer. No page change.

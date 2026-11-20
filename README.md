@@ -69,7 +69,9 @@ gold, woven), the grand finale (twin rings + 12 spikes, slowly rotating),
 and your words (LOVE).*
 
 Word legibility is measured, not assumed: the minimum dots per letter and
-per word are recorded in [docs/readability-floor.md](docs/readability-floor.md).
+per word are recorded in [docs/readability-floor.md](docs/readability-floor.md). To play with the settings live, serve the repo
+over HTTP and open [tools/readability-lab.html](tools/readability-lab.html) —
+it re-renders every letter from the real pipeline as you move the controls.
 
 ## Prerequisites
 
@@ -379,7 +381,8 @@ whenwhere-drone-light-shows/
 ├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates)
 ├── studio.js                   # page JavaScript (studio, form, shortcuts, nav)
 ├── tools/
-│   └── build.py                # image optimization + checks (index.html is the source of truth)
+│   ├── build.py                # image optimization + checks (index.html is the source of truth)
+│   └── readability-lab.html    # word-readability diagnostic (drives the live page)
 ├── assets/                     # photos (hero + 6 occasion cards, optimized JPEG)
 │   ├── hero.jpg                # hero (1248×832, 161 KB)
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
