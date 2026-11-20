@@ -15,8 +15,9 @@ the latest deploy went green.
 
 ## Description
 
-A single static page (`index.html`, ~42 KB) plus `studio.js` (~32 KB,
-the page's JavaScript), no framework, no build step to view it) with:
+A single static page (`index.html`, ~43 KB) plus `studio.js` (~44 KB,
+the page's JavaScript) and `config.js` (~2 KB, the launch settings),
+no framework, no build step to view it) with:
 
 - **Hero + six occasion cards** — weddings, vineyards & wineries,
   corporate, festivals, alumni, proposals & private estates.
@@ -141,19 +142,20 @@ in [CHANGELOG.md](CHANGELOG.md). To release a new version, bump that
 comment in `index.html` and add a section to the changelog.
 
 The page's JavaScript lives in `studio.js` — the Formation Studio, the
-inquiry form, the package shortcuts, and the mobile nav. Edit it there,
+inquiry form, the package shortcuts, and the mobile nav — with the
+launch settings in `config.js` (loaded before it). Edit them there,
 never inline: `index.html` carries no inline executable script (only
 the JSON-LD data block), and the build fails if one appears, because
 the page's Content Security Policy allows `script-src 'self'` only.
 The policy also covers the Google Fonts stylesheet (`style-src`), the
 font files (`font-src`), and the form's POST (`connect-src` for the
 Apps Script endpoints). The pure geometry functions are exposed as
-`window.WHENWHERE.geometry` for the planned unit tests.
+`window.WHENWHERE.geometry` and covered by the geometry unit tests.
 
 The build fails loudly (non-zero exit) on a missing or corrupt photo,
-and it validates the result: it runs `studio.js` through
-`node --check` when Node is available and asserts the fleet counts are
-present. A rebuild with nothing changed is a no-op. Run it from any
+and it validates the result: it runs both `config.js` and `studio.js`
+through `node --check` when Node is available and asserts the fleet
+counts are present in `config.js`. A rebuild with nothing changed is a no-op. Run it from any
 directory — paths resolve from the script's own location.
 
 ### Tests
@@ -207,23 +209,28 @@ positions), cropped to the stage. The hero still is a plain headless
 screenshot of the top of the page at 1280×900, served over a local
 server so the photo and fonts load — capture it against `file://` and
 the hero photo comes out as a broken image (that is what the old
-`hero.png` showed).
+`hero.png` showed). Capture it in dark mode (the page follows the OS;
+the README's hero is the dark rendering, which is where the themed
+scrollbar shows).
 
 ### Configuration — the two things to set before launch
 
-Everything launch-specific lives in one place, `WHENWHERE_CONFIG`, near
-the top of `studio.js`:
+Everything launch-specific lives in one place, `WHENWHERE_CONFIG`, in
+`config.js` (loaded before `studio.js`, which reads it and fails loudly
+if it is missing):
 
 ```js
-var WHENWHERE_CONFIG = {
-  // the deployed Apps Script Web app URL — set in studio.js
+window.WHENWHERE_CONFIG = {
+  // the deployed Apps Script Web app URL — set in config.js
   INQUIRY_ENDPOINT: '<the deployed Apps Script Web app URL>'
+  // ... plus FLEET, COLORS, PALETTES, COOLDOWN_MS, INQUIRY_KEY,
+  // DATE_MIN_DAYS_AHEAD, DATE_MIN_FLOOR — see config.js
 };
 ```
 
 The endpoint is connected: the live form saves to the private Sheet and
 emails you. If the Apps Script deployment is ever replaced, paste the
-new URL as `INQUIRY_ENDPOINT` in `studio.js` and push.
+new URL as `INQUIRY_ENDPOINT` in `config.js` and push.
 
 - **No business inbox is set up yet**, so the page lists no email address:
   the brand and footer link to the main site
@@ -272,7 +279,7 @@ works fine on Pages in the meantime).
 ## Connecting the inquiry form (Apps Script)
 
 Same setup as the main site — and it is connected: `INQUIRY_ENDPOINT`
-is set in `studio.js`, so the live form saves to the private Sheet
+is set in `config.js`, so the live form saves to the private Sheet
 and emails you. The steps below are the record of how it was connected
 (and how to redo it if the deployment is ever replaced). With no
 endpoint configured the form falls back to **demo mode**: submitting
@@ -290,7 +297,7 @@ endpoint is connected yet…"). To connect (or reconnect):
    several addresses separated by commas.
 4. **Deploy → New deployment → Web app** — Execute as: Me, Who has
    access: Anyone. Copy the Web app URL.
-5. In `studio.js`, find `WHENWHERE_CONFIG` and paste the URL as
+5. In `config.js`, find `WHENWHERE_CONFIG` and paste the URL as
    `INQUIRY_ENDPOINT`.
 6. Rebuild (`python3 tools/build.py`) and push to `main` — the workflow
    rebuilds, smoke-tests, and redeploys automatically — then submit a
@@ -392,7 +399,7 @@ whenwhere-drone-light-shows/
 │   └── screenshots/            # hero, formation stills, assembly GIF (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
-│   ├── geometry.mjs            # CDP unit tests: pure geometry, 26 assertions
+│   ├── geometry.mjs            # CDP unit tests: pure geometry, 45 assertions
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
 ├── CHANGELOG.md                # one line per shipped change, dated
 ├── README.md
