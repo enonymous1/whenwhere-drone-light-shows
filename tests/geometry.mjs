@@ -365,7 +365,27 @@ async function main() {
     ws.close();
   } finally {
     child.kill('SIGKILL');
-    rmSync(profile, { recursive: true, force: true });
+    // Wait for the browser to actually exit before removing its
+    // profile: SIGKILL is async, and a profile dir still being written
+    // to makes the recursive remove fail with ENOTEMPTY — the run went
+    // red in CI on teardown before it could report pass/fail
+    // (2026-11-20). The 5s cap is a backstop; SIGKILL normally lands
+    // in well under a second.
+    await new Promise((resolve) => {
+      if (child.exitCode !== null || child.signalCode !== null) return resolve();
+      const timer = setTimeout(resolve, 5000);
+      child.once('exit', () => { clearTimeout(timer); resolve(); });
+    });
+    try {
+      // maxRetries covers the stragglers (a child process flushing a
+      // file a beat after the main process dies).
+      rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    } catch (e) {
+      // A leftover temp profile is harmless (/tmp is cleaned by the
+      // OS); it must not fail a run whose assertions passed, and it
+      // must not hide the verdict by throwing out of the finally.
+      console.error(`warning: could not remove temp profile ${profile}: ${e.message}`);
+    }
   }
 
   if (failures.length) {

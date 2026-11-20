@@ -4,6 +4,10 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Test harness — 2026-11-20 (no version bump)
+
+- 2026-11-20 — The geometry test went red in CI on teardown: `child.kill('SIGKILL')` returns at once, and the recursive remove of the temp Chrome profile ran while the browser was still shutting down, failing with ENOTEMPTY — before the run could report pass or fail. Cleanup now waits for the browser process to exit (5s cap as a backstop), retries the remove, and warns instead of failing if a temp profile still can't be removed. Same fix in the smoke test, which shared the pattern. The page itself is unchanged.
+
 ## v1.4.6 — 2026-11-19
 
 - 2026-11-19 — Word density + separation: the dot budget is now split across glyphs in proportion to their stroke lengths (`allocateCounts`, by skeleton pixel count) instead of equally, so a wide letter gets more drones than a narrow one — LOVE goes from 25/25/25/25 to 16/38/22/25 and every glyph sits at ~11px spacing. Dots are then pushed apart to a 10.5px minimum gap (`separatePoints`, 2.5x the 4.2px drone radius, repeated until settled), so the packed L stem and the V-arm clumps open up; LOVE's closest pair went from 8px to 10.45px. No behavior change to counts (still exactly 50–100) or to the space gap. Geometry tests 36 → 45: the MARRY ME gap test now finds the gap as the largest jump in sorted x (glyph boundaries move with the split), plus allocateCounts / separatePoints / IW-split / LOVE-minimum-distance assertions, with thresholds probed in both fonts (Marcellus and the fallback serif).
