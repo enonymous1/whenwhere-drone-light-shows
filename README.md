@@ -473,6 +473,7 @@ whenwhere-drone-light-shows/
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
 ├── docs/
 │   ├── content.csv             # the Sheet contents (key | text | image | alt), 133 rows
+│   ├── content-editing.md      # how to edit the site's text + photos in the Sheet
 │   ├── inquiry-pipeline.md     # inquiry-to-show workflow, visitor + manager views
 │   ├── readability-floor.md    # measured minimum dots per letter/word (25px floor)
 │   ├── readability-floor/      # probe renders behind that table
