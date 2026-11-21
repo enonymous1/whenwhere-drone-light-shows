@@ -173,8 +173,12 @@ applies it. The content source is `CONTENT_CSV_URL` in `config.js`;
 when it is blank the page reads `content.json` beside `index.html`
 instead. Blank cells are ignored, so a half-filled Sheet never wipes
 text. The page's Content Security Policy allows the content fetch:
-`connect-src` includes `'self'` (for `content.json`) and
-`https://docs.google.com` (for the published Sheet CSV).
+`connect-src` includes `'self'` (for `content.json`),
+`https://docs.google.com` (for the published Sheet CSV), and
+`https://*.googleusercontent.com` — the published Sheet URL redirects
+to a per-document `doc-*-sheets.googleusercontent.com` host, and the
+fetch is blocked without that wildcard (the page then silently falls
+back to `content.json`).
 
 **The Sheet** has four columns — `key | text | image | alt` — one row
 per item. Text rows fill in `text`; image rows fill in `image` (a

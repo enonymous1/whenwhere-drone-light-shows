@@ -41,5 +41,5 @@ window.WHENWHERE_CONFIG = {
   // Site content (text + images): File > Share > Publish to web > CSV
   // link from the CONTENT Sheet (key | text | image | alt). Leave blank
   // to read content.json beside this page instead.
-  CONTENT_CSV_URL: ''
+  CONTENT_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRBNnmT-q8v3IJ_iuMcxVFdJ001to_gjZiFQlxkXo0RDxGOQ2rIryhx3jTOwsY4KB7wcbZlOMw4T0ZD/pub?gid=0&single=true&output=csv'
 };
