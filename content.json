@@ -1,0 +1,408 @@
+{
+  "faq-1-a": {
+    "text": "It depends on the package, how custom the artwork is, and your venue — so we quote every event individually rather than posting a one-size price. Send the inquiry below with your date and a rough budget, and we'll tell you honestly what that budget can put in the sky."
+  },
+  "faq-1-q": {
+    "text": "How much does a show cost?"
+  },
+  "faq-2-a": {
+    "text": "As early as you can. Design, approvals and venue coordination take weeks, and the FAA authorization process needs lead time — for weddings and fall alumni weekends, think months, not weeks. Our 2027 founding-season interest list is open now. Planning a 200+ drone finale? Tell us as early as you can — the additional units take extra lead time to secure."
+  },
+  "faq-2-q": {
+    "text": "How far ahead do we need to book?"
+  },
+  "faq-3-a": {
+    "text": "An open launch area roughly the size of a tennis court, a clear view of the sky above it, and the venue's permission. Estates, vineyards, farms and fairgrounds across Central Virginia are ideal. We'll visit or review the site with you before confirming."
+  },
+  "faq-3-q": {
+    "text": "What does our venue need?"
+  },
+  "faq-4-a": {
+    "text": "Drone light shows are regulated for good reason, and every show is planned around FAA rules: FAA Part 107 licensed pilots, the airspace authorizations your venue needs, a dedicated safety observer, insured operations, and a defined flight zone that keeps the fleet away from your guests. If conditions aren't safe, the show doesn't fly — simple as that."
+  },
+  "faq-4-q": {
+    "text": "Is it safe and legal?"
+  },
+  "faq-5-a": {
+    "text": "Light rain and wind limits are part of the plan: we monitor the forecast with you in the days before, and your contract covers a weather backup plan so a storm doesn't take your finale with it."
+  },
+  "faq-5-q": {
+    "text": "What happens if the weather turns?"
+  },
+  "faq-6-a": {
+    "text": "Charlottesville and Central Virginia are home — Albemarle, the Blue Ridge foothills, and the vineyard country around them. Further afield in Virginia? Ask in the inquiry; founding-season travel is on the table."
+  },
+  "faq-6-q": {
+    "text": "Where do you fly?"
+  },
+  "faq-7-a": {
+    "text": "Absolutely — proposals and gifts are our favorite kind of secret. Tell us it's a surprise in the inquiry and we'll keep every conversation discreet."
+  },
+  "faq-7-q": {
+    "text": "Can it be a surprise?"
+  },
+  "faq-heading": {
+    "text": "Before you ask"
+  },
+  "faq-kicker": {
+    "text": "Questions"
+  },
+  "footer-copy": {
+    "text": "© 2026 WhenWhere.biz"
+  },
+  "footer-link-main": {
+    "text": "Visit the main site →"
+  },
+  "footer-text": {
+    "text": "WhenWhere.biz — event production, DJ & MC, and now drone light shows · Charlottesville & Central Virginia"
+  },
+  "form-contact": {
+    "text": "Questions first? Visit the <a href=\"https://enonymous1.github.io/whenwhere-biz-main-site/\">main site</a>."
+  },
+  "form-heading": {
+    "text": "Join the founding-season list"
+  },
+  "form-intro": {
+    "text": "Tell us about your event and we'll come back with availability, honest guidance on what your budget can do, and first claim on 2027 dates for your venue."
+  },
+  "form-kicker": {
+    "text": "Check your date"
+  },
+  "form-label-budget": {
+    "text": "Rough budget for the show"
+  },
+  "form-label-date": {
+    "text": "Event date *"
+  },
+  "form-label-dream": {
+    "text": "What would you love to see in the sky?"
+  },
+  "form-label-email": {
+    "text": "Email *"
+  },
+  "form-label-guests": {
+    "text": "Expected guests"
+  },
+  "form-label-name": {
+    "text": "Your name *"
+  },
+  "form-label-phone": {
+    "text": "Phone <span class=\"opt\">(optional)</span>"
+  },
+  "form-label-pkg": {
+    "text": "Package you're eyeing"
+  },
+  "form-label-stage": {
+    "text": "Where are you in planning?"
+  },
+  "form-label-type": {
+    "text": "Event type *"
+  },
+  "form-label-venue": {
+    "text": "Venue / town"
+  },
+  "form-li-1": {
+    "text": "No obligation — this is an inquiry, not a booking"
+  },
+  "form-li-2": {
+    "text": "Founding-season clients get a free design consultation"
+  },
+  "form-li-3": {
+    "text": "Planning a surprise? Tick the box in the form and we'll keep it quiet"
+  },
+  "form-li-4": {
+    "text": "Venues & planners: ask about partnering for your clients"
+  },
+  "hero-cta-1": {
+    "text": "Check your date"
+  },
+  "hero-cta-2": {
+    "text": "See what we can draw"
+  },
+  "hero-headline": {
+    "text": "Your story,<br />written in <span class=\"gold\">light</span> across the sky."
+  },
+  "hero-kicker": {
+    "text": "WhenWhere Drone Light Shows · Charlottesville & Central Virginia"
+  },
+  "hero-meta-1": {
+    "text": "Founding season — 2027 interest list open"
+  },
+  "hero-meta-2": {
+    "text": "Weddings · Vineyards · Alumni · Corporate · Festivals"
+  },
+  "hero-meta-3": {
+    "text": "Safety & permits planned into every show"
+  },
+  "hero-subhead": {
+    "text": "Up to 100 synchronized drones paint your initials, your logo, your date — animated, in full color, above your guests. The finale nobody at your event will stop talking about, from the team behind WhenWhere's weddings and parties."
+  },
+  "how-1-desc": {
+    "text": "Send the inquiry below with your date, venue and the moment you want to mark. Founding-season dates go fast — fall Saturdays first."
+  },
+  "how-1-title": {
+    "text": "Tell us the date"
+  },
+  "how-2-desc": {
+    "text": "You approve every scene as an animated preview before anything flies. Nothing goes in the sky you haven't already seen."
+  },
+  "how-2-title": {
+    "text": "We design your show"
+  },
+  "how-3-desc": {
+    "text": "Drone shows are regulated, and that's built into the plan: airspace authorizations, venue coordination and a written safety plan for your site — we'll walk you through exactly what's in place before you commit."
+  },
+  "how-3-title": {
+    "text": "We plan the paperwork"
+  },
+  "how-4-desc": {
+    "text": "We arrive hours early, set the launch field, and fly the moment your MC calls it. Guests watch; phones come out; jaws drop."
+  },
+  "how-4-title": {
+    "text": "Show night"
+  },
+  "how-heading": {
+    "text": "From first call to wheels-up"
+  },
+  "how-kicker": {
+    "text": "How it works"
+  },
+  "img-alumni": {
+    "image": "assets/alumni.jpg",
+    "alt": "Aerial view of a Virginia vineyard estate at sunset beneath the Blue Ridge mountains"
+  },
+  "img-corporate": {
+    "image": "assets/corporate.jpg",
+    "alt": "Guests filming drone formations bursting like fireworks over an evening reception"
+  },
+  "img-festivals": {
+    "image": "assets/festivals.jpg",
+    "alt": "A guest filming a drone formation of a tree with swirling coloured canopy"
+  },
+  "img-hero": {
+    "image": "assets/hero.jpg",
+    "alt": "A drone light show forming swirling galaxies of colored light above a festival crowd at night"
+  },
+  "img-proposals": {
+    "image": "assets/proposals.jpg",
+    "alt": "A single red heart formed by drones above a moonlit lake"
+  },
+  "img-vineyards": {
+    "image": "assets/vineyards.jpg",
+    "alt": "Drones forming the outline of a wine glass in a cloudy night sky"
+  },
+  "img-weddings": {
+    "image": "assets/weddings.jpg",
+    "alt": "Three glowing hearts formed by drones, reflected in a lake at night"
+  },
+  "occ-alum-desc": {
+    "text": "Reunions, alumni weekends and graduation parties at estates and venues around Charlottesville. Class years, mascots and inside jokes — if your class lived it, we can draw it."
+  },
+  "occ-alum-ideas": {
+    "text": "✦ Class years · Mascots · Rotunda silhouette · School colors"
+  },
+  "occ-alum-title": {
+    "text": "Alumni & University"
+  },
+  "occ-corp-desc": {
+    "text": "Product launches, company anniversaries and holiday parties. Your logo animated in the sky is the most photographed moment of the night — every guest becomes your media team."
+  },
+  "occ-corp-ideas": {
+    "text": "✦ Logo animation · Product shapes · Anniversary numbers"
+  },
+  "occ-corp-title": {
+    "text": "Corporate & Brand"
+  },
+  "occ-fest-desc": {
+    "text": "Town celebrations, Fourth of July, holiday light-ups and fundraisers. All the spectacle of a finale with no fire risk, no debris, and no frightened horses or dogs."
+  },
+  "occ-fest-ideas": {
+    "text": "✦ Flags & eagles · Snowflakes · Town landmarks · Countdowns"
+  },
+  "occ-fest-title": {
+    "text": "Festivals & Community"
+  },
+  "occ-heading": {
+    "text": "If the night matters, put it in the sky"
+  },
+  "occ-intro": {
+    "text": "Every show is designed around your event — the venue, the moment in the evening, and the people it's for. These are the nights our founding-season clients are asking about most."
+  },
+  "occ-kicker": {
+    "text": "Occasions"
+  },
+  "occ-note": {
+    "text": "Photography on this page is illustrative of what drone light shows look like — as our founding-season shows fly, their photos will take its place."
+  },
+  "occ-prop-desc": {
+    "text": "One heart, one question, one unforgettable yes. Intimate shows for proposals, birthdays and estate parties — and because it's WhenWhere, the DJ and MC come with it."
+  },
+  "occ-prop-ideas": {
+    "text": "✦ “Marry me” · Names · Birthdays · Anniversary dates"
+  },
+  "occ-prop-title": {
+    "text": "Proposals & Private Estates"
+  },
+  "occ-vin-desc": {
+    "text": "Harvest parties, wine-club weekends and vineyard weddings, with the Blue Ridge as your backdrop. A wine glass pours, a grape cluster ripens — your label, drawn 300 feet wide."
+  },
+  "occ-vin-ideas": {
+    "text": "✦ Wine glass · Grape cluster · Your label · Harvest moon"
+  },
+  "occ-vin-title": {
+    "text": "Vineyards & Wineries"
+  },
+  "occ-wed-desc": {
+    "text": "Your initials, interlocking rings and your wedding date rise over the reception — timed to your first dance, your send-off, or the moment dinner ends and the party begins."
+  },
+  "occ-wed-ideas": {
+    "text": "✦ Initials & monograms · Rings · Hearts · Your date"
+  },
+  "occ-wed-title": {
+    "text": "Weddings"
+  },
+  "pkg-heading": {
+    "text": "Three ways to light up the night"
+  },
+  "pkg-intro": {
+    "text": "Every event is different — venue, guest count, and how custom the artwork is — so every show is quoted individually. Founding-season clients for 2027 get priority dates and a free design consultation. Our opening fleet is 100 drones; larger 200+ drone finales are available with extra lead time to secure the additional units."
+  },
+  "pkg-kicker": {
+    "text": "Packages"
+  },
+  "pkg-moment-cta": {
+    "text": "Ask about The Moment"
+  },
+  "pkg-moment-desc": {
+    "text": "A single signature formation as the climax of your evening — the proposal, the send-off, the big reveal."
+  },
+  "pkg-moment-li-1": {
+    "text": "One custom formation, designed with you"
+  },
+  "pkg-moment-li-2": {
+    "text": "50–100 drones — fits our opening fleet"
+  },
+  "pkg-moment-li-3": {
+    "text": "A short, perfectly timed flight"
+  },
+  "pkg-moment-li-4": {
+    "text": "Ideal for proposals & intimate parties"
+  },
+  "pkg-moment-li-5": {
+    "text": "MC announcement to gather your guests"
+  },
+  "pkg-moment-tag": {
+    "text": "The Moment"
+  },
+  "pkg-moment-title": {
+    "text": "One unforgettable scene"
+  },
+  "pkg-party-cta": {
+    "text": "Ask about Show + Party"
+  },
+  "pkg-party-desc": {
+    "text": "The whole evening under one team: WhenWhere's DJ and MC run the party, and the sky is the headline act."
+  },
+  "pkg-party-li-1": {
+    "text": "Everything in The Signature Show"
+  },
+  "pkg-party-li-2": {
+    "text": "DJ & MC for the full event"
+  },
+  "pkg-party-li-3": {
+    "text": "Show timed into your reception timeline"
+  },
+  "pkg-party-li-4": {
+    "text": "One contract, one team, one point of contact"
+  },
+  "pkg-party-tag": {
+    "text": "Full production"
+  },
+  "pkg-party-title": {
+    "text": "Show + Party"
+  },
+  "pkg-sig-cta": {
+    "text": "Ask about Signature"
+  },
+  "pkg-sig-desc": {
+    "text": "A full multi-scene show that tells your story — the complete arc, animated in the sky above your venue."
+  },
+  "pkg-sig-li-1": {
+    "text": "Multiple scenes, roughly 10–15 minutes"
+  },
+  "pkg-sig-li-2": {
+    "text": "Up to 100 drones per scene — 200+ finales with extra lead time"
+  },
+  "pkg-sig-li-3": {
+    "text": "Custom artwork: initials, dates, shapes, text"
+  },
+  "pkg-sig-li-4": {
+    "text": "Choreographed to your music, with DJ sync"
+  },
+  "pkg-sig-li-5": {
+    "text": "Design preview animation before show night"
+  },
+  "pkg-sig-tag": {
+    "text": "Most requested"
+  },
+  "pkg-sig-title": {
+    "text": "The Signature Show"
+  },
+  "studio-heading": {
+    "text": "What should we draw over your event?"
+  },
+  "studio-hint": {
+    "text": "Try your initials, a year, or a short word — then tell us in the inquiry below and we'll design the real thing."
+  },
+  "studio-intro": {
+    "text": "Tap a design and watch the fleet assemble it. This is a simplified sketch of how a show is choreographed — your real design is built with you, frame by frame, and previewed as an animation before show night. Our opening fleet is 100 drones, so most designs here fit it as drawn — the two marked 200+ are larger finales that need extra lead time to secure additional units."
+  },
+  "studio-kicker": {
+    "text": "The Formation Studio"
+  },
+  "why-close": {
+    "text": "Already booked fireworks? A drone show pairs beautifully alongside them — or carries the nights fireworks can't fly."
+  },
+  "why-drone-li-1": {
+    "text": "Custom artwork — your initials, logo or date, animated"
+  },
+  "why-drone-li-2": {
+    "text": "No fire, no sparks: flies where burn bans and venues say no to fireworks"
+  },
+  "why-drone-li-3": {
+    "text": "Quiet — kind to horses, dogs and neighbors in horse country"
+  },
+  "why-drone-li-4": {
+    "text": "No debris to rain on guests, vineyards or waterways"
+  },
+  "why-drone-li-5": {
+    "text": "Reusable and repeatable across a whole weekend"
+  },
+  "why-drone-title": {
+    "text": "Drone light show"
+  },
+  "why-fire-li-1": {
+    "text": "Beautiful, but the same bursts every time — nothing personal"
+  },
+  "why-fire-li-2": {
+    "text": "Fire risk, permits and venue restrictions in dry months"
+  },
+  "why-fire-li-3": {
+    "text": "Loud enough to spook animals for miles"
+  },
+  "why-fire-li-4": {
+    "text": "Fallout over lawns, vines, cars and water"
+  },
+  "why-fire-li-5": {
+    "text": "One shot, one night — weather can't be rebooked easily"
+  },
+  "why-fire-title": {
+    "text": "Traditional fireworks"
+  },
+  "why-heading": {
+    "text": "The finale, without the fireworks problems"
+  },
+  "why-kicker": {
+    "text": "Why drones"
+  }
+}

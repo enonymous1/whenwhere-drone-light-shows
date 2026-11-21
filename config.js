@@ -36,5 +36,10 @@ window.WHENWHERE_CONFIG = {
   // Earliest bookable date: 14 days out, and never before the
   // founding season opens (2027-01-01).
   DATE_MIN_DAYS_AHEAD: 14,
-  DATE_MIN_FLOOR: '2027-01-01'
+  DATE_MIN_FLOOR: '2027-01-01',
+
+  // Site content (text + images): File > Share > Publish to web > CSV
+  // link from the CONTENT Sheet (key | text | image | alt). Leave blank
+  // to read content.json beside this page instead.
+  CONTENT_CSV_URL: ''
 };

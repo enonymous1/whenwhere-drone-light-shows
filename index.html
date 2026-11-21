@@ -1,9 +1,9 @@
 <!doctype html>
-<!-- whenwhere-drone-light-shows v1.4.8 -->
+<!-- whenwhere-drone-light-shows v1.4.9 -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src https://fonts.gstatic.com; connect-src https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src https://fonts.gstatic.com; connect-src 'self' https://docs.google.com https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23060a1a'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23d9a441'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
@@ -238,20 +238,20 @@
     </nav>
 
     <header class="hero">
-      <img class="bg" src="assets/hero.jpg" alt="A drone light show forming swirling galaxies of colored light above a festival crowd at night" fetchpriority="high" width="1248" height="832" />
+      <img class="bg" src="assets/hero.jpg" alt="A drone light show forming swirling galaxies of colored light above a festival crowd at night" fetchpriority="high" width="1248" height="832" data-content-img="img-hero" />
       <div class="shade"></div>
       <div class="wrap hero-in">
-        <p class="kicker">WhenWhere Drone Light Shows · Charlottesville &amp; Central Virginia</p>
-        <h1>Your story,<br />written in <span class="gold">light</span> across the sky.</h1>
-        <p class="sub">Up to 100 synchronized drones paint your initials, your logo, your date — animated, in full color, above your guests. The finale nobody at your event will stop talking about, from the team behind WhenWhere's weddings and parties.</p>
+        <p class="kicker" data-content="hero-kicker">WhenWhere Drone Light Shows · Charlottesville &amp; Central Virginia</p>
+        <h1 data-content="hero-headline">Your story,<br />written in <span class="gold">light</span> across the sky.</h1>
+        <p class="sub" data-content="hero-subhead">Up to 100 synchronized drones paint your initials, your logo, your date — animated, in full color, above your guests. The finale nobody at your event will stop talking about, from the team behind WhenWhere's weddings and parties.</p>
         <div class="hero-ctas">
-          <a class="btn" href="#inquire">Check your date</a>
-          <a class="btn ghost" href="#studio">See what we can draw</a>
+          <a class="btn" href="#inquire" data-content="hero-cta-1">Check your date</a>
+          <a class="btn ghost" href="#studio" data-content="hero-cta-2">See what we can draw</a>
         </div>
         <div class="hero-meta">
-          <span>Founding season — 2027 interest list open</span>
-          <span>Weddings · Vineyards · Alumni · Corporate · Festivals</span>
-          <span>Safety &amp; permits planned into every show</span>
+          <span data-content="hero-meta-1">Founding season — 2027 interest list open</span>
+          <span data-content="hero-meta-2">Weddings · Vineyards · Alumni · Corporate · Festivals</span>
+          <span data-content="hero-meta-3">Safety &amp; permits planned into every show</span>
         </div>
       </div>
     </header>
@@ -264,68 +264,68 @@
 
     <section id="occasions">
       <div class="wrap">
-        <p class="kicker">Occasions</p>
-        <h2>If the night matters, put it in the sky</h2>
-        <p class="lede">Every show is designed around your event — the venue, the moment in the evening, and the people it's for. These are the nights our founding-season clients are asking about most.</p>
+        <p class="kicker" data-content="occ-kicker">Occasions</p>
+        <h2 data-content="occ-heading">If the night matters, put it in the sky</h2>
+        <p class="lede" data-content="occ-intro">Every show is designed around your event — the venue, the moment in the evening, and the people it's for. These are the nights our founding-season clients are asking about most.</p>
         <div class="cards">
           <article class="card">
-            <img src="assets/weddings.jpg" alt="Three glowing hearts formed by drones, reflected in a lake at night" loading="lazy" decoding="async" width="900" height="600" />
+            <img src="assets/weddings.jpg" alt="Three glowing hearts formed by drones, reflected in a lake at night" loading="lazy" decoding="async" width="900" height="600" data-content-img="img-weddings" />
             <div class="pad">
-              <h3>Weddings</h3>
-              <p>Your initials, interlocking rings and your wedding date rise over the reception — timed to your first dance, your send-off, or the moment dinner ends and the party begins.</p>
-              <p class="ideas">✦ Initials &amp; monograms · Rings · Hearts · Your date</p>
+              <h3 data-content="occ-wed-title">Weddings</h3>
+              <p data-content="occ-wed-desc">Your initials, interlocking rings and your wedding date rise over the reception — timed to your first dance, your send-off, or the moment dinner ends and the party begins.</p>
+              <p class="ideas" data-content="occ-wed-ideas">✦ Initials &amp; monograms · Rings · Hearts · Your date</p>
             </div>
           </article>
           <article class="card">
-            <img src="assets/vineyards.jpg" alt="Drones forming the outline of a wine glass in a cloudy night sky" loading="lazy" decoding="async" width="900" height="507" />
+            <img src="assets/vineyards.jpg" alt="Drones forming the outline of a wine glass in a cloudy night sky" loading="lazy" decoding="async" width="900" height="507" data-content-img="img-vineyards" />
             <div class="pad">
-              <h3>Vineyards &amp; Wineries</h3>
-              <p>Harvest parties, wine-club weekends and vineyard weddings, with the Blue Ridge as your backdrop. A wine glass pours, a grape cluster ripens — your label, drawn 300 feet wide.</p>
-              <p class="ideas">✦ Wine glass · Grape cluster · Your label · Harvest moon</p>
+              <h3 data-content="occ-vin-title">Vineyards &amp; Wineries</h3>
+              <p data-content="occ-vin-desc">Harvest parties, wine-club weekends and vineyard weddings, with the Blue Ridge as your backdrop. A wine glass pours, a grape cluster ripens — your label, drawn 300 feet wide.</p>
+              <p class="ideas" data-content="occ-vin-ideas">✦ Wine glass · Grape cluster · Your label · Harvest moon</p>
             </div>
           </article>
           <article class="card">
-            <img src="assets/corporate.jpg" alt="Guests filming drone formations bursting like fireworks over an evening reception" loading="lazy" decoding="async" width="900" height="1125" />
+            <img src="assets/corporate.jpg" alt="Guests filming drone formations bursting like fireworks over an evening reception" loading="lazy" decoding="async" width="900" height="1125" data-content-img="img-corporate" />
             <div class="pad">
-              <h3>Corporate &amp; Brand</h3>
-              <p>Product launches, company anniversaries and holiday parties. Your logo animated in the sky is the most photographed moment of the night — every guest becomes your media team.</p>
-              <p class="ideas">✦ Logo animation · Product shapes · Anniversary numbers</p>
+              <h3 data-content="occ-corp-title">Corporate &amp; Brand</h3>
+              <p data-content="occ-corp-desc">Product launches, company anniversaries and holiday parties. Your logo animated in the sky is the most photographed moment of the night — every guest becomes your media team.</p>
+              <p class="ideas" data-content="occ-corp-ideas">✦ Logo animation · Product shapes · Anniversary numbers</p>
             </div>
           </article>
           <article class="card">
-            <img src="assets/festivals.jpg" alt="A guest filming a drone formation of a tree with swirling coloured canopy" loading="lazy" decoding="async" width="900" height="506" />
+            <img src="assets/festivals.jpg" alt="A guest filming a drone formation of a tree with swirling coloured canopy" loading="lazy" decoding="async" width="900" height="506" data-content-img="img-festivals" />
             <div class="pad">
-              <h3>Festivals &amp; Community</h3>
-              <p>Town celebrations, Fourth of July, holiday light-ups and fundraisers. All the spectacle of a finale with no fire risk, no debris, and no frightened horses or dogs.</p>
-              <p class="ideas">✦ Flags &amp; eagles · Snowflakes · Town landmarks · Countdowns</p>
+              <h3 data-content="occ-fest-title">Festivals &amp; Community</h3>
+              <p data-content="occ-fest-desc">Town celebrations, Fourth of July, holiday light-ups and fundraisers. All the spectacle of a finale with no fire risk, no debris, and no frightened horses or dogs.</p>
+              <p class="ideas" data-content="occ-fest-ideas">✦ Flags &amp; eagles · Snowflakes · Town landmarks · Countdowns</p>
             </div>
           </article>
           <article class="card">
-            <img src="assets/alumni.jpg" alt="Aerial view of a Virginia vineyard estate at sunset beneath the Blue Ridge mountains" loading="lazy" decoding="async" width="900" height="539" />
+            <img src="assets/alumni.jpg" alt="Aerial view of a Virginia vineyard estate at sunset beneath the Blue Ridge mountains" loading="lazy" decoding="async" width="900" height="539" data-content-img="img-alumni" />
             <div class="pad">
-              <h3>Alumni &amp; University</h3>
-              <p>Reunions, alumni weekends and graduation parties at estates and venues around Charlottesville. Class years, mascots and inside jokes — if your class lived it, we can draw it.</p>
-              <p class="ideas">✦ Class years · Mascots · Rotunda silhouette · School colors</p>
+              <h3 data-content="occ-alum-title">Alumni &amp; University</h3>
+              <p data-content="occ-alum-desc">Reunions, alumni weekends and graduation parties at estates and venues around Charlottesville. Class years, mascots and inside jokes — if your class lived it, we can draw it.</p>
+              <p class="ideas" data-content="occ-alum-ideas">✦ Class years · Mascots · Rotunda silhouette · School colors</p>
             </div>
           </article>
           <article class="card">
-            <img src="assets/proposals.jpg" alt="A single red heart formed by drones above a moonlit lake" loading="lazy" decoding="async" width="900" height="600" />
+            <img src="assets/proposals.jpg" alt="A single red heart formed by drones above a moonlit lake" loading="lazy" decoding="async" width="900" height="600" data-content-img="img-proposals" />
             <div class="pad">
-              <h3>Proposals &amp; Private Estates</h3>
-              <p>One heart, one question, one unforgettable yes. Intimate shows for proposals, birthdays and estate parties — and because it's WhenWhere, the DJ and MC come with it.</p>
-              <p class="ideas">✦ “Marry me” · Names · Birthdays · Anniversary dates</p>
+              <h3 data-content="occ-prop-title">Proposals &amp; Private Estates</h3>
+              <p data-content="occ-prop-desc">One heart, one question, one unforgettable yes. Intimate shows for proposals, birthdays and estate parties — and because it's WhenWhere, the DJ and MC come with it.</p>
+              <p class="ideas" data-content="occ-prop-ideas">✦ “Marry me” · Names · Birthdays · Anniversary dates</p>
             </div>
           </article>
         </div>
-        <p style="color:var(--muted);font-size:.88rem;margin-top:22px">Photography on this page is illustrative of what drone light shows look like — as our founding-season shows fly, their photos will take its place.</p>
+        <p style="color:var(--muted);font-size:.88rem;margin-top:22px" data-content="occ-note">Photography on this page is illustrative of what drone light shows look like — as our founding-season shows fly, their photos will take its place.</p>
       </div>
     </section>
 
     <section id="studio" class="night-sec">
       <div class="wrap">
-        <p class="kicker">The Formation Studio</p>
-        <h2>What should we draw over your event?</h2>
-        <p class="lede">Tap a design and watch the fleet assemble it. This is a simplified sketch of how a show is choreographed — your real design is built with you, frame by frame, and previewed as an animation before show night. Our opening fleet is 100 drones, so most designs here fit it as drawn — the two marked 200+ are larger finales that need extra lead time to secure additional units.</p>
+        <p class="kicker" data-content="studio-kicker">The Formation Studio</p>
+        <h2 data-content="studio-heading">What should we draw over your event?</h2>
+        <p class="lede" data-content="studio-intro">Tap a design and watch the fleet assemble it. This is a simplified sketch of how a show is choreographed — your real design is built with you, frame by frame, and previewed as an animation before show night. Our opening fleet is 100 drones, so most designs here fit it as drawn — the two marked 200+ are larger finales that need extra lead time to secure additional units.</p>
         <div class="studio">
           <div class="shape-list" role="group" aria-label="Choose a formation">
             <button type="button" class="shape-btn active" data-shape="heart">Interlocking hearts <span>weddings · <span data-fleet="heart">80</span> drones</span></button>
@@ -337,7 +337,7 @@
             <div class="custom-word">
               <input id="customWord" type="text" maxlength="9" value="LOVE" aria-label="Your initials, date or short word" />
             </div>
-            <p style="color:var(--night-muted);font-size:.9rem;margin:6px 2px 0">Try your initials, a year, or a short word — then tell us in the inquiry below and we'll design the real thing.</p>
+            <p style="color:var(--night-muted);font-size:.9rem;margin:6px 2px 0" data-content="studio-hint">Try your initials, a year, or a short word — then tell us in the inquiry below and we'll design the real thing.</p>
             <button type="button" class="btn line-btn" id="useDesignBtn">Use this design in my inquiry ↓</button>
           </div>
           <figure class="stage" style="margin:0">
@@ -350,47 +350,47 @@
 
     <section id="packages">
       <div class="wrap">
-        <p class="kicker">Packages</p>
-        <h2>Three ways to light up the night</h2>
-        <p class="lede">Every event is different — venue, guest count, and how custom the artwork is — so every show is quoted individually. Founding-season clients for 2027 get priority dates and a free design consultation. Our opening fleet is 100 drones; larger 200+ drone finales are available with extra lead time to secure the additional units.</p>
+        <p class="kicker" data-content="pkg-kicker">Packages</p>
+        <h2 data-content="pkg-heading">Three ways to light up the night</h2>
+        <p class="lede" data-content="pkg-intro">Every event is different — venue, guest count, and how custom the artwork is — so every show is quoted individually. Founding-season clients for 2027 get priority dates and a free design consultation. Our opening fleet is 100 drones; larger 200+ drone finales are available with extra lead time to secure the additional units.</p>
         <div class="tiers">
           <article class="tier">
-            <span class="tag">The Moment</span>
-            <h3>One unforgettable scene</h3>
-            <p>A single signature formation as the climax of your evening — the proposal, the send-off, the big reveal.</p>
+            <span class="tag" data-content="pkg-moment-tag">The Moment</span>
+            <h3 data-content="pkg-moment-title">One unforgettable scene</h3>
+            <p data-content="pkg-moment-desc">A single signature formation as the climax of your evening — the proposal, the send-off, the big reveal.</p>
             <ul>
-              <li>One custom formation, designed with you</li>
-              <li>50–100 drones — fits our opening fleet</li>
-              <li>A short, perfectly timed flight</li>
-              <li>Ideal for proposals &amp; intimate parties</li>
-              <li>MC announcement to gather your guests</li>
+              <li data-content="pkg-moment-li-1">One custom formation, designed with you</li>
+              <li data-content="pkg-moment-li-2">50–100 drones — fits our opening fleet</li>
+              <li data-content="pkg-moment-li-3">A short, perfectly timed flight</li>
+              <li data-content="pkg-moment-li-4">Ideal for proposals &amp; intimate parties</li>
+              <li data-content="pkg-moment-li-5">MC announcement to gather your guests</li>
             </ul>
-            <div class="cta"><a class="btn line-btn" href="#inquire" data-interest="The Moment — one signature formation">Ask about The Moment</a></div>
+            <div class="cta"><a class="btn line-btn" href="#inquire" data-interest="The Moment — one signature formation" data-content="pkg-moment-cta">Ask about The Moment</a></div>
           </article>
           <article class="tier featured">
-            <span class="tag">Most requested</span>
-            <h3>The Signature Show</h3>
-            <p>A full multi-scene show that tells your story — the complete arc, animated in the sky above your venue.</p>
+            <span class="tag" data-content="pkg-sig-tag">Most requested</span>
+            <h3 data-content="pkg-sig-title">The Signature Show</h3>
+            <p data-content="pkg-sig-desc">A full multi-scene show that tells your story — the complete arc, animated in the sky above your venue.</p>
             <ul>
-              <li>Multiple scenes, roughly 10–15 minutes</li>
-              <li>Up to 100 drones per scene — 200+ finales with extra lead time</li>
-              <li>Custom artwork: initials, dates, shapes, text</li>
-              <li>Choreographed to your music, with DJ sync</li>
-              <li>Design preview animation before show night</li>
+              <li data-content="pkg-sig-li-1">Multiple scenes, roughly 10–15 minutes</li>
+              <li data-content="pkg-sig-li-2">Up to 100 drones per scene — 200+ finales with extra lead time</li>
+              <li data-content="pkg-sig-li-3">Custom artwork: initials, dates, shapes, text</li>
+              <li data-content="pkg-sig-li-4">Choreographed to your music, with DJ sync</li>
+              <li data-content="pkg-sig-li-5">Design preview animation before show night</li>
             </ul>
-            <div class="cta"><a class="btn" href="#inquire" data-interest="The Signature Show — full multi-scene show">Ask about Signature</a></div>
+            <div class="cta"><a class="btn" href="#inquire" data-interest="The Signature Show — full multi-scene show" data-content="pkg-sig-cta">Ask about Signature</a></div>
           </article>
           <article class="tier">
-            <span class="tag">Full production</span>
-            <h3>Show + Party</h3>
-            <p>The whole evening under one team: WhenWhere's DJ and MC run the party, and the sky is the headline act.</p>
+            <span class="tag" data-content="pkg-party-tag">Full production</span>
+            <h3 data-content="pkg-party-title">Show + Party</h3>
+            <p data-content="pkg-party-desc">The whole evening under one team: WhenWhere's DJ and MC run the party, and the sky is the headline act.</p>
             <ul>
-              <li>Everything in The Signature Show</li>
-              <li>DJ &amp; MC for the full event</li>
-              <li>Show timed into your reception timeline</li>
-              <li>One contract, one team, one point of contact</li>
+              <li data-content="pkg-party-li-1">Everything in The Signature Show</li>
+              <li data-content="pkg-party-li-2">DJ &amp; MC for the full event</li>
+              <li data-content="pkg-party-li-3">Show timed into your reception timeline</li>
+              <li data-content="pkg-party-li-4">One contract, one team, one point of contact</li>
             </ul>
-            <div class="cta"><a class="btn line-btn" href="#inquire" data-interest="Show + Party — drone show with DJ &amp; MC">Ask about Show + Party</a></div>
+            <div class="cta"><a class="btn line-btn" href="#inquire" data-interest="Show + Party — drone show with DJ &amp; MC" data-content="pkg-party-cta">Ask about Show + Party</a></div>
           </article>
         </div>
       </div>
@@ -398,28 +398,28 @@
 
     <section style="padding-top:0">
       <div class="wrap">
-        <p class="kicker">How it works</p>
-        <h2>From first call to wheels-up</h2>
+        <p class="kicker" data-content="how-kicker">How it works</p>
+        <h2 data-content="how-heading">From first call to wheels-up</h2>
         <div class="steps">
           <div class="step">
             <div class="num">1</div>
-            <h3>Tell us the date</h3>
-            <p>Send the inquiry below with your date, venue and the moment you want to mark. Founding-season dates go fast — fall Saturdays first.</p>
+            <h3 data-content="how-1-title">Tell us the date</h3>
+            <p data-content="how-1-desc">Send the inquiry below with your date, venue and the moment you want to mark. Founding-season dates go fast — fall Saturdays first.</p>
           </div>
           <div class="step">
             <div class="num">2</div>
-            <h3>We design your show</h3>
-            <p>You approve every scene as an animated preview before anything flies. Nothing goes in the sky you haven't already seen.</p>
+            <h3 data-content="how-2-title">We design your show</h3>
+            <p data-content="how-2-desc">You approve every scene as an animated preview before anything flies. Nothing goes in the sky you haven't already seen.</p>
           </div>
           <div class="step">
             <div class="num">3</div>
-            <h3>We plan the paperwork</h3>
-            <p>Drone shows are regulated, and that's built into the plan: airspace authorizations, venue coordination and a written safety plan for your site — we'll walk you through exactly what's in place before you commit.</p>
+            <h3 data-content="how-3-title">We plan the paperwork</h3>
+            <p data-content="how-3-desc">Drone shows are regulated, and that's built into the plan: airspace authorizations, venue coordination and a written safety plan for your site — we'll walk you through exactly what's in place before you commit.</p>
           </div>
           <div class="step">
             <div class="num">4</div>
-            <h3>Show night</h3>
-            <p>We arrive hours early, set the launch field, and fly the moment your MC calls it. Guests watch; phones come out; jaws drop.</p>
+            <h3 data-content="how-4-title">Show night</h3>
+            <p data-content="how-4-desc">We arrive hours early, set the launch field, and fly the moment your MC calls it. Guests watch; phones come out; jaws drop.</p>
           </div>
         </div>
       </div>
@@ -427,29 +427,29 @@
 
     <section style="padding-top:0">
       <div class="wrap">
-        <p class="kicker">Why drones</p>
-        <h2>The finale, without the fireworks problems</h2>
+        <p class="kicker" data-content="why-kicker">Why drones</p>
+        <h2 data-content="why-heading">The finale, without the fireworks problems</h2>
         <div class="versus">
           <div class="vs-col drones">
-            <h3>Drone light show</h3>
+            <h3 data-content="why-drone-title">Drone light show</h3>
             <ul>
-              <li>Custom artwork — your initials, logo or date, animated</li>
-              <li>No fire, no sparks: flies where burn bans and venues say no to fireworks</li>
-              <li>Quiet — kind to horses, dogs and neighbors in horse country</li>
-              <li>No debris to rain on guests, vineyards or waterways</li>
-              <li>Reusable and repeatable across a whole weekend</li>
+              <li data-content="why-drone-li-1">Custom artwork — your initials, logo or date, animated</li>
+              <li data-content="why-drone-li-2">No fire, no sparks: flies where burn bans and venues say no to fireworks</li>
+              <li data-content="why-drone-li-3">Quiet — kind to horses, dogs and neighbors in horse country</li>
+              <li data-content="why-drone-li-4">No debris to rain on guests, vineyards or waterways</li>
+              <li data-content="why-drone-li-5">Reusable and repeatable across a whole weekend</li>
             </ul>
           </div>
           <div class="vs-col fire">
-            <h3>Traditional fireworks</h3>
+            <h3 data-content="why-fire-title">Traditional fireworks</h3>
             <ul>
-              <li>Beautiful, but the same bursts every time — nothing personal</li>
-              <li>Fire risk, permits and venue restrictions in dry months</li>
-              <li>Loud enough to spook animals for miles</li>
-              <li>Fallout over lawns, vines, cars and water</li>
-              <li>One shot, one night — weather can't be rebooked easily</li>
+              <li data-content="why-fire-li-1">Beautiful, but the same bursts every time — nothing personal</li>
+              <li data-content="why-fire-li-2">Fire risk, permits and venue restrictions in dry months</li>
+              <li data-content="why-fire-li-3">Loud enough to spook animals for miles</li>
+              <li data-content="why-fire-li-4">Fallout over lawns, vines, cars and water</li>
+              <li data-content="why-fire-li-5">One shot, one night — weather can't be rebooked easily</li>
             </ul>
-            <p>Already booked fireworks? A drone show pairs beautifully alongside them — or carries the nights fireworks can't fly.</p>
+            <p data-content="why-close">Already booked fireworks? A drone show pairs beautifully alongside them — or carries the nights fireworks can't fly.</p>
           </div>
         </div>
       </div>
@@ -457,36 +457,36 @@
 
     <section id="faq" style="padding-top:0">
       <div class="wrap">
-        <p class="kicker">Questions</p>
-        <h2>Before you ask</h2>
+        <p class="kicker" data-content="faq-kicker">Questions</p>
+        <h2 data-content="faq-heading">Before you ask</h2>
         <div class="faq">
           <details>
-            <summary>How much does a show cost?</summary>
-            <div class="a"><p>It depends on the package, how custom the artwork is, and your venue — so we quote every event individually rather than posting a one-size price. Send the inquiry below with your date and a rough budget, and we'll tell you honestly what that budget can put in the sky.</p></div>
+            <summary data-content="faq-1-q">How much does a show cost?</summary>
+            <div class="a"><p data-content="faq-1-a">It depends on the package, how custom the artwork is, and your venue — so we quote every event individually rather than posting a one-size price. Send the inquiry below with your date and a rough budget, and we'll tell you honestly what that budget can put in the sky.</p></div>
           </details>
           <details>
-            <summary>How far ahead do we need to book?</summary>
-            <div class="a"><p>As early as you can. Design, approvals and venue coordination take weeks, and the FAA authorization process needs lead time — for weddings and fall alumni weekends, think months, not weeks. Our 2027 founding-season interest list is open now. Planning a 200+ drone finale? Tell us as early as you can — the additional units take extra lead time to secure.</p></div>
+            <summary data-content="faq-2-q">How far ahead do we need to book?</summary>
+            <div class="a"><p data-content="faq-2-a">As early as you can. Design, approvals and venue coordination take weeks, and the FAA authorization process needs lead time — for weddings and fall alumni weekends, think months, not weeks. Our 2027 founding-season interest list is open now. Planning a 200+ drone finale? Tell us as early as you can — the additional units take extra lead time to secure.</p></div>
           </details>
           <details>
-            <summary>What does our venue need?</summary>
-            <div class="a"><p>An open launch area roughly the size of a tennis court, a clear view of the sky above it, and the venue's permission. Estates, vineyards, farms and fairgrounds across Central Virginia are ideal. We'll visit or review the site with you before confirming.</p></div>
+            <summary data-content="faq-3-q">What does our venue need?</summary>
+            <div class="a"><p data-content="faq-3-a">An open launch area roughly the size of a tennis court, a clear view of the sky above it, and the venue's permission. Estates, vineyards, farms and fairgrounds across Central Virginia are ideal. We'll visit or review the site with you before confirming.</p></div>
           </details>
           <details>
-            <summary>Is it safe and legal?</summary>
-            <div class="a"><p>Drone light shows are regulated for good reason, and every show is planned around FAA rules: FAA Part 107 licensed pilots, the airspace authorizations your venue needs, a dedicated safety observer, insured operations, and a defined flight zone that keeps the fleet away from your guests. If conditions aren't safe, the show doesn't fly — simple as that.</p></div>
+            <summary data-content="faq-4-q">Is it safe and legal?</summary>
+            <div class="a"><p data-content="faq-4-a">Drone light shows are regulated for good reason, and every show is planned around FAA rules: FAA Part 107 licensed pilots, the airspace authorizations your venue needs, a dedicated safety observer, insured operations, and a defined flight zone that keeps the fleet away from your guests. If conditions aren't safe, the show doesn't fly — simple as that.</p></div>
           </details>
           <details>
-            <summary>What happens if the weather turns?</summary>
-            <div class="a"><p>Light rain and wind limits are part of the plan: we monitor the forecast with you in the days before, and your contract covers a weather backup plan so a storm doesn't take your finale with it.</p></div>
+            <summary data-content="faq-5-q">What happens if the weather turns?</summary>
+            <div class="a"><p data-content="faq-5-a">Light rain and wind limits are part of the plan: we monitor the forecast with you in the days before, and your contract covers a weather backup plan so a storm doesn't take your finale with it.</p></div>
           </details>
           <details>
-            <summary>Where do you fly?</summary>
-            <div class="a"><p>Charlottesville and Central Virginia are home — Albemarle, the Blue Ridge foothills, and the vineyard country around them. Further afield in Virginia? Ask in the inquiry; founding-season travel is on the table.</p></div>
+            <summary data-content="faq-6-q">Where do you fly?</summary>
+            <div class="a"><p data-content="faq-6-a">Charlottesville and Central Virginia are home — Albemarle, the Blue Ridge foothills, and the vineyard country around them. Further afield in Virginia? Ask in the inquiry; founding-season travel is on the table.</p></div>
           </details>
           <details>
-            <summary>Can it be a surprise?</summary>
-            <div class="a"><p>Absolutely — proposals and gifts are our favorite kind of secret. Tell us it's a surprise in the inquiry and we'll keep every conversation discreet.</p></div>
+            <summary data-content="faq-7-q">Can it be a surprise?</summary>
+            <div class="a"><p data-content="faq-7-a">Absolutely — proposals and gifts are our favorite kind of secret. Tell us it's a surprise in the inquiry and we'll keep every conversation discreet.</p></div>
           </details>
         </div>
       </div>
@@ -496,38 +496,38 @@
       <div class="wrap">
         <div class="form-grid">
           <div class="form-side">
-            <p class="kicker">Check your date</p>
-            <h2>Join the founding-season list</h2>
-            <p>Tell us about your event and we'll come back with availability, honest guidance on what your budget can do, and first claim on 2027 dates for your venue.</p>
+            <p class="kicker" data-content="form-kicker">Check your date</p>
+            <h2 data-content="form-heading">Join the founding-season list</h2>
+            <p data-content="form-intro">Tell us about your event and we'll come back with availability, honest guidance on what your budget can do, and first claim on 2027 dates for your venue.</p>
             <ul>
-              <li>No obligation — this is an inquiry, not a booking</li>
-              <li>Founding-season clients get a free design consultation</li>
-              <li>Planning a surprise? Tick the box in the form and we'll keep it quiet</li>
-              <li>Venues &amp; planners: ask about partnering for your clients</li>
+              <li data-content="form-li-1">No obligation — this is an inquiry, not a booking</li>
+              <li data-content="form-li-2">Founding-season clients get a free design consultation</li>
+              <li data-content="form-li-3">Planning a surprise? Tick the box in the form and we'll keep it quiet</li>
+              <li data-content="form-li-4">Venues &amp; planners: ask about partnering for your clients</li>
             </ul>
-            <p class="contact-line">Questions first? Visit the <a href="https://enonymous1.github.io/whenwhere-biz-main-site/">main site</a>.</p>
+            <p class="contact-line" data-content="form-contact">Questions first? Visit the <a href="https://enonymous1.github.io/whenwhere-biz-main-site/">main site</a>.</p>
           </div>
           <div>
             <form class="inquiry" id="inquiryForm" novalidate>
               <div class="frow">
                 <div class="field" id="f-name">
-                  <label for="inName">Your name *</label>
+                  <label for="inName" data-content="form-label-name">Your name *</label>
                   <input id="inName" name="name" type="text" autocomplete="name" placeholder="Jordan Smith" required />
                   <p class="err">Please tell us your name.</p>
                 </div>
                 <div class="field" id="f-email">
-                  <label for="inEmail">Email *</label>
+                  <label for="inEmail" data-content="form-label-email">Email *</label>
                   <input id="inEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
                   <p class="err">Please enter a valid email so we can reply.</p>
                 </div>
               </div>
               <div class="frow">
                 <div class="field">
-                  <label for="inPhone">Phone <span class="opt">(optional)</span></label>
+                  <label for="inPhone" data-content="form-label-phone">Phone <span class="opt">(optional)</span></label>
                   <input id="inPhone" name="phone" type="tel" autocomplete="tel" placeholder="(434) 555-0100" />
                 </div>
                 <div class="field" id="f-type">
-                  <label for="inType">Event type *</label>
+                  <label for="inType" data-content="form-label-type">Event type *</label>
                   <select id="inType" name="type" required>
                     <option value="">Choose one…</option>
                     <option>Wedding</option>
@@ -545,19 +545,19 @@
               </div>
               <div class="frow">
                 <div class="field" id="f-date">
-                  <label for="inDate">Event date *</label>
+                  <label for="inDate" data-content="form-label-date">Event date *</label>
                   <input id="inDate" name="date" type="date" />
                   <p class="err">Please pick your 2027 event date, or tick the flexible box.</p>
                   <label class="check" style="margin-top:10px"><input type="checkbox" id="inFlexDate" /> My date is flexible / not sure yet</label>
                 </div>
                 <div class="field">
-                  <label for="inVenue">Venue / town</label>
+                  <label for="inVenue" data-content="form-label-venue">Venue / town</label>
                   <input id="inVenue" name="venue" type="text" placeholder="Vineyard in Crozet, private estate…" />
                 </div>
               </div>
               <div class="frow">
                 <div class="field">
-                  <label for="inGuests">Expected guests</label>
+                  <label for="inGuests" data-content="form-label-guests">Expected guests</label>
                   <select id="inGuests" name="guests">
                     <option value="">Not sure yet</option>
                     <option>Under 50</option>
@@ -568,7 +568,7 @@
                   </select>
                 </div>
                 <div class="field">
-                  <label for="inBudget">Rough budget for the show</label>
+                  <label for="inBudget" data-content="form-label-budget">Rough budget for the show</label>
                   <select id="inBudget" name="budget">
                     <option value="">Not sure yet</option>
                     <option>Under $5,000</option>
@@ -579,7 +579,7 @@
                 </div>
               </div>
               <div class="field">
-                <label>Package you're eyeing</label>
+                <label data-content="form-label-pkg">Package you're eyeing</label>
                 <div class="radios">
                   <label><input type="radio" name="pkg" value="The Moment" />The Moment</label>
                   <label><input type="radio" name="pkg" value="The Signature Show" />Signature Show</label>
@@ -587,11 +587,11 @@
                 </div>
               </div>
               <div class="field">
-                <label for="inDream">What would you love to see in the sky?</label>
+                <label for="inDream" data-content="form-label-dream">What would you love to see in the sky?</label>
                 <textarea id="inDream" name="dream" rows="3" placeholder="Our initials and the date over the vineyard, then a grape cluster…"></textarea>
               </div>
               <div class="field">
-                <label>Where are you in planning?</label>
+                <label data-content="form-label-stage">Where are you in planning?</label>
                 <div class="radios">
                   <label><input type="radio" name="stage" value="Ready to book" />Ready to book</label>
                   <label><input type="radio" name="stage" value="Planning ahead" />Planning ahead</label>
@@ -622,8 +622,8 @@
 
     <footer>
       <div class="wrap">
-        <span>WhenWhere.biz — event production, DJ &amp; MC, and now drone light shows · Charlottesville &amp; Central Virginia</span>
-        <span><a href="https://enonymous1.github.io/whenwhere-biz-main-site/">Visit the main site →</a></span><span>© 2026 WhenWhere.biz</span>
+        <span data-content="footer-text">WhenWhere.biz — event production, DJ &amp; MC, and now drone light shows · Charlottesville &amp; Central Virginia</span>
+        <span><a href="https://enonymous1.github.io/whenwhere-biz-main-site/" data-content="footer-link-main">Visit the main site →</a></span><span data-content="footer-copy">© 2026 WhenWhere.biz</span>
       </div>
     </footer>
 

@@ -158,6 +158,62 @@ through `node --check` when Node is available and asserts the fleet
 counts are present in `config.js`. A rebuild with nothing changed is a no-op. Run it from any
 directory — paths resolve from the script's own location.
 
+### Editing the site content (Google Sheets)
+
+The page's text and photos are editable from a Google Sheet — no code
+changes and no redeploy for copy edits. The page reads the Sheet
+(published as CSV) and overrides the matching text and images; the
+text baked into `index.html` stays as the fallback, so the page is
+unchanged if the Sheet is unreachable.
+
+**How it works:** every editable bit of copy is tagged in the HTML
+with `data-content="key"` (text) or `data-content-img="key"` (an
+`<img>`). A loader at the end of `studio.js` fetches the content and
+applies it. The content source is `CONTENT_CSV_URL` in `config.js`;
+when it is blank the page reads `content.json` beside `index.html`
+instead. Blank cells are ignored, so a half-filled Sheet never wipes
+text. The page's Content Security Policy allows the content fetch:
+`connect-src` includes `'self'` (for `content.json`) and
+`https://docs.google.com` (for the published Sheet CSV).
+
+**The Sheet** has four columns — `key | text | image | alt` — one row
+per item. Text rows fill in `text`; image rows fill in `image` (a
+filename in `assets/`, e.g. `assets/weddings.jpg`, or a full URL) and
+`alt` (the accessibility description). Image size is set by the
+page's CSS, not the Sheet. A few rows keep markup in `text` — the
+hero headline and a couple of labels — and those must keep their
+`<span>` / `<br />` / `<a>` tags when edited; everything else is
+plain text. `docs/content.csv` is the current Sheet contents in CSV
+form (133 rows) — paste it into a new Sheet to start. Note: an
+external image URL (as opposed to a repo filename) also needs adding
+to the CSP's `img-src` in `index.html`, which currently allows
+`'self'` and `data:` only.
+
+**To connect a Sheet:**
+
+1. Create a new Google Sheet (one per site) and paste in
+   `docs/content.csv` — File → Import → Upload, or paste the rows.
+2. File → Share → Publish to web → choose the Sheet, format CSV,
+   Publish. Copy the link.
+3. Paste the link as `CONTENT_CSV_URL` in `config.js` and push once.
+   After that, editing the Sheet updates the page with no redeploy
+   (the page fetches with `no-store`, so edits show on the next load).
+
+**What is and isn't in the Sheet:** the marketing copy (hero,
+occasions, studio intro, packages, how it works, why drones, FAQ,
+form labels, footer) and the seven photos. Not in it: the nav labels,
+the studio's shape buttons and drone counts (those are driven by
+`FLEET` in `config.js`), the submit button and form note (both set by
+the form's mode in JS), the send-failure result panel, the validation
+messages, and the checkbox/radio option labels (they contain the
+inputs, so overriding their text would wipe the control). To add a new
+editable bit later, tag the element with `data-content="new-key"` (or
+`data-content-img`), add the row to the Sheet and to `content.json`,
+and the loader picks it up. Swapping the back-end later (for example
+to a CMS that emits the same `key → {text, image, alt}` map) only
+means changing how the map is fetched — the override mechanism stays
+the same.
+
 ### Tests
 
 ```bash
@@ -402,8 +458,9 @@ whenwhere-drone-light-shows/
 │   └── workflows/
 │       └── pages.yml           # build + smoke test + deploy on push to main
 ├── index.html                  # the page (source of truth — see Local Development)
-├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates)
-├── studio.js                   # page JavaScript (studio, form, shortcuts, nav)
+├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates, content CSV)
+├── studio.js                   # page JavaScript (studio, form, shortcuts, nav, content loader)
+├── content.json                # the page content, local fallback for the Sheet
 ├── tools/
 │   ├── build.py                # image optimization + checks (index.html is the source of truth)
 │   └── readability-lab.html    # word-readability diagnostic (drives the live page)
@@ -411,6 +468,7 @@ whenwhere-drone-light-shows/
 │   ├── hero.jpg                # hero (1248×832, 161 KB)
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
 ├── docs/
+│   ├── content.csv             # the Sheet contents (key | text | image | alt), 133 rows
 │   ├── inquiry-pipeline.md     # inquiry-to-show workflow, visitor + manager views
 │   ├── readability-floor.md    # measured minimum dots per letter/word (25px floor)
 │   ├── readability-floor/      # probe renders behind that table

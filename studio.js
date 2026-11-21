@@ -771,3 +771,90 @@
         document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') setOpen(false); });
         window.addEventListener('resize', function () { if (window.innerWidth > 620) setOpen(false); });
       })();
+
+      /* ============ Site content (Sheets-backed) ============
+         Editable text and images live in a Google Sheet (CFG.CONTENT_CSV_URL,
+         published to web as CSV, columns: key | text | image | alt) or, as a
+         fallback, in content.json beside this page. Elements tagged with
+         data-content="key" get their text replaced; <img> tags with
+         data-content-img="key" get src/alt replaced. The hardcoded HTML is
+         the fallback — if neither source loads, the page is unchanged.
+         HTML_KEYS are the few values that keep markup (hero headline, etc.)
+         and are set with innerHTML; everything else uses textContent.
+         Blank cells are ignored, so a half-filled Sheet never wipes text. */
+      (function () {
+        var HTML_KEYS = { 'hero-headline': true, 'form-label-phone': true, 'form-contact': true };
+        function parseCSV(text) {
+          var rows = [], row = [], field = '', inQ = false;
+          if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+          for (var i = 0; i < text.length; i++) {
+            var c = text[i], n = text[i + 1];
+            if (inQ) {
+              if (c === '"' && n === '"') { field += '"'; i++; }
+              else if (c === '"') inQ = false;
+              else field += c;
+            } else if (c === '"') inQ = true;
+            else if (c === ',') { row.push(field); field = ''; }
+            else if (c === '\n' || c === '\r') {
+              if (c === '\r' && n === '\n') i++;
+              row.push(field); field = '';
+              if (row.length > 1 || row[0] !== '') rows.push(row);
+              row = [];
+            } else field += c;
+          }
+          row.push(field);
+          if (row.length > 1 || row[0] !== '') rows.push(row);
+          return rows;
+        }
+        function mapFromRows(rows) {
+          var map = {};
+          rows.forEach(function (r, idx) {
+            if (idx === 0) return; /* header: key,text,image,alt */
+            var key = (r[0] || '').trim();
+            if (!key) return;
+            map[key] = {
+              text: (r[1] || '').trim(),
+              image: (r[2] || '').trim(),
+              alt: (r[3] || '').trim()
+            };
+          });
+          return map;
+        }
+        function applyContent(map) {
+          if (!map) return;
+          var els = document.querySelectorAll('[data-content]');
+          for (var i = 0; i < els.length; i++) {
+            var el = els[i], k = el.getAttribute('data-content'), item = map[k];
+            if (!item || !item.text) continue;
+            if (HTML_KEYS[k]) el.innerHTML = item.text;
+            else el.textContent = item.text;
+          }
+          var imgs = document.querySelectorAll('[data-content-img]');
+          for (var j = 0; j < imgs.length; j++) {
+            var im = imgs[j], it = map[im.getAttribute('data-content-img')];
+            if (!it) continue;
+            if (it.image) im.setAttribute('src', it.image);
+            if (it.alt) im.setAttribute('alt', it.alt);
+          }
+        }
+        function loadJSON() {
+          return fetch('content.json', { cache: 'no-store' }).then(function (res) {
+            if (!res.ok) throw new Error('content.json missing');
+            return res.json();
+          });
+        }
+        function run() {
+          var url = (CFG.CONTENT_CSV_URL || '').trim();
+          if (url) {
+            fetch(url, { cache: 'no-store' }).then(function (res) {
+              if (!res.ok) throw new Error('content CSV failed');
+              return res.text();
+            }).then(function (text) { applyContent(mapFromRows(parseCSV(text))); })
+            .catch(function () { loadJSON().then(applyContent).catch(function () {}); });
+          } else {
+            loadJSON().then(applyContent).catch(function () {});
+          }
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+        else run();
+      })();
