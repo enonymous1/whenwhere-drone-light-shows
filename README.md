@@ -411,6 +411,7 @@ whenwhere-drone-light-shows/
 │   ├── hero.jpg                # hero (1248×832, 161 KB)
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
 ├── docs/
+│   ├── inquiry-pipeline.md     # inquiry-to-show workflow, visitor + manager views
 │   ├── readability-floor.md    # measured minimum dots per letter/word (25px floor)
 │   ├── readability-floor/      # probe renders behind that table
 │   └── screenshots/            # hero, formation stills, assembly + finale GIFs (for this README)
