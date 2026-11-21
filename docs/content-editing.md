@@ -44,6 +44,26 @@ Google can take a few minutes to republish the CSV after an edit — if
 a change doesn't appear at once, wait a few minutes and hard-refresh
 (`Ctrl+Shift+R` / `Cmd+Shift+R`).
 
+### Who can edit the Sheet
+
+The published CSV link is **read-only** — anyone who finds it can read
+the site's current copy (the same words already public on the website),
+but they cannot change anything through it. Editing is controlled
+separately, by the Sheet's **Share** settings. Lock it down like this:
+
+1. Open the Sheet → **Share** (top right).
+2. Under **General access**, choose **Restricted** — "Only people
+   added can open".
+3. Add the accounts that should be able to edit (your Gmail, and
+   anyone else who edits copy) and set each to **Editor**.
+4. Leave **File → Share → Publish to web** turned on — that's the
+   read-only copy the page fetches, and restricting Share does not
+   turn it off or break the page.
+
+If the Sheet is ever set to "Anyone with the link can edit", then
+anyone who gets the Sheet's edit link can change the site's copy.
+Keep it Restricted.
+
 ## The editor's view — changing copy
 
 ### Find the row
