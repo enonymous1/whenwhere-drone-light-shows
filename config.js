@@ -1,4 +1,4 @@
-/* WhenWhere drone light shows — launch settings.
+/* When&Where drone light shows — launch settings.
    This is the one file to edit when the show changes: the form
    endpoint, the fleet counts, the colours, the re-send cooldown,
    and the earliest bookable date. Everything in studio.js is the

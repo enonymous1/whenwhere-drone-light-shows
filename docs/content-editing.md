@@ -1,6 +1,6 @@
 # Editing the site content — drone light shows site
 
-How to change the words and photos on the WhenWhere drone light
+How to change the words and photos on the When&Where drone light
 shows site without touching code. Written for two sets of eyes: the
 **editor** (the person updating copy and photos) and the
 **manager/developer** (the person who owns the repo and the Sheet).

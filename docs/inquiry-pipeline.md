@@ -1,4 +1,4 @@
-# WhenWhere Drone Light Shows — Inquiry Pipeline & Workflow
+# When&Where Drone Light Shows — Inquiry Pipeline & Workflow
 
 **What this is:** the journey of one drone-show inquiry, from a visitor
 finding the page to the show flying, told from both sides — what the

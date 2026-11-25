@@ -1,9 +1,9 @@
 /**
- * WhenWhere Drone Light Shows — inquiry form backend
+ * When&Where Drone Light Shows — inquiry form backend
  * (same setup as the main site's inquiry form)
  *
  * Paste this whole file into a PRIVATE Sheet:
- *   1. Create a new Google Sheet, e.g. "WhenWhere Drone Inquiries".
+ *   1. Create a new Google Sheet, e.g. "When&Where Drone Inquiries".
  *   2. Extensions → Apps Script, replace the default Code.gs contents
  *      with this file.
  *
@@ -170,7 +170,7 @@ function doPostInner(e) {
     + 'style="width:100%;max-width:600px;background:#0d1230;border:1px solid #d9a441;'
     + 'border-radius:12px;padding:28px 30px;">'
     + '<tr><td style="font-size:11px;letter-spacing:.3em;color:#d9a441;font-weight:700;">'
-    + 'WHENWHERE.BIZ</td></tr>'
+    + 'WHEN&amp;WHERE.BIZ</td></tr>'
     + '<tr><td style="padding:8px 0 4px;font-family:Georgia,serif;font-size:26px;color:#ffffff;">'
     + 'New drone inquiry — ' + esc(p.type || 'event') + '</td></tr>'
     + '<tr><td style="padding:0 0 14px;font-size:13px;color:#aab3d6;">'
@@ -186,6 +186,6 @@ function doPostInner(e) {
 
   MailApp.sendEmail(NOTIFY_EMAIL,
     'New drone light show inquiry — ' + (p.type || 'event'), text,
-    { htmlBody: html, replyTo: p.email || '', name: 'WhenWhere.biz' });
+    { htmlBody: html, replyTo: p.email || '', name: 'When&Where.biz' });
   return jsonOut({ ok: true });
 }

@@ -1,4 +1,4 @@
-# WhenWhere Drone Light Shows
+# When&Where Drone Light Shows
 
 ![Hero — a drone light show over a festival crowd](docs/screenshots/hero.jpg)
 
@@ -363,7 +363,7 @@ endpoint configured the form falls back to **demo mode**: submitting
 shows the inquiry to copy/download and says so ("Demo mode: no inquiry
 endpoint is connected yet…"). To connect (or reconnect):
 
-1. Create a new **private** Google Sheet, e.g. "WhenWhere Drone
+1. Create a new **private** Google Sheet, e.g. "When&Where Drone
    Inquiries". This is where inquiries land — keep it private, it holds
    visitor contact details.
 2. In that Sheet: **Extensions → Apps Script**, delete the default
@@ -484,9 +484,9 @@ whenwhere-drone-light-shows/
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
 ├── CHANGELOG.md                # one line per shipped change, dated
 ├── README.md
-└── LICENSE                     # © 2026 WhenWhere.biz, all rights reserved
+└── LICENSE                     # © 2026 When&Where.biz, all rights reserved
 ```
 
 ## License
 
-© 2026 WhenWhere.biz — All rights reserved. See `LICENSE`.
+© 2026 When&Where.biz — All rights reserved. See `LICENSE`.
