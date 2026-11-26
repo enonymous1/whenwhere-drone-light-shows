@@ -686,6 +686,33 @@
           if (flexBox.checked) document.getElementById('f-date').classList.remove('invalid');
         });
 
+        /* 30-day warning: a drone show needs permits, airspace and
+           fleet prep, so a date under 30 days out shows a gold
+           heads-up — but only if the date is valid (it passes the
+           14-day floor above); warning on a date the form already
+           rejects would promise a submission that can't go through.
+           It never blocks submission, and it hides when the date is
+           flexible (no date, no warning). UTC date-only math, so a
+           date 29 days out reads 29 at any hour of the day. */
+        var dateWrap = document.getElementById('f-date');
+        function daysUntil(iso) {
+          var p = iso.split('-');
+          var picked = Date.UTC(+p[0], +p[1] - 1, +p[2]);
+          var n = new Date();
+          var today = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+          return Math.round((picked - today) / 86400000);
+        }
+        function checkSoon() {
+          var v = dateInput.value;
+          if (!v || flexBox.checked) { dateWrap.classList.remove('warn'); return; }
+          var d = daysUntil(v);
+          dateWrap.classList.toggle('warn', d >= 0 && d < 30 && v >= dateInput.min);
+        }
+        dateInput.addEventListener('change', checkSoon);
+        dateInput.addEventListener('input', checkSoon);
+        flexBox.addEventListener('change', checkSoon);
+        checkSoon();
+
         function val(id) { return document.getElementById(id).value.trim(); }
         function mark(fieldId, bad) { document.getElementById(fieldId).classList.toggle('invalid', bad); return !bad; }
 

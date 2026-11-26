@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- whenwhere-drone-light-shows v1.5.0 -->
+<!-- whenwhere-drone-light-shows v1.5.1 -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -172,6 +172,8 @@
       .field input,.field select,.field textarea{width:100%;background:#070c26;border:1px solid #33407a;border-radius:9px;color:#fff;padding:12px 14px;font-family:"Jost",sans-serif;font-size:1rem}
       .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--gold-bright);outline-offset:1px;border-color:transparent}
       .field .err{display:none;color:#ff9db1;font-size:.86rem;margin-top:5px}
+      .field .warn{display:none;color:var(--gold-bright);font-size:.86rem;margin-top:5px}
+      .field.warn .warn{display:block}
       .field.invalid input,.field.invalid select{border-color:#ff7d9c}
       .field.invalid .err{display:block}
       .radios{display:flex;gap:8px;flex-wrap:wrap}
@@ -549,6 +551,7 @@
                 <div class="field" id="f-date">
                   <label for="inDate" data-content="form-label-date">Event date *</label>
                   <input id="inDate" name="date" type="date" />
+                  <p class="warn" id="dateWarn">Heads up — a drone show usually needs at least 30 days to line up permits, airspace and the fleet. Shorter timelines can work depending on the date and the details, so please do send this in and we&rsquo;ll let you know what&rsquo;s possible.</p>
                   <p class="err">Please pick your 2027 event date, or tick the flexible box.</p>
                   <label class="check" style="margin-top:10px"><input type="checkbox" id="inFlexDate" /> My date is flexible / not sure yet</label>
                 </div>
