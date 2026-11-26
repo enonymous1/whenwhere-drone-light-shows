@@ -1,0 +1,26 @@
+{
+  // Type-check the page's own scripts (config.js + studio.js) with the
+  // JSDoc annotations in them — // @ts-check at the top of each file
+  // turns the checker on for that file. No emit: the .js files are the
+  // shipped code, TypeScript only verifies them.
+  //
+  // Deliberately NOT strict: strictNullChecks would flag every
+  // getElementById(...).value in the DOM wiring, and the value here is
+  // catching shape mistakes in the geometry + config, not proving every
+  // element exists. Unannotated parameters stay implicit any; annotated
+  // functions are checked.
+  //
+  // The two files are classic scripts (no import/export), so they share
+  // one global scope — the same way the browser loads them — and a
+  // @typedef declared in config.js is visible in studio.js.
+  "compilerOptions": {
+    "checkJs": true,
+    "noEmit": true,
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "strict": false,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["config.js", "studio.js"],
+  "exclude": ["node_modules"]
+}

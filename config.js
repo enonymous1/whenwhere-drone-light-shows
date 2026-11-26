@@ -1,3 +1,4 @@
+// @ts-check
 /* When&Where drone light shows — launch settings.
    This is the one file to edit when the show changes: the form
    endpoint, the fleet counts, the colours, the re-send cooldown,
@@ -6,7 +7,25 @@
    file (loaded before it) and has no defaults of its own for these
    values — if this file is missing, the page fails loudly instead
    of rendering with stale numbers. */
-window.WHENWHERE_CONFIG = {
+/**
+ * Launch settings for the drone light shows page, read by studio.js
+ * via window.WHENWHERE_CONFIG. Declared as a top-level var (a var in a
+ * classic script IS a window property), so the checker knows the shape
+ * on both sides of the load.
+ * @typedef {Object} WhenWhereConfig
+ * @property {string} INQUIRY_ENDPOINT - Deployed Apps Script Web app URL ('' = demo mode: copy/download fallback).
+ * @property {{heart: number, rings: number, glass: number, star: number, finale: number}} FLEET - Drones per formation.
+ * @property {string[]} COLORS - Fallback colours per formation.
+ * @property {{heart: string[], rings: string[], glass: string[], star: string[], word: string[], finale: string[]}} PALETTES - Colours per formation.
+ * @property {number} COOLDOWN_MS - Re-send cooldown in ms.
+ * @property {string} INQUIRY_KEY - localStorage key recording the last send.
+ * @property {number} DATE_MIN_DAYS_AHEAD - Earliest bookable date, days out.
+ * @property {string} DATE_MIN_FLOOR - Earliest bookable date, ISO floor ('2027-01-01').
+ * @property {string} CONTENT_CSV_URL - Published Sheet CSV for site content ('' = content.json fallback).
+ */
+
+/** @type {WhenWhereConfig} */
+var WHENWHERE_CONFIG = {
   // Deployed Apps Script Web app URL (see README.md).
   // Leave blank to keep the copy/download fallback (demo mode).
   INQUIRY_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxGXFDzmwqyUB3vUu-pex2y6VfSR27AMCUbZffagkcWP0SiOaI_IUml0viK1ScUeOE1/exec',

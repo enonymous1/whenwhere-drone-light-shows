@@ -136,6 +136,22 @@ python3 tools/build.py --check   # exit 0 if index.html matches a fresh build, 1
 python3 tools/build.py --help
 ```
 
+### Type-checking the page scripts
+
+`config.js` + `studio.js` carry JSDoc types (`// @ts-check` at the top
+of each file; the shapes are typedefs at the top of `studio.js`). The
+checker verifies them and emits nothing — the `.js` files are the
+shipped code. Run it after editing either file:
+
+```bash
+npm ci            # once, to install TypeScript (dev-only)
+npx tsc --noEmit  # exit 0 when the types are clean
+```
+
+It is deliberately not strict (see `jsconfig.json`): it catches shape
+mistakes in the geometry + config, not every `getElementById` null.
+The check also runs in CI, alongside the smoke + geometry tests.
+
 The deployed page carries a `<!-- whenwhere-drone-light-shows v1.3.0 -->`
 comment at the top so it can be traced to a build; releases are listed
 in [CHANGELOG.md](CHANGELOG.md). To release a new version, bump that
@@ -462,10 +478,13 @@ crossings.
 whenwhere-drone-light-shows/
 ├── .github/
 │   └── workflows/
-│       └── pages.yml           # build + smoke test + deploy on push to main
+│       └── pages.yml           # build + type-check + smoke test + geometry tests + deploy on push to main
 ├── index.html                  # the page (source of truth — see Local Development)
 ├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates, content CSV)
 ├── studio.js                   # page JavaScript (studio, form, shortcuts, nav, content loader)
+├── jsconfig.json               # TypeScript check settings for config.js + studio.js (no emit)
+├── package.json                # dev-only: TypeScript for the type check
+├── package-lock.json           # pins the TypeScript version
 ├── content.json                # the page content, local fallback for the Sheet
 ├── tools/
 │   ├── build.py                # image optimization + checks (index.html is the source of truth)

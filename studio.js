@@ -1,3 +1,4 @@
+// @ts-check
 /* WhenWhere drone light shows — page JavaScript (Formation Studio, inquiry form,
    package shortcuts, mobile nav). Extracted from index.html 2026-11-18: the page
    carries no inline executable scripts, so script-src 'self' holds. */
@@ -7,11 +8,90 @@
       // file holds the machinery and has no defaults for them — if
       // config.js is missing, fail loudly instead of rendering with
       // stale numbers.
+      /** @type {WhenWhereConfig} */
       var CFG = window.WHENWHERE_CONFIG;
       if (!CFG) throw new Error('WHENWHERE_CONFIG is missing — config.js did not load');
+
+      /* ============ Types (JSDoc) ============
+         The geometry pipeline is points in, points out; the form is
+         strings in, an inquiry object out. These typedefs are the
+         vocabulary the @param/@returns below use. Point.c is set only
+         by heartPair (the two hearts get different colours); everywhere
+         else the palette supplies the colour. */
+      /**
+       * A single drone position on the canvas.
+       * @typedef {{x: number, y: number, c?: string}} Point
+       */
+      /**
+       * The word renderer tuning (see TUNING in the studio).
+       * @typedef {Object} Tuning
+       * @property {string} font
+       * @property {number} weight
+       * @property {number} size
+       * @property {number} sizeMin
+       * @property {number} maxW
+       * @property {number} perGlyph
+       * @property {number} targetMin
+       * @property {number} targetMax
+       * @property {number} minGap
+       * @property {number} sampleStep
+       * @property {number} threshold
+       */
+      /**
+       * One layout item in wordPoints: a glyph ({c, w}) or a space gap
+       * ({space: true, w}) — a space takes no drones.
+       * @typedef {{space?: boolean, c?: string, w: number}} WordItem
+       */
+      /**
+       * A rasterised + skeletonised glyph.
+       * @typedef {{cp: Point[], tw: number, th: number}} Glyph
+       */
+      /**
+       * A drone on the canvas: start (sx, sy), current (x, y), target
+       * (tx, ty), delay d, colour c, twinkle phase ph.
+       * @typedef {{sx: number, sy: number, x: number, y: number, tx: number, ty: number, d: number, c: string, ph: number}} Drone
+       */
+      /**
+       * A background star (studio + hero starfields).
+       * @typedef {{x: number, y: number, r: number, p: number}} Star
+       */
+      /**
+       * What collectInquiry() returns: the visitor's first name, the
+       * plain-text inquiry, and the URLSearchParams posted to the
+       * Apps Script endpoint.
+       * @typedef {{first: string, lines: string, params: URLSearchParams}} Inquiry
+       */
+      /**
+       * One row of the content Sheet, keyed by content key.
+       * @typedef {{text: string, image: string, alt: string}} ContentItem
+       */
+      /**
+       * The pure geometry the page exposes for tests and the
+       * Readability Lab (window.WHENWHERE.geometry).
+       * @typedef {Object} WhenWhereGeometry
+       * @property {function(Point[], number): Point[]} resample
+       * @property {function(Point[], number): Point[]} resampleRuns
+       * @property {function(number): Point[]} heartPair
+       * @property {function(Point[], number): Point[]} thinUniform
+       * @property {function(string): Point[]} wordPoints
+       * @property {function(number[][]): number[][]} skeletonize
+       * @property {function(number): Point[]} finalePts
+       * @property {function(number[], number): number[]} allocateCounts
+       * @property {function(Point[], number): Point[]} separatePoints
+       * @property {function(string, number): Glyph} glyphSkeleton
+       * @property {function(string): string[]} splitSlides
+       */
+      /**
+       * The namespace the page exposes (window.WHENWHERE).
+       * @typedef {Object} WhenWhereNS
+       * @property {WhenWhereGeometry} geometry
+       * @property {Tuning} tuning
+       */
+      /** @type {WhenWhereNS} */
+      var WHENWHERE;
       /* ============ Formation Studio ============ */
       (function () {
-        var canvas = document.getElementById('sky');
+        var canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('sky'));
         if (!canvas) return;
         var ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -41,6 +121,15 @@
            found and the under-heart alternates at each crossing, and the
            gaps are real - resampleRuns() never interpolates dots across
            a break. */
+        /**
+         * One cubic Bezier segment, sampled at n points.
+         * @param {Point} p0 - start point.
+         * @param {Point} p1 - first control point.
+         * @param {Point} p2 - second control point.
+         * @param {Point} p3 - end point.
+         * @param {number} n - how many points to return.
+         * @returns {Point[]} n points along the curve.
+         */
         function cubic(p0, p1, p2, p3, n) {
           var pts = [];
           for (var i = 0; i <= n; i++) {
@@ -51,9 +140,9 @@
           return pts;
         }
         /** Resample a contour to exactly n points, evenly spaced by arc length.
-            @param {Array<{x: number, y: number}>} pts - points along the contour.
+            @param {Point[]} pts - points along the contour.
             @param {number} n - how many points to return.
-            @returns {Array<{x: number, y: number}>} n points, or [] when the contour has no length or n <= 0. */
+            @returns {Point[]} n points, or [] when the contour has no length or n <= 0. */
         function resample(pts, n) {
           var L = [0];
           for (var i = 1; i < pts.length; i++) L.push(L[i-1] + Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y));
@@ -68,22 +157,43 @@
           }
           return out;
         }
+        /**
+         * Points around a circle (squashed vertically when squash < 1).
+         * @param {number} cx - centre x.
+         * @param {number} cy - centre y.
+         * @param {number} r - radius.
+         * @param {number} n - how many points to return.
+         * @param {number} [squash] - vertical squash factor (1 = a true circle).
+         * @returns {Point[]} n points around the circle, starting at the top.
+         */
         function circlePts(cx, cy, r, n, squash) {
           var pts = [];
           for (var i = 0; i < n; i++) { var a = i/n*Math.PI*2 - Math.PI/2; pts.push({ x: cx+Math.cos(a)*r, y: cy+Math.sin(a)*r*(squash||1) }); }
           return pts;
         }
+        /**
+         * A dense heart outline (the raw contour heartPair thins down).
+         * @param {number} cx - centre x.
+         * @param {number} cy - centre y.
+         * @param {number} s - size (half-width).
+         * @returns {Point[]} the heart contour, densely sampled.
+         */
         function heartDense(cx, cy, s) {
           var tip = { x: cx, y: cy + s * .85 };
           var dense = cubic(tip, {x:cx-s*1.5,y:cy-s*.1}, {x:cx-s*.75,y:cy-s*1.15}, {x:cx,y:cy-s*.35}, 48);
           dense = dense.concat(cubic({x:cx,y:cy-s*.35}, {x:cx+s*.75,y:cy-s*1.15}, {x:cx+s*1.5,y:cy-s*.1}, tip, 48).slice(1));
           return dense;
         }
+        /**
+         * Length of one run (polyline) in px.
+         * @param {Point[]} r - the run.
+         * @returns {number} the arc length.
+         */
         function runLen(r) { var L = 0; for (var i = 1; i < r.length; i++) L += Math.hypot(r[i].x-r[i-1].x, r[i].y-r[i-1].y); return L; }
         /** Resample without interpolating across a break: split the contour into runs, share dots by run length.
-            @param {Array<{x: number, y: number}>} pts - contour points; a jump over 25px between consecutive points starts a new run.
+            @param {Point[]} pts - contour points; a jump over 25px between consecutive points starts a new run.
             @param {number} n - total points wanted across all runs.
-            @returns {Array<{x: number, y: number}>} n points, none interpolated across a break; falls back to resample() when there are no runs. */
+            @returns {Point[]} n points, none interpolated across a break; falls back to resample() when there are no runs. */
         function resampleRuns(pts, n) {
           var runs = [[]];
           for (var i = 0; i < pts.length; i++) {
@@ -106,7 +216,7 @@
         }
         /** Two interlocking hearts, tilted toward each other on a diagonal.
             @param {number} n - total drones across both hearts.
-            @returns {Array<{x: number, y: number}>} n points (left heart + right heart); the under-heart alternates at each crossing, and the crossings are real gaps, not interpolated dots. */
+            @returns {Point[]} n points (left heart + right heart); the under-heart alternates at each crossing, and the crossings are real gaps, not interpolated dots. */
         function heartPair(n) {
           var s = 100;
           function tilt(dense, cx, cy, a) { var co = Math.cos(a), si = Math.sin(a); return dense.map(function (p) { var dx = p.x-cx, dy = p.y-cy; return { x: cx+dx*co-dy*si, y: cy+dx*si+dy*co }; }); }
@@ -139,6 +249,11 @@
           right.forEach(function (p, i) { p.c = PALETTES.rings[i % PALETTES.rings.length]; });
           return left.concat(right);
         }
+        /**
+         * The champagne-glass formation (bowl + stem + base).
+         * @param {number} n - total drones.
+         * @returns {Point[]} n points.
+         */
         function glassPts(n) {
           var P = function (x, y) { return { x: W*x, y: H*y }; };
           var dense = [P(.40,.10), P(.60,.10)];
@@ -147,6 +262,11 @@
           dense = dense.concat(cubic(P(.48,.47), P(.45,.44), P(.40,.34), P(.40,.10), 32).slice(1));
           return resample(dense, n);
         }
+        /**
+         * The starburst formation (12-point star).
+         * @param {number} n - total drones.
+         * @returns {Point[]} n points.
+         */
         function starPts(n) {
           var cx = W/2, cy = H/2, verts = [];
           for (var k = 0; k < 12; k++) {
@@ -158,6 +278,11 @@
           verts.push(verts[0]);
           return resample(verts, n);
         }
+        /**
+         * The wedding-rings formation (two interlocked rings + gem).
+         * @param {number} n - total drones.
+         * @returns {Point[]} n points.
+         */
         function ringsPts(n) {
           var per = Math.floor((n - 12) / 2);
           var pts = circlePts(W*.42, H*.52, 105, per).concat(circlePts(W*.58, H*.52, 105, n - 12 - per));
@@ -165,6 +290,11 @@
           var gem = [{x:gx,y:gy-30},{x:gx+26,y:gy},{x:gx,y:gy+30},{x:gx-26,y:gy},{x:gx,y:gy-30}];
           return pts.concat(resample(gem, 12));
         }
+        /**
+         * The grand-finale formation (outer ring, mid ring, core, rays).
+         * @param {number} n - total drones.
+         * @returns {Point[]} n points, split across outer/mid/core/rays in the 240-drone proportions.
+         */
         function finalePts(n) {
           var cx = W/2, cy = H/2;
           // Split n across the four parts in the same proportions as the
@@ -192,6 +322,13 @@
           star: { name: 'Starburst', points: starPts },
           finale: { name: 'Grand finale', points: finalePts }
         };
+        /**
+         * Thins a point cloud to exactly target points, spread evenly:
+         * one point per grid cell, then farthest-point top-up.
+         * @param {Point[]} pts - the input points (not mutated).
+         * @param {number} target - how many points to return.
+         * @returns {Point[]} exactly target points, a subset of the input.
+         */
         function thinUniform(pts, target) {
           if (pts.length <= target) return pts.slice();
           var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, i, p;
@@ -209,7 +346,7 @@
             if (!cells[k] || d < cells[k].d) cells[k] = { p: p, d: d };
           }
           var out = [];
-          for (var k in cells) out.push(cells[k].p);
+          for (var key in cells) out.push(cells[key].p);
           while (out.length < target) {
             var best = null, bestD = -1;
             for (i = 0; i < pts.length; i++) {
@@ -233,6 +370,14 @@
         // centerline, so the drones trace the letter one drone wide
         // instead of filling the stroke - a bright light stands on its
         // own and needs no 3-4 drones lumped together for bold text.
+        /**
+         * Thins a binary grid to its 1px-wide skeleton (Zhang-Suen
+         * thinning). The grid is an array of rows of 0/1 and is modified
+         * in place; wordPoints thins each glyph's raster to its stroke
+         * centerline, so the drones trace the letter one drone wide.
+         * @param {number[][]} grid - rows of 0/1, mutated in place.
+         * @returns {number[][]} the same grid, thinned to a 1px centerline.
+         */
         function skeletonize(grid) {
           var rows = grid.length, cols = grid[0].length;
           function neighbors(r, c) {
@@ -270,6 +415,7 @@
         // readability lab (tools/readability-lab.html) — the lab changes
         // them without reloading and the page re-renders. Defaults are
         // the shipped values; nothing else reads them.
+        /** @type {Tuning} */
         var TUNING = {
           font: 'Marcellus, Georgia, serif', weight: 700,
           size: 190, sizeMin: 60, maxW: W - 40,
@@ -294,6 +440,14 @@
         // any stroke gets at least 1 dot (it never silently vanishes),
         // a glyph with no stroke gets 0, and the leftover from rounding
         // goes to the largest remainders.
+        /**
+         * Splits a dot budget across glyphs in proportion to their stroke
+         * lengths. Every glyph with any stroke gets at least 1; the
+         * leftover goes to the largest remainders.
+         * @param {number[]} lengths - stroke length per glyph.
+         * @param {number} total - the dot budget.
+         * @returns {number[]} one count per glyph, summing exactly to total.
+         */
         function allocateCounts(lengths, total) {
           var sum = 0, i;
           for (i = 0; i < lengths.length; i++) sum += lengths[i];
@@ -330,6 +484,13 @@
         // it, since the push runs along their connecting vector.
         // Mutates the array in place (like skeletonize mutates its grid)
         // and returns it.
+        /**
+         * Pushes points apart (pairwise repulsion, up to 20 passes) so no
+         * two are closer than minDist. Mutates in place.
+         * @param {Point[]} pts - the points, mutated in place.
+         * @param {number} minDist - the minimum gap in px.
+         * @returns {Point[]} the same points, separated.
+         */
         function separatePoints(pts, minDist) {
           for (var pass = 0; pass < 20; pass++) {
             var moved = false;
@@ -358,6 +519,12 @@
         // { cp, tw, th } in the glyph's own canvas coords. wordPoints
         // calls this per glyph; the readability lab calls it directly to
         // render any letter at any count.
+        /**
+         * Rasterises one glyph and thins it to its stroke centerline.
+         * @param {string} ch - the character (one glyph).
+         * @param {number} size - the type size in px.
+         * @returns {Glyph} the skeleton points plus the glyph's width/height.
+         */
         function glyphSkeleton(ch, size) {
           var mc2 = document.createElement('canvas').getContext('2d');
           mc2.font = TUNING.weight + ' ' + size + 'px ' + TUNING.font;
@@ -391,7 +558,7 @@
         }
         /** Points for a word, rastered one character at a time on tight per-glyph canvases and thinned to the stroke centerline.
             @param {string} text - the word to draw; spaces are kept as gaps (they take no drones).
-            @returns {Array<{x: number, y: number}>} exactly target points (clamped 50-100), split across glyphs in proportion to their stroke lengths, with dots kept at least the minimum gap apart; each glyph is thinned to its skeleton, so the drones trace the letter one drone wide; the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
+            @returns {Point[]} exactly target points (clamped 50-100), split across glyphs in proportion to their stroke lengths, with dots kept at least the minimum gap apart; each glyph is thinned to its skeleton, so the drones trace the letter one drone wide; the type is the largest bold size that fits the 900px stage (190px down to a 60px floor); [] for empty or whitespace-only text. */
         function wordPoints(text) {
           var chars = text.replace(/\s/g, '').split('');
           if (!chars.length) return [];
@@ -404,7 +571,10 @@
           // shrink instead of running off the edges.
           var MAXW = TUNING.maxW;
           var size = TUNING.size;
-          var items, gap, totalW;
+          /** @type {WordItem[]} */
+          var items = [];
+          var gap = 0;
+          var totalW = 0;
           function measure() {
             mc.font = TUNING.weight + ' ' + size + 'px ' + TUNING.font;
             gap = size * .18;
@@ -442,6 +612,14 @@
 
         var drones = [], startTime = 0, currentName = '';
         // Drone reuse: drones that already exist morph from their current position; new ones rise from below the canvas.
+        /**
+         * Shows a formation: the drones morph from their current position
+         * (new ones rise from below the canvas). A point's own colour
+         * (p.c, set by heartPair) wins; otherwise the palette cycles.
+         * @param {Point[]} pts - the target positions.
+         * @param {string} name - the caption (e.g. 'Two hearts').
+         * @param {string[]} [palette] - colours to cycle; CFG.COLORS when omitted.
+         */
         function setFormation(pts, name, palette) {
           currentName = name;
           nameEl.textContent = name;
@@ -457,7 +635,18 @@
           startTime = performance.now();
           if (reduced) { drones.forEach(function (d) { d.x = d.tx; d.y = d.ty; }); draw(performance.now()); }
         }
+        /**
+         * Cubic ease-out for the morph.
+         * @param {number} t - progress 0-1.
+         * @returns {number} eased progress 0-1.
+         */
         function ease(t) { return 1 - Math.pow(1 - t, 3); }
+        /**
+         * One frame: background stars, then every drone at its eased
+         * position, bobbing and twinkling. Runs on requestAnimationFrame
+         * via queueDraw() (paused off-screen / under reduced motion).
+         * @param {number} now - the animation timestamp in ms.
+         */
         function draw(now) {
           ctx.fillStyle = '#03040d'; ctx.fillRect(0, 0, W, H);
           var t = (now - startTime) / 1000;
@@ -488,6 +677,10 @@
         // sky comes back into view; drawQueued keeps the restart from
         // starting a second loop while one is already running.
         var skyVisible = true, drawQueued = false;
+        /**
+         * Schedules the next frame, unless one is already queued, the
+         * page prefers reduced motion, or the sky is scrolled out of view.
+         */
         function queueDraw() {
           if (drawQueued || reduced || !skyVisible) return;
           drawQueued = true;
@@ -505,10 +698,10 @@
         // HTML, so the button labels can never drift from the real counts.
         document.querySelectorAll('[data-fleet]').forEach(function (el) {
           var n = FLEET[el.getAttribute('data-fleet')];
-          if (typeof n === 'number') el.textContent = n;
+          if (typeof n === 'number') el.textContent = String(n);
         });
 
-        var wordInput = document.getElementById('customWord');
+        var wordInput = /** @type {HTMLInputElement} */ (document.getElementById('customWord'));
         // Multi-slide words: '+' splits the box into separate moments
         // ("happy + new year" -> Happy, then New Year). Without '+',
         // whole words are packed into slides of at most
@@ -522,6 +715,13 @@
         var wordSlides = [];
         var wordSlideIdx = 0;
         var wordTimer = 0;
+        /**
+         * Splits a word message into slides of at most 8 non-space glyphs.
+         * '+' is an explicit separator; without it, whole words pack into
+         * slides; a single long word is its own slide; at most 6 slides.
+         * @param {string} text - the visitor's message.
+         * @returns {string[]} the slides, in order ([] for blank text).
+         */
         function splitSlides(text) {
           var slides = [];
           function pack(words) {
@@ -545,11 +745,16 @@
           });
           return slides.slice(0, MAX_SLIDES);
         }
+        /** Stops the multi-slide word cycle (switching shapes calls this). */
         function stopWordCycle() {
           if (wordTimer) { clearInterval(wordTimer); wordTimer = 0; }
           wordSlides = [];
           wordSlideIdx = 0;
         }
+        /**
+         * Shows one slide of the word cycle.
+         * @param {number} i - the slide index (0-based).
+         */
         function showWordSlide(i) {
           var slide = wordSlides[i];
           var name = '“' + slide + '” — your words in the sky';
@@ -563,6 +768,12 @@
         // (blank box) instead of drawing anything. With more than
         // one slide, the fleet cycles through them (SLIDE_MS apart,
         // looping) - the re-assembly between slides is the show.
+        /**
+         * Draws the visitor's word (uppercased), splitting it into slides
+         * when it needs more than one, and cycling them every ~4s.
+         * @param {string} fallback - the word to draw when the input is blank.
+         * @returns {boolean} false when there is nothing to draw, else true.
+         */
         function drawWord(fallback) {
           var w = (wordInput.value || fallback).toUpperCase();
           stopWordCycle();
@@ -616,7 +827,7 @@
         }
         document.getElementById('useDesignBtn').addEventListener('click', function () {
           if (!currentName) return;
-          var dream = document.getElementById('inDream');
+          var dream = /** @type {HTMLTextAreaElement} */ (document.getElementById('inDream'));
           // For words, record the whole message (all slides), not just
           // whichever slide is showing - otherwise the team only gets
           // half a proposal.
@@ -633,7 +844,7 @@
           dream.focus();
         });
         // Exposed for tests: the pure geometry, without the DOM.
-        window.WHENWHERE = window.WHENWHERE || {};
+        window.WHENWHERE = window.WHENWHERE || /** @type {WhenWhereNS} */ ({});
         window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts, allocateCounts: allocateCounts, separatePoints: separatePoints, glyphSkeleton: glyphSkeleton, splitSlides: splitSlides };
         window.WHENWHERE.tuning = TUNING;
       })();
@@ -642,10 +853,10 @@
       document.querySelectorAll('[data-interest]').forEach(function (link) {
         link.addEventListener('click', function () {
           var label = link.getAttribute('data-interest');
-          var dream = document.getElementById('inDream');
+          var dream = /** @type {HTMLTextAreaElement} */ (document.getElementById('inDream'));
           if (dream && !dream.value) dream.value = 'Interested in: ' + label + '. ';
           var radios = document.querySelectorAll('input[name="pkg"]');
-          radios.forEach(function (r) {
+          radios.forEach(function (/** @type {HTMLInputElement} */ r) {
             if (label.indexOf(r.value) === 0 || (r.value === 'The Moment' && label.indexOf('Moment') > -1) || (r.value === 'Show + Party' && label.indexOf('Show + Party') > -1) || (r.value === 'The Signature Show' && label.indexOf('Signature') > -1)) r.checked = true;
           });
         });
@@ -659,15 +870,15 @@
          result panel for copy/download instead. A localStorage cooldown (config INQUIRY_KEY)
          plus an in-flight guard stop double submits. */
       (function () {
-        var form = document.getElementById('inquiryForm');
-        var dateInput = document.getElementById('inDate');
-        var flexBox = document.getElementById('inFlexDate');
+        var form = /** @type {HTMLFormElement} */ (document.getElementById('inquiryForm'));
+        var dateInput = /** @type {HTMLInputElement} */ (document.getElementById('inDate'));
+        var flexBox = /** @type {HTMLInputElement} */ (document.getElementById('inFlexDate'));
         var note = document.getElementById('formNote');
         var endpoint = (CFG.INQUIRY_ENDPOINT || '').trim();
         var configured = !!endpoint;
         var COOLDOWN_MS = CFG.COOLDOWN_MS;
         var inFlight = false;
-        var submitBtn = form.querySelector('button[type="submit"]');
+        var submitBtn = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
         function setNote() {
           if (note) note.textContent = configured
             ? 'Submitting sends your inquiry to WhenWhere. We only use your details to reply about your event.'
@@ -695,6 +906,12 @@
            flexible (no date, no warning). UTC date-only math, so a
            date 29 days out reads 29 at any hour of the day. */
         var dateWrap = document.getElementById('f-date');
+        /**
+         * Whole days from today to an ISO date (UTC date-only math, so a
+         * date 29 days out reads 29 at any hour).
+         * @param {string} iso - an ISO date (YYYY-MM-DD).
+         * @returns {number} the days until the date (negative when past).
+         */
         function daysUntil(iso) {
           var p = iso.split('-');
           var picked = Date.UTC(+p[0], +p[1] - 1, +p[2]);
@@ -702,6 +919,10 @@
           var today = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
           return Math.round((picked - today) / 86400000);
         }
+        /**
+         * Shows the 30-day heads-up when the chosen date is a valid date
+         * under 30 days out (and the date is not flexible). Never blocks.
+         */
         function checkSoon() {
           var v = dateInput.value;
           if (!v || flexBox.checked) { dateWrap.classList.remove('warn'); return; }
@@ -713,9 +934,28 @@
         flexBox.addEventListener('change', checkSoon);
         checkSoon();
 
-        function val(id) { return document.getElementById(id).value.trim(); }
+        /**
+         * The trimmed value of a form field.
+         * @param {string} id - the field's element id.
+         * @returns {string} the trimmed value.
+         */
+        function val(id) { return /** @type {HTMLInputElement} */ (document.getElementById(id)).value.trim(); }
+        /**
+         * Marks a field invalid (or clears it) and reports whether it is valid.
+         * @param {string} fieldId - the wrapping .field element's id.
+         * @param {boolean} bad - true when the field fails validation.
+         * @returns {boolean} true when the field is valid.
+         */
         function mark(fieldId, bad) { document.getElementById(fieldId).classList.toggle('invalid', bad); return !bad; }
 
+        /**
+         * Shows the result panel: a thank-you on a confirmed send, the
+         * copy/download fallback otherwise.
+         * @param {string} first - the visitor's first name.
+         * @param {string} lines - the plain-text inquiry (for copy/download).
+         * @param {boolean} sent - true when the send was confirmed.
+         * @param {boolean} sendFailed - true when the send itself failed.
+         */
         function showResult(first, lines, sent, sendFailed) {
           document.getElementById('resultText').textContent = lines;
           document.getElementById('resultHeading').textContent = sent
@@ -733,6 +973,11 @@
           panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
+        /**
+         * Validates the inquiry form (name, email format, type, date
+         * unless flexible) and marks the bad fields.
+         * @returns {boolean} true when the form is valid.
+         */
         function validateForm() {
           var ok = true;
           ok = mark('f-name', !val('inName')) && ok;
@@ -742,15 +987,20 @@
           var flex = flexBox.checked;
           var dateBad = !flex && (!val('inDate') || val('inDate') < dateInput.min);
           ok = mark('f-date', dateBad) && ok;
-          if (!ok) { var bad = document.querySelector('.field.invalid input, .field.invalid select'); if (bad) bad.focus(); }
+          if (!ok) { var bad = /** @type {HTMLElement} */ (document.querySelector('.field.invalid input, .field.invalid select')); if (bad) bad.focus(); }
           return ok;
         }
+        /**
+         * Reads the form into the inquiry object: first name, plain-text
+         * lines for copy/download, and the params posted to Apps Script.
+         * @returns {Inquiry} the inquiry.
+         */
         function collectInquiry() {
           var email = val('inEmail');
           var flex = flexBox.checked;
-          var pkg = (form.querySelector('input[name="pkg"]:checked') || {}).value || 'Not specified yet';
-          var stage = (form.querySelector('input[name="stage"]:checked') || {}).value || 'Not specified yet';
-          var surprise = document.getElementById('inSurprise').checked ? 'Yes' : 'No';
+          var pkg = (/** @type {HTMLInputElement} */ (form.querySelector('input[name="pkg"]:checked')) || {}).value || 'Not specified yet';
+          var stage = (/** @type {HTMLInputElement} */ (form.querySelector('input[name="stage"]:checked')) || {}).value || 'Not specified yet';
+          var surprise = /** @type {HTMLInputElement} */ (document.getElementById('inSurprise')).checked ? 'Yes' : 'No';
           var dateStr = flex ? 'Flexible / not sure yet'
             : new Date(val('inDate') + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
           var first = val('inName').split(' ')[0];
@@ -779,6 +1029,11 @@
           params.set('stage', stage); params.set('surprise', surprise);
           return { first: first, lines: lines, params: params };
         }
+        /**
+         * Posts the inquiry to the Apps Script endpoint (live mode) or
+         * shows the copy/download fallback (demo mode / send failure).
+         * @param {Inquiry} inquiry - the inquiry from collectInquiry().
+         */
         function sendInquiry(inquiry) {
           /* Live mode: POST to the Apps Script endpoint, which appends a row
              to the private Sheet and emails a notification. Replies come
@@ -863,7 +1118,7 @@
           btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         }
         btn.addEventListener('click', function () { setOpen(!links.classList.contains('open')); });
-        links.addEventListener('click', function (ev) { if (ev.target.closest('a')) setOpen(false); });
+        links.addEventListener('click', function (ev) { if (/** @type {HTMLElement} */ (ev.target).closest('a')) setOpen(false); });
         document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') setOpen(false); });
         window.addEventListener('resize', function () { if (window.innerWidth > 620) setOpen(false); });
       })();
@@ -880,6 +1135,12 @@
          Blank cells are ignored, so a half-filled Sheet never wipes text. */
       (function () {
         var HTML_KEYS = { 'hero-headline': true, 'form-label-phone': true, 'form-contact': true };
+        /**
+         * Parses the content Sheet's CSV (RFC 4180: quoted fields, embedded
+         * commas, "" escapes, newlines, CRLF, BOM strip).
+         * @param {string} text - the raw CSV.
+         * @returns {string[][]} the rows (header first).
+         */
         function parseCSV(text) {
           var rows = [], row = [], field = '', inQ = false;
           if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
@@ -902,7 +1163,14 @@
           if (row.length > 1 || row[0] !== '') rows.push(row);
           return rows;
         }
+        /**
+         * Turns CSV rows into the content map (key -> {text, image, alt}),
+         * skipping the header and blank keys.
+         * @param {string[][]} rows - the parsed CSV rows.
+         * @returns {Object.<string, ContentItem>} the content map.
+         */
         function mapFromRows(rows) {
+          /** @type {Object.<string, ContentItem>} */
           var map = {};
           rows.forEach(function (r, idx) {
             if (idx === 0) return; /* header: key,text,image,alt */
@@ -916,6 +1184,12 @@
           });
           return map;
         }
+        /**
+         * Applies the content map to the page: text via textContent
+         * (innerHTML for HTML_KEYS), images via src/alt. Blank values are
+         * ignored, so a half-filled Sheet never wipes text.
+         * @param {Object.<string, ContentItem>} map - the content map.
+         */
         function applyContent(map) {
           if (!map) return;
           var els = document.querySelectorAll('[data-content]');
@@ -961,7 +1235,7 @@
          Draws once and stays still under prefers-reduced-motion, and
          pauses while the hero is scrolled out of view. */
       (function () {
-        var canvas = document.getElementById('heroStars');
+        var canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('heroStars'));
         var hero = canvas && canvas.closest('.hero');
         if (!canvas || !hero) return;
         var ctx = canvas.getContext('2d');
