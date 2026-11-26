@@ -1,6 +1,6 @@
 # When&Where Drone Light Shows
 
-![Hero — the twinkling starfield behind the headline](docs/screenshots/hero.jpg?v=2)
+![Hero — the twinkling starfield behind the headline](docs/screenshots/hero.jpg?v=3)
 
 Custom drone light shows for weddings, vineyard celebrations, alumni
 weekends, corporate events, and festivals across Charlottesville and
@@ -15,8 +15,8 @@ the latest deploy went green.
 
 ## Description
 
-A single static page (`index.html`, ~43 KB) plus `studio.js` (~44 KB,
-the page's JavaScript) and `config.js` (~2 KB, the launch settings),
+A single static page (`index.html`, ~46 KB) plus `studio.js` (~67 KB,
+the page's JavaScript) and `config.js` (~3 KB, the launch settings),
 no framework, no build step to view it) with:
 
 - **Hero + six occasion cards** — weddings, vineyards & wineries,
@@ -73,6 +73,32 @@ Word legibility is measured, not assumed: the minimum dots per letter and
 per word are recorded in [docs/readability-floor.md](docs/readability-floor.md). To play with the settings live, serve the repo
 over HTTP and open [tools/readability-lab.html](tools/readability-lab.html) —
 it re-renders every letter from the real pipeline as you move the controls.
+
+## Screenshots
+
+Captured from the page in dark mode (the page follows the OS — the
+light rendering is the same layout in warm ivory). Served over HTTP
+so the fonts load.
+
+Desktop — 1920×1080, the most common desktop resolution (also the
+hero at the top of this README):
+
+![Drone light shows on desktop — the nav, headline, and starfield hero](docs/screenshots/hero.jpg?v=3)
+
+Mobile — 390×844, a typical phone viewport. The nav collapses to a
+hamburger, the hero stacks, and the buttons go full-width:
+
+![Drone light shows on mobile — hamburger nav, stacked hero](docs/screenshots/hero-mobile.png)
+
+The Formation Studio on a small screen — the same 390×844 viewport,
+scrolled to the canvas. The hearts read clearly at phone width, and
+the caption still names the formation and its drone count:
+
+![The Formation Studio on mobile — interlocking hearts, 80 drones](docs/screenshots/studio-mobile.png)
+
+These are headless captures at a phone viewport, not photos of a
+physical phone — a real-phone screenshot of the studio is still the
+gold standard (see [Still to capture](#still-to-capture-needs-real-shows-cannot-be-faked)).
 
 ## Prerequisites
 
@@ -152,7 +178,7 @@ It is deliberately not strict (see `tsconfig.json`): it catches shape
 mistakes in the geometry + config, not every `getElementById` null.
 The check also runs in CI, alongside the smoke + geometry tests.
 
-The deployed page carries a `<!-- whenwhere-drone-light-shows v1.3.0 -->`
+The deployed page carries a `<!-- whenwhere-drone-light-shows v1.5.1 -->`
 comment at the top so it can be traced to a build; releases are listed
 in [CHANGELOG.md](CHANGELOG.md). To release a new version, bump that
 comment in `index.html` and add a section to the changelog.
@@ -299,8 +325,13 @@ EOF
 Settled-formation stills are plain headless screenshots with
 `--force-prefers-reduced-motion` (which snaps the fleet to its final
 positions), cropped to the stage. The hero still is a plain headless
-screenshot of the top of the page at 1280×900, served over a local
-server so the fonts load. The hero background is the animated
+screenshot of the top of the page at 1920×1080, served over a local
+server so the fonts load. The mobile hero and mobile studio stills are
+the same recipe at 390×844 (a typical phone viewport), with the studio
+shot scrolled to the canvas so the formation is in frame (capture
+script: `~/workspace/.scratch/ww-capture-drone-responsive.mjs`, usage
+`node ww-capture-drone-responsive.mjs <page-url> <dark|light> <width>
+<height> <hero|studio> <out.png>`). The hero background is the animated
 starfield canvas now (not the old hero photo), so it draws the same
 over `file://` or HTTP — the photo is kept in `assets/` only as the
 social-preview (`og:image`) image. Capture it in dark mode (the page follows the OS;
@@ -410,6 +441,23 @@ you — reply from that personal Gmail. If you change the script after
 deploying, **Deploy → Manage deployments → edit the deployment and
 pick the new version**, or the live URL keeps running the old code.
 
+How one inquiry travels:
+
+```mermaid
+flowchart TB
+    V[Visitor fills in the inquiry form] --> P[POST to the Apps Script Web app]
+    P --> D{Same email + date in the last 5 min?}
+    D -- Yes --> O[Return ok — no second row or email]
+    D -- No --> S[Append a row to the Inquiries tab]
+    S --> C[Confirmation email to the visitor]
+    S --> N[Notify email to the manager]
+    O --> T[Page shows: Thank you]
+    C --> T
+```
+
+The full visitor + manager workflow is in
+[docs/inquiry-pipeline.md](docs/inquiry-pipeline.md).
+
 **Still to do:** submit one test inquiry from the live page (and
 delete the test row from the Sheet afterwards) — the endpoint is wired,
 but no live submission has been confirmed yet.
@@ -467,7 +515,10 @@ crossings.
 
 ### Still to capture (needs real shows, cannot be faked)
 
-- **A real phone screenshot** of the studio on a small screen.
+- **A real phone screenshot** of the studio on a small screen. A
+  headless capture at a 390×844 phone viewport now exists
+  (`docs/screenshots/studio-mobile.png`, in the Screenshots section)
+  — a photo of a physical phone is still the gold standard.
 - **A 15-second screen recording** of a full show night, if one exists
   from a rehearsal — that belongs in the gallery/showcase, not the
   hero (the hero is the starfield canvas now).
@@ -498,7 +549,7 @@ whenwhere-drone-light-shows/
 │   ├── inquiry-pipeline.md     # inquiry-to-show workflow, visitor + manager views
 │   ├── readability-floor.md    # measured minimum dots per letter/word (25px floor)
 │   ├── readability-floor/      # probe renders behind that table
-│   └── screenshots/            # hero, formation stills, assembly + finale GIFs (for this README)
+│   └── screenshots/            # hero (desktop + mobile), mobile studio, formation stills, assembly + finale GIFs (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
 │   ├── geometry.mjs            # CDP unit tests: pure geometry, 52 assertions
