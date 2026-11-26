@@ -8,8 +8,10 @@
  *      with this file.
  *
  * 3. Change NOTIFY_EMAIL at the top below to the personal email you
- *    want new-inquiry notifications sent to. It is the only setting
- *    in this file — everything else stays as it is.
+ *    want new-inquiry notifications sent to. SEND_CONFIRMATION (just
+ *    below it) is on by default — it also sends the visitor a short
+ *    confirmation email styled like the notification. Those two are
+ *    the only settings in this file — everything else stays as it is.
  * 4. Deploy → New deployment → Web app
  *      Execute as: Me
  *      Who has access: Anyone
@@ -54,6 +56,13 @@
    listed gets the same email, and Reply-To is still the visitor. */
 var NOTIFY_EMAIL = 'your-personal-email@example.com';
 
+/** On = each NEW inquiry also gets a short confirmation email (see
+ * buildConfirmEmail), styled like the notification — same Night &
+ * Gold wrapper, same field rows, no Sheet link (that stays
+ * owner-only). Off = notify only. Either way the row is saved first
+ * and mail is best-effort; a mail failure never fails a saved inquiry. */
+var SEND_CONFIRMATION = true;
+
 function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -75,6 +84,79 @@ function jsonOut(obj) {
 function safeCell(v) {
   var s = String(v == null ? '' : v);
   return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+}
+
+/**
+ * Builds the confirmation email to the visitor (plain text + HTML).
+ * Pure, like the notify bodies — no SpreadsheetApp/MailApp calls — so
+ * the wording and the escaping can be tested without a live Sheet.
+ *
+ * Same Night & Gold inline styling as the notification email, same
+ * labelled field rows, but no Sheet link: that stays owner-only. The
+ * copy promises only what the site already promises (a personal reply,
+ * usually within two working days — the pipeline doc's stated aim) and
+ * says plainly that nothing else is coming unless they ask — the
+ * confirmation is a receipt, not the start of a mailing list. Replies
+ * go to NOTIFY_EMAIL when it is set (see doPostInner); otherwise they
+ * go to the script owner's Gmail, which is the same inbox.
+ *
+ * @param {string} email The visitor's address.
+ * @param {Array<Array<string>>} fields Label/value pairs, as built in
+ *   doPostInner — only non-empty values are shown.
+ * @param {string} dream The visitor's free-text note, may be empty.
+ * @return {{subject: string, body: string, htmlBody: string}} The three
+ *   parts MailApp.sendEmail takes.
+ */
+function buildConfirmEmail(email, fields, dream) {
+  var subject = 'Thanks \u2014 your drone light show inquiry is in';
+  var lines = ['Thanks \u2014 your inquiry is in.', ''];
+  var rows = '';
+  for (var i = 0; i < fields.length; i++) {
+    var v = (fields[i][1] || '').trim();
+    if (!v) continue;
+    lines.push(fields[i][0] + ': ' + v);
+    rows += '<tr><td style="padding:9px 14px 9px 0;vertical-align:top;width:150px;'
+      + 'font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#d9a441;'
+      + 'font-weight:700;">' + esc(fields[i][0]) + '</td>'
+      + '<td style="padding:9px 0;vertical-align:top;font-size:15px;color:#ffffff;">'
+      + esc(v) + '</td></tr>';
+  }
+  dream = (dream || '').trim();
+  if (dream) {
+    lines.push('', 'In the sky:', dream);
+  }
+  lines.push('', 'Justin will reply personally to confirm your date, usually within two working days.',
+    '', 'This email was sent to ' + email + ' because someone submitted an inquiry with that address.',
+    'If that wasn\u2019t you, just ignore it \u2014 nothing else is coming unless you ask.',
+    '', '\u2014 When&Where', 'whenwhere.biz');
+  var body = lines.join('\n');
+  var dreamHtml = dream
+    ? '<p style="margin:18px 0 0;padding:14px 16px;background:#141a3d;border-radius:8px;'
+      + 'font-size:15px;line-height:1.6;color:#e8ecff;">' + esc(dream).replace(/\r?\n/g, '<br>') + '</p>'
+    : '';
+  var htmlBody =
+    '<div style="background:#060a1a;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;">'
+    + '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" '
+    + 'style="width:100%;max-width:600px;background:#0d1230;border:1px solid #d9a441;'
+    + 'border-radius:12px;padding:28px 30px;">'
+    + '<tr><td style="font-size:11px;letter-spacing:.3em;color:#d9a441;font-weight:700;">'
+    + 'WHEN&amp;WHERE.BIZ</td></tr>'
+    + '<tr><td style="padding:8px 0 4px;font-family:Georgia,serif;font-size:26px;color:#ffffff;">'
+    + 'Thanks \u2014 your inquiry is in</td></tr>'
+    + '<tr><td style="padding:0 0 14px;font-size:13px;color:#aab3d6;">'
+    + 'We\u2019ve got it, and Justin will reply personally to confirm your date, '
+    + 'usually within two working days.</td></tr>'
+    + '<tr><td><table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+    + 'style="width:100%;border-top:1px solid #2a3263;">' + rows + '</table></td></tr>'
+    + (dream ? '<tr><td style="padding:16px 0 0;font-size:11px;letter-spacing:.14em;'
+      + 'text-transform:uppercase;color:#d9a441;font-weight:700;">In the sky</td></tr>'
+      + '<tr><td>' + dreamHtml + '</td></tr>' : '')
+    + '<tr><td style="padding:18px 0 0;font-size:13px;line-height:1.6;color:#aab3d6;">'
+    + 'This email was sent to ' + esc(email) + ' because someone submitted an inquiry '
+    + 'with that address. If that wasn\u2019t you, just ignore it \u2014 nothing else is '
+    + 'coming unless you ask.</td></tr>'
+    + '</table></div>';
+  return { subject: subject, body: body, htmlBody: htmlBody };
 }
 
 function doPost(e) {
@@ -184,8 +266,37 @@ function doPostInner(e) {
       + '<a href="' + esc(sheetUrl) + '" style="color:#d9a441;">View all inquiries in the private Sheet &rarr;</a></td></tr>'
     + '</table></div>';
 
-  MailApp.sendEmail(NOTIFY_EMAIL,
-    'New drone light show inquiry — ' + (p.type || 'event'), text,
-    { htmlBody: html, replyTo: p.email || '', name: 'When&Where.biz' });
+  /* The visitor's confirmation goes FIRST, then the owner
+     notification — if the daily MailApp quota runs out mid-send, the
+     person waiting on proof their inquiry landed gets the email, not
+     just the owner. Both are best-effort; neither can fail the save.
+     Deduped repeats never reach here (they return 'ok' above), so
+     nobody gets a second confirmation. A leftover placeholder
+     NOTIFY_EMAIL is never mailed to — the notify is skipped and the
+     confirmation's replies go to the script owner's Gmail. */
+  var email = (p.email || '').trim();
+  var notifyOk = !!NOTIFY_EMAIL && NOTIFY_EMAIL !== 'your-personal-email@example.com';
+  if (SEND_CONFIRMATION && email) {
+    try {
+      var confirm = buildConfirmEmail(email, fields, dream);
+      var confirmOpts = { htmlBody: confirm.htmlBody, name: 'When&Where.biz' };
+      if (notifyOk) confirmOpts.replyTo = NOTIFY_EMAIL;
+      MailApp.sendEmail(email, confirm.subject, confirm.body, confirmOpts);
+    } catch (confirmErr) {
+      Logger.log('Drone inquiry saved but confirmation email failed: ' + confirmErr);
+    }
+  }
+  /* Notification is best-effort: the row above is already saved, so a
+     mail failure (bad NOTIFY_EMAIL, daily MailApp quota) must not
+     report a saved inquiry as failed. */
+  if (notifyOk) {
+    try {
+      MailApp.sendEmail(NOTIFY_EMAIL,
+        'New drone light show inquiry — ' + (p.type || 'event'), text,
+        { htmlBody: html, replyTo: email, name: 'When&Where.biz' });
+    } catch (mailErr) {
+      Logger.log('Drone inquiry saved but notification email failed: ' + mailErr);
+    }
+  }
   return jsonOut({ ok: true });
 }

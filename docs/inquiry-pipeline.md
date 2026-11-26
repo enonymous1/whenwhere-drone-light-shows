@@ -117,10 +117,7 @@ the manager marks the date in the **main site's** public availability Sheet
 - Hits **Send my inquiry**. If something required is missing, the form
   flags that field and nothing is sent.
 - Sees a **thank-you panel**: "Thank you, {first name} ✦".
-- **The visitor gets no confirmation email.** The thank-you panel is
-  the only confirmation. If the send itself fails, the form shows the
-  inquiry text with copy/download buttons so they can send it another
-  way.
+- **Gets a confirmation email** ("Thanks — your drone light show inquiry is in"), styled like the notification, repeating their details and promising a personal reply usually within two working days. It is a receipt, not a mailing list — nothing else is coming unless they ask. If the send itself fails, the form shows the inquiry text with copy/download buttons so they can send it another way.
 - If they submit the same inquiry twice within 5 minutes (same email +
   same date), the second copy is silently dropped — no second row, no
   second email — but the form still shows the thank-you. A different
@@ -204,9 +201,10 @@ sequenceDiagram
 
 ### Visitor
 
-- Waits. The first thing they hear back is the manager's personal
-  reply — there is no automated "we got it" email, so the two-working-day
-  reply is the moment the pipeline feels alive to them.
+- Gets the confirmation email straight away, then waits for the
+  manager's personal reply — the two-working-day reply is still the
+  moment the pipeline feels alive to them, but the confirmation is the
+  proof the inquiry landed.
 - Replies with the details the manager asked for.
 
 ### What the system does
@@ -299,7 +297,7 @@ sequenceDiagram
 | Form validation + spam guard | Browser + script (5-min same email+date, date floor 2027-01-01 + 14 days) | — |
 | Row saved to `Inquiries` | Script appends it + writes the header once | Inserting the header by hand if the tab already had rows |
 | Manager notified | Email to `NOTIFY_EMAIL` on every submit, with a link to the Sheet | Reading it and replying |
-| Visitor confirmed | Thank-you panel only (shown only when the server answered `ok`) | — (no confirmation email is sent) |
+| Visitor confirmed | Thank-you panel (shown only when the server answered `ok`) + confirmation email to the visitor | — |
 | Reply to the visitor | — | From personal Gmail, same signature, ~2 working days; discreet if a surprise |
 | Availability confirmed | — | Manager confirms it in the reply (no public calendar on this site) |
 | Record the booking + payment | — | `Bookings` / `Payments` tabs in the private Sheet |
@@ -335,30 +333,26 @@ These are things the system does **not** do today. Each is a decision,
 not a bug — but they are the places where the pipeline leans on the
 manager's memory.
 
-1. **No confirmation email to the visitor.** The visitor only sees the
-   thank-you panel. If a "we got it, we'll reply within two working
-   days" email would help, that's a new script feature (send a second
-   email to the visitor's address).
-2. **No pipeline status column.** The `Inquiries` tab records what the
+1. **No pipeline status column.** The `Inquiries` tab records what the
    visitor submitted — including the stage *they* picked (Ready to
    book / Planning ahead / Just curious). It does not track the
    manager's stage (contacted → quoted → booked → flown). Tracking that
    means adding a column to `Inquiries` (e.g. `Status`) or running it
    through the `Bookings` tab.
-3. **One notification address.** `NOTIFY_EMAIL` is a single personal
+2. **One notification address.** `NOTIFY_EMAIL` is a single personal
    Gmail. A second recipient (e.g. James) would mean a second address
    in the script.
-4. **No automated follow-up or reminder.** If the manager hasn't
+3. **No automated follow-up or reminder.** If the manager hasn't
    replied, or a visitor goes quiet after a quote, nothing nudges
    anyone.
-5. **No payment step in the pipeline.** The private Sheet has a
+4. **No payment step in the pipeline.** The private Sheet has a
    `Payments` tab to record payments, but how a deposit is taken
    (link, invoice, bank transfer) is not part of the system.
-6. **No public calendar on this site.** Availability is confirmed by
+5. **No public calendar on this site.** Availability is confirmed by
    the manager in the reply, and the date is blocked by editing the
    **main site's** public Sheet. Nothing warns the manager if a booked
    drone date is still showing Available on the main site.
-7. **Drone shows are 2027-only for now.** The form won't accept a date
+6. **Drone shows are 2027-only for now.** The form won't accept a date
    before 2027-01-01, and requires at least 14 days' lead.
 
 ---
