@@ -110,7 +110,7 @@ const ASSERTIONS = `(() => {
     }
     return out;
   };
-  const inCanvas = (pts) => pts.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.x <= 900 && p.y >= 0 && p.y <= 520);
+  const inCanvas = (pts) => pts.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= 0 && p.x <= 900 && p.y >= 0 && p.y <= 732);
 
   // resample: exactly n points, evenly spaced by arc length.
   const line = [{ x: 0, y: 0 }, { x: 100, y: 0 }];
@@ -150,7 +150,7 @@ const ASSERTIONS = `(() => {
   } else {
     check('heartPair(80): the left gap sits on the right heart', false, 'no single gap to measure from');
   }
-  check('heartPair(80): all points inside the 900x520 canvas', inCanvas(hp80), hp80.length + ' points');
+  check('heartPair(80): all points inside the 900x732 canvas', inCanvas(hp80), hp80.length + ' points');
   // Same single-gap pattern at 200 drones, so it is not a coincidence of 80.
   const hp200 = g.heartPair(200);
   check('heartPair(200): one gap in the left heart, none in the right',
@@ -177,7 +177,7 @@ const ASSERTIONS = `(() => {
   check("wordPoints('WEDDINGS') hits the upper clamp (100)", g.wordPoints('WEDDINGS').length === 100, g.wordPoints('WEDDINGS').length);
   check('wordPoints of empty / whitespace-only text is empty',
     g.wordPoints('').length === 0 && g.wordPoints('   ').length === 0, "'' -> " + g.wordPoints('').length + ", '   ' -> " + g.wordPoints('   ').length);
-  check("wordPoints('TEST') points inside the 900x520 canvas", inCanvas(g.wordPoints('TEST')), 'all inside');
+  check("wordPoints('TEST') points inside the 900x732 canvas", inCanvas(g.wordPoints('TEST')), 'all inside');
 
   // Spaces are gaps, not vanished: 'MARRY ME' has the same 100 drones as
   // 'MARRYME' (a space takes no drones), and the gap between the Y and M
@@ -300,7 +300,7 @@ const ASSERTIONS = `(() => {
   check('skeletonize thins a 3x3 block to its center pixel', countOnes(skel3) === 1 && skel3[2][2] === 1, countOnes(skel3) + ' pixels left');
 
   // finalePts: the count is exactly n, and the points stay inside the
-  // 900x520 canvas at both the shipped count and a smaller one.
+  // 900x732 canvas at both the shipped count and a smaller one.
   const fin240 = g.finalePts(240);
   check('finalePts(240) returns 240 points', fin240.length === 240, fin240.length);
   const fin120 = g.finalePts(120);

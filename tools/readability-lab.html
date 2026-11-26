@@ -118,7 +118,7 @@
 
 <section>
   <h2>Word preview</h2>
-  <canvas id="stage" width="900" height="520"></canvas>
+  <canvas id="stage" width="900" height="732"></canvas>
   <p id="wordReadout"></p>
   <p class="muted">The preview uses the page's own budget formula with the
   current dots-per-glyph setting; the floor is summed per glyph at the
@@ -263,7 +263,7 @@
   function renderWord() {
     var word = (state.word || 'LOVE').toUpperCase();
     var pts = geo.wordPoints(word);
-    stageCtx.fillStyle = '#080c1d'; stageCtx.fillRect(0, 0, 900, 520);
+    stageCtx.fillStyle = '#080c1d'; stageCtx.fillRect(0, 0, 900, 732);
     drawDots(stageCtx, pts, 0, 0);
     var size = fittedSize(word), floor = 0;
     for (var i = 0; i < word.length; i++) {

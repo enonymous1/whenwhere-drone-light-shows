@@ -4,6 +4,24 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## v1.5.3 — 2026-11-26
+
+- 2026-11-26 — The studio canvas is taller: 900×520 → 900×732, so
+  the stage fills the row against the 664px controls list (measured
+  1px above and below at 1280px, down from a 179px gap). The
+  formations do not get bigger — hearts, rings, star, and words are
+  sized by fixed radii and font sizes (or by width), so the taller
+  canvas gives them more vertical breathing room (the two hearts sit
+  further apart) rather than larger drones. The geometry adapts
+  automatically (`W`/`H` are read from the canvas element), so the
+  only code change is the canvas height attribute; the geometry
+  test's `inCanvas` bound moves 520 → 732 (it had flagged finale
+  points at y=571 as outside the old bound — a test artifact, the
+  points were inside the real canvas), and the Readability Lab's
+  preview stage matches the new size. Verified: geometry 52/52,
+  full smoke suite over HTTP, no JS errors; mobile studio shot
+  re-captured.
+
 ## Studio stage centered — 2026-11-26 (no version bump)
 
 - 2026-11-26 — The controls list (six shape buttons, word box +

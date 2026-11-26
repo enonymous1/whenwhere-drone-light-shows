@@ -511,7 +511,7 @@
           return pts;
         }
         // One character at a time, each rastered on a tight canvas just big
-        // enough for the glyph (not the full 900x520 stage): wordPoints runs
+        // enough for the glyph (not the full 900x732 stage): wordPoints runs
         // on every keystroke, and a full-stage canvas per character was ~2MB
         // of allocation per keystroke for a 4-letter word. The glyph is drawn
         // centered, so points translate back by the same offset.
