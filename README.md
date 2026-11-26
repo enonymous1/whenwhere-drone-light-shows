@@ -1,6 +1,6 @@
 # When&Where Drone Light Shows
 
-![Hero — the twinkling starfield behind the headline](docs/screenshots/hero.jpg)
+![Hero — the twinkling starfield behind the headline](docs/screenshots/hero.jpg?v=2)
 
 Custom drone light shows for weddings, vineyard celebrations, alumni
 weekends, corporate events, and festivals across Charlottesville and
