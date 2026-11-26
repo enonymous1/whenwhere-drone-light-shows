@@ -52,7 +52,7 @@ secure additional units. The studio caption says so per design.
 | Interlocking hearts | 80 | fits the opening fleet |
 | Wedding rings | 100 | uses the full opening fleet |
 | Wine glass | 60 | fits the opening fleet |
-| Your words (initials / dates) | split by stroke length, 50–100 | fits the opening fleet |
+| Your words (initials / dates) | split by stroke length, 50–100 per moment | fits the opening fleet — + splits a message into separate moments (max 6) |
 | Starburst | 200 | larger show — extra lead time |
 | Grand finale (twin rings + 12 radiating spikes) | 240 | larger show — extra lead time |
 
@@ -228,7 +228,7 @@ node tests/geometry.mjs         # unit tests for the pure geometry
                                 # (resample, resampleRuns, heartPair,
                                 # thinUniform, wordPoints, skeletonize,
                                 # finalePts, allocateCounts,
-                                # separatePoints) — 45 assertions on
+                                # separatePoints, splitSlides) — 52 assertions on
                                 # window.WHENWHERE.geometry, no JS errors
 node --check tests/smoke.mjs    # syntax-check the tests themselves
 node --check tests/geometry.mjs
@@ -482,7 +482,7 @@ whenwhere-drone-light-shows/
 │   └── screenshots/            # hero, formation stills, assembly + finale GIFs (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
-│   ├── geometry.mjs            # CDP unit tests: pure geometry, 45 assertions
+│   ├── geometry.mjs            # CDP unit tests: pure geometry, 52 assertions
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
 ├── CHANGELOG.md                # one line per shipped change, dated
 ├── README.md

@@ -509,15 +509,73 @@
         });
 
         var wordInput = document.getElementById('customWord');
+        // Multi-slide words: '+' splits the box into separate moments
+        // ("happy + new year" -> Happy, then New Year). Without '+',
+        // whole words are packed into slides of at most
+        // MAX_SLIDE_GLYPHS non-space glyphs - the most that still
+        // reads at the 100-drone budget (HAPPY NEW is 8). A single
+        // word longer than the cap is its own slide. At most
+        // MAX_SLIDES slides; extras are dropped.
+        var MAX_SLIDE_GLYPHS = 8;
+        var MAX_SLIDES = 6;
+        var SLIDE_MS = 4000;
+        var wordSlides = [];
+        var wordSlideIdx = 0;
+        var wordTimer = 0;
+        function splitSlides(text) {
+          var slides = [];
+          function pack(words) {
+            var cur = '', curGlyphs = 0;
+            words.forEach(function (w) {
+              var g = w.replace(/\s/g, '').length;
+              if (!g) return;
+              if (curGlyphs > 0 && curGlyphs + g > MAX_SLIDE_GLYPHS) {
+                slides.push(cur);
+                cur = w; curGlyphs = g;
+              } else {
+                cur = cur ? cur + ' ' + w : w;
+                curGlyphs += g;
+              }
+            });
+            if (cur) slides.push(cur);
+          }
+          String(text || '').split('+').forEach(function (part) {
+            var words = part.trim().split(/\s+/).filter(Boolean);
+            if (words.length) pack(words);
+          });
+          return slides.slice(0, MAX_SLIDES);
+        }
+        function stopWordCycle() {
+          if (wordTimer) { clearInterval(wordTimer); wordTimer = 0; }
+          wordSlides = [];
+          wordSlideIdx = 0;
+        }
+        function showWordSlide(i) {
+          var slide = wordSlides[i];
+          var name = '“' + slide + '” — your words in the sky';
+          if (wordSlides.length > 1) name += ' (' + (i + 1) + ' of ' + wordSlides.length + ')';
+          setFormation(wordPoints(slide), name, PALETTES.word);
+        }
         // One place that turns the word box into a formation: the
         // shape button, the input listener, and the fonts-ready
         // re-render all call this, so the label can never drift
         // between them. Returns false when there is no word to draw
-        // (blank box) instead of drawing anything.
+        // (blank box) instead of drawing anything. With more than
+        // one slide, the fleet cycles through them (SLIDE_MS apart,
+        // looping) - the re-assembly between slides is the show.
         function drawWord(fallback) {
           var w = (wordInput.value || fallback).toUpperCase();
+          stopWordCycle();
           if (!w.trim()) return false;
-          setFormation(wordPoints(w), '“' + w + '” — your words in the sky', PALETTES.word);
+          wordSlides = splitSlides(w);
+          if (!wordSlides.length) return false;
+          showWordSlide(0);
+          if (wordSlides.length > 1) {
+            wordTimer = setInterval(function () {
+              wordSlideIdx = (wordSlideIdx + 1) % wordSlides.length;
+              showWordSlide(wordSlideIdx);
+            }, SLIDE_MS);
+          }
           return true;
         }
         document.querySelectorAll('.shape-btn').forEach(function (btn) {
@@ -528,6 +586,7 @@
             if (key === 'word') {
               drawWord('LOVE');
             } else {
+              stopWordCycle();
               setFormation(SHAPES[key].points(FLEET[key]), SHAPES[key].name, PALETTES[key]);
             }
           });
@@ -558,14 +617,24 @@
         document.getElementById('useDesignBtn').addEventListener('click', function () {
           if (!currentName) return;
           var dream = document.getElementById('inDream');
-          var line = 'Design we liked in the Formation Studio: ' + currentName + '. ';
+          // For words, record the whole message (all slides), not just
+          // whichever slide is showing - otherwise the team only gets
+          // half a proposal.
+          var design = currentName;
+          var wordBtn = document.getElementById('wordBtn');
+          if (wordBtn && wordBtn.classList.contains('active') && wordSlides.length) {
+            design = wordSlides.length > 1
+              ? '“' + wordSlides.join('” then “') + '” — your words in the sky (' + wordSlides.length + ' moments)'
+              : '“' + wordSlides[0] + '” — your words in the sky';
+          }
+          var line = 'Design we liked in the Formation Studio: ' + design + '. ';
           if (dream.value.indexOf(line) === -1) dream.value = (dream.value ? dream.value.replace(/\s+$/, ' ') : '') + line;
           document.getElementById('inquire').scrollIntoView({ behavior: 'smooth' });
           dream.focus();
         });
         // Exposed for tests: the pure geometry, without the DOM.
         window.WHENWHERE = window.WHENWHERE || {};
-        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts, allocateCounts: allocateCounts, separatePoints: separatePoints, glyphSkeleton: glyphSkeleton };
+        window.WHENWHERE.geometry = { resample: resample, resampleRuns: resampleRuns, heartPair: heartPair, thinUniform: thinUniform, wordPoints: wordPoints, skeletonize: skeletonize, finalePts: finalePts, allocateCounts: allocateCounts, separatePoints: separatePoints, glyphSkeleton: glyphSkeleton, splitSlides: splitSlides };
         window.WHENWHERE.tuning = TUNING;
       })();
 

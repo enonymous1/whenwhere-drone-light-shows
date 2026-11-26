@@ -252,6 +252,32 @@ const ASSERTIONS = `(() => {
   check("wordPoints('LOVE') keeps every pair of dots at least 10px apart",
     loveMin >= 10, Math.round(loveMin * 100) / 100 + 'px');
 
+  // splitSlides: '+' marks an explicit break; without one, whole words
+  // are packed into slides of at most 8 non-space glyphs (HAPPY NEW
+  // is the proof that 8 reads at the 100-drone budget). A single long
+  // word is its own slide; at most 6 slides.
+  check("splitSlides splits on '+' into separate moments",
+    JSON.stringify(g.splitSlides('HAPPY + NEW YEAR')) === JSON.stringify(['HAPPY', 'NEW YEAR']),
+    JSON.stringify(g.splitSlides('HAPPY + NEW YEAR')));
+  check("splitSlides honours four '+' breaks",
+    JSON.stringify(g.splitSlides('WILL + YOU + MARRY + ME')) === JSON.stringify(['WILL', 'YOU', 'MARRY', 'ME']),
+    JSON.stringify(g.splitSlides('WILL + YOU + MARRY + ME')));
+  check("splitSlides packs whole words to 8 glyphs without '+'",
+    JSON.stringify(g.splitSlides('HAPPY NEW YEAR')) === JSON.stringify(['HAPPY NEW', 'YEAR']),
+    JSON.stringify(g.splitSlides('HAPPY NEW YEAR')));
+  check("splitSlides keeps a single short word on one slide",
+    JSON.stringify(g.splitSlides('LOVE')) === JSON.stringify(['LOVE']),
+    JSON.stringify(g.splitSlides('LOVE')));
+  check("splitSlides keeps a single long word on its own slide",
+    JSON.stringify(g.splitSlides('CONGRATULATIONS')) === JSON.stringify(['CONGRATULATIONS']),
+    JSON.stringify(g.splitSlides('CONGRATULATIONS')));
+  check("splitSlides drops empty parts and a trailing '+'",
+    JSON.stringify(g.splitSlides('HAPPY +')) === JSON.stringify(['HAPPY']) && JSON.stringify(g.splitSlides('')) === JSON.stringify([]),
+    JSON.stringify(g.splitSlides('HAPPY +')));
+  check('splitSlides caps at 6 slides',
+    g.splitSlides('A + B + C + D + E + F + G + H').length === 6,
+    g.splitSlides('A + B + C + D + E + F + G + H').length + ' slides');
+
   // skeletonize: Zhang-Suen thinning — a solid block collapses to its
   // center, a bar to its middle line. wordPoints relies on this to put
   // the drones on the stroke centerline, one wide.

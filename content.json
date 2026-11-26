@@ -400,5 +400,8 @@
   },
   "why-kicker": {
     "text": "Why drones"
+  },
+  "word-slides-hint": {
+    "text": "Use + to split your message into separate moments — “happy + new year” shows Happy, then New Year."
   }
 }
