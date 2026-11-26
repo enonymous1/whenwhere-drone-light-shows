@@ -33,6 +33,10 @@ at the top of `index.html` and add a section below.
 
 - 2026-11-25 — The visitor now gets a confirmation email ("Thanks — your drone light show inquiry is in"), the same pattern as the main site's R39: `SEND_CONFIRMATION` (on by default) sends it via a pure `buildConfirmEmail(email, fields, dream)` — same Night & Gold wrapper and field rows as the notification, no Sheet link (owner-only), promising a personal reply usually within two working days (the pipeline doc's stated aim), with the "nothing else is coming unless you ask" disclaimer. The confirmation goes FIRST, then the notification; both are best-effort (a mail failure is logged, never fails a saved inquiry); deduped repeats return `ok` before any mail is sent, so nobody gets a second confirmation; a leftover placeholder `NOTIFY_EMAIL` is never mailed to. Verified by a Node mock harness (25 checks): row + both emails in order, dedup, the off-switch, mail failure, placeholder guard, HTML escaping. No page change; re-paste + redeploy the Apps Script as a new version for it to take effect.
 
+## Test harness — 2026-11-25 (no version bump)
+
+- 2026-11-25 — The smoke test's `'E + J': 75` expectation went stale with v1.5.0: `+` now splits a message into separate moments, so the first slide ("E") shows 50 drones, not 75. The space-gap count test moves to `'A B C': 75` (3 glyphs, no `+`), and a new multi-slide check asserts `'E + J'` shows "50 drones" with a "(1 of 2)" caption. Verified over HTTP with the proxy (the file:// run flakes on this box when Google Fonts hangs and studio.js hasn't run before the clicks fire — all counts read empty; that is the known environmental flake, not a code failure). No page change.
+
 ## Backend — 2026-11-20 (no version bump)
 
 - 2026-11-20 — The notification email now links back to the Sheet: both the plain-text and HTML bodies end with a "View all inquiries in the private Sheet" link that opens the spreadsheet at the Inquiries tab (`#gid=`), so one click shows the full history around the row that just landed. No page change; re-paste + redeploy the Apps Script as a new version for it to take effect.

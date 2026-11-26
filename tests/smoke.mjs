@@ -24,7 +24,11 @@ import { pathToFileURL } from 'node:url';
 
 const PAGE = resolve(process.argv[2] || 'index.html');
 const EXPECTED = { heart: 80, rings: 100, glass: 60, star: 200, finale: 240 };
-const WORDS = { LOVE: 100, 'E + J': 75, 2027: 100 };
+const WORDS = { LOVE: 100, 'A B C': 75, 2027: 100 };
+// 'E + J' is no longer one word: since v1.5.0 '+' splits a message into
+// separate moments, so 'E + J' is two slides (E, then J) and the first
+// shows 50 drones with a "(1 of 2)" caption. It is checked separately
+// below, and 'A B C' keeps the space-gap count test (3 glyphs = 75).
 
 // CHROME_PATH wins, then PATH (browser-actions/setup-chrome in CI puts
 // a binary named `chrome` on PATH), then the usual install locations.
@@ -156,6 +160,17 @@ async function main() {
         failures.push(`word ${word}: expected "${count} drones", got "${got}"`);
       }
     }
+    // Multi-slide words (v1.5.0): 'E + J' is two moments. The first
+    // slide is E (50 drones) and the caption says which moment is up.
+    const multi = await evaluate(`(function () {
+      document.getElementById('customWord').value = 'E + J';
+      document.querySelector('[data-shape="word"]').click();
+      return document.getElementById('droneCount').textContent + ' | '
+        + document.getElementById('shapeName').textContent;
+    })()`);
+    if (!multi.startsWith('50 drones') || !multi.includes('(1 of 2)')) {
+      failures.push(`word E + J (multi-slide): expected "50 drones" + "(1 of 2)", got "${multi}"`);
+    }
     // Button labels are derived from FLEET at load; they must match it too.
     const labels = await evaluate(`Array.from(document.querySelectorAll('[data-fleet]'))
       .map((el) => el.getAttribute('data-fleet') + '=' + el.textContent).join(',')`);
@@ -197,7 +212,7 @@ async function main() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log('Smoke test passed: 5 formations + 3 words + button labels + no JS errors.');
+  console.log('Smoke test passed: 5 formations + 3 words + multi-slide + button labels + no JS errors.');
 }
 
 main().catch((err) => { console.error(err.message); process.exit(1); });
