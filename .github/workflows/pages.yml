@@ -60,7 +60,7 @@ jobs:
         with:
           node-version: '22'
 
-      # TypeScript is a dev-only check (jsconfig.json + JSDoc in the .js
+      # TypeScript is a dev-only check (tsconfig.json + JSDoc in the .js
       # files): it verifies the page scripts and emits nothing — the
       # .js files are the shipped code.
       - name: Install dependencies

@@ -148,7 +148,7 @@ npm ci            # once, to install TypeScript (dev-only)
 npx tsc --noEmit  # exit 0 when the types are clean
 ```
 
-It is deliberately not strict (see `jsconfig.json`): it catches shape
+It is deliberately not strict (see `tsconfig.json`): it catches shape
 mistakes in the geometry + config, not every `getElementById` null.
 The check also runs in CI, alongside the smoke + geometry tests.
 
@@ -482,7 +482,7 @@ whenwhere-drone-light-shows/
 ├── index.html                  # the page (source of truth — see Local Development)
 ├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates, content CSV)
 ├── studio.js                   # page JavaScript (studio, form, shortcuts, nav, content loader)
-├── jsconfig.json               # TypeScript check settings for config.js + studio.js (no emit)
+├── tsconfig.json               # TypeScript check settings for config.js + studio.js (no emit)
 ├── package.json                # dev-only: TypeScript for the type check
 ├── package-lock.json           # pins the TypeScript version
 ├── content.json                # the page content, local fallback for the Sheet
