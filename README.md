@@ -415,7 +415,7 @@ endpoint is connected yet…"). To connect (or reconnect):
    Inquiries". This is where inquiries land — keep it private, it holds
    visitor contact details.
 2. In that Sheet: **Extensions → Apps Script**, delete the default
-   `Code.gs` contents, and paste in `docs/apps-script/Code.gs` from
+   `Code.gs` contents, and paste in `apps-script/Code.gs` from
    this repo.
 3. In the script, change the one setting at the top, `NOTIFY_EMAIL`,
    to the personal email you want notifications sent to. It accepts
@@ -530,6 +530,8 @@ whenwhere-drone-light-shows/
 ├── .github/
 │   └── workflows/
 │       └── pages.yml           # build + type-check + smoke test + geometry tests + deploy on push to main
+├── apps-script/
+│   └── Code.gs                 # Apps Script doPost for the inquiry Sheet
 ├── index.html                  # the page (source of truth — see Local Development)
 ├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates, content CSV)
 ├── studio.js                   # page JavaScript (studio, form, shortcuts, nav, content loader)

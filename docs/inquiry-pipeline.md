@@ -50,7 +50,7 @@ Before any of this works, the manager has already done the following
 | Manager does | Where |
 |---|---|
 | Creates the **private bookings Sheet** for the drone site. Never published to web, shared only with people who should see client details. | Google Sheets |
-| Pastes `docs/apps-script/Code.gs` into the private Sheet's Apps Script editor, sets `NOTIFY_EMAIL` to his personal Gmail, and deploys it as a web app (Execute as: Me, Who has access: Anyone). | Apps Script |
+| Pastes `apps-script/Code.gs` into the private Sheet's Apps Script editor, sets `NOTIFY_EMAIL` to his personal Gmail, and deploys it as a web app (Execute as: Me, Who has access: Anyone). | Apps Script |
 | Puts the web app URL in the site as `INQUIRY_ENDPOINT`. | `config.js` |
 | Adds his own tabs alongside `Inquiries` in the private Sheet (e.g. `Bookings`, `Payments`). The script only ever touches `Inquiries`, so their headers are his to type. | Private Sheet |
 
