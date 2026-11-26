@@ -150,10 +150,18 @@ async function main() {
         failures.push(`${shape}: expected "${count} drones", got "${got}"`);
       }
     }
+    // Words are typed, not clicked: the word shape is activated once,
+    // then each word is set + an 'input' event is dispatched, which is
+    // how a real visitor changes the word (the 'input' listener redraws
+    // while the shape is active). Clicking the word button per word
+    // would not work — since v1.5.2, clicking the already-active word
+    // shape resets to the default LOVE.
+    await evaluate(`document.querySelector('[data-shape="word"]').click();`);
     for (const [word, count] of Object.entries(WORDS)) {
       const got = await evaluate(`(function () {
-        document.getElementById('customWord').value = ${JSON.stringify(word)};
-        document.querySelector('[data-shape="word"]').click();
+        var input = document.getElementById('customWord');
+        input.value = ${JSON.stringify(word)};
+        input.dispatchEvent(new Event('input', { bubbles: true }));
         return document.getElementById('droneCount').textContent;
       })()`);
       if (!got.startsWith(`${count} drones`)) {
@@ -163,13 +171,47 @@ async function main() {
     // Multi-slide words (v1.5.0): 'E + J' is two moments. The first
     // slide is E (50 drones) and the caption says which moment is up.
     const multi = await evaluate(`(function () {
-      document.getElementById('customWord').value = 'E + J';
-      document.querySelector('[data-shape="word"]').click();
+      var input = document.getElementById('customWord');
+      input.value = 'E + J';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
       return document.getElementById('droneCount').textContent + ' | '
         + document.getElementById('shapeName').textContent;
     })()`);
     if (!multi.startsWith('50 drones') || !multi.includes('(1 of 2)')) {
       failures.push(`word E + J (multi-slide): expected "50 drones" + "(1 of 2)", got "${multi}"`);
+    }
+    // The example pill (v1.5.2): fills the box with a multi-slide
+    // message and draws it. First slide is HAPPY (100 drones, 1 of 2).
+    const pill = await evaluate(`(function () {
+      document.getElementById('exampleWordBtn').click();
+      return document.getElementById('customWord').value + ' | '
+        + document.getElementById('droneCount').textContent + ' | '
+        + document.getElementById('shapeName').textContent;
+    })()`);
+    if (!pill.startsWith('happy + new year | 100 drones') || !pill.includes('(1 of 2)')) {
+      failures.push(`example pill: expected "happy + new year | 100 drones" + "(1 of 2)", got "${pill}"`);
+    }
+    // The reset button (v1.5.2): puts the default back.
+    const reset = await evaluate(`(function () {
+      document.getElementById('customWord').value = 'SOMETHING ELSE';
+      document.getElementById('wordResetBtn').click();
+      return document.getElementById('customWord').value + ' | '
+        + document.getElementById('droneCount').textContent;
+    })()`);
+    if (!reset.startsWith('LOVE | 100 drones')) {
+      failures.push(`reset button: expected "LOVE | 100 drones", got "${reset}"`);
+    }
+    // Re-clicking the already-active word shape (v1.5.2): resets to LOVE.
+    const reclick = await evaluate(`(function () {
+      var input = document.getElementById('customWord');
+      input.value = 'EMMA';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[data-shape="word"]').click();
+      return document.getElementById('customWord').value + ' | '
+        + document.getElementById('droneCount').textContent;
+    })()`);
+    if (!reclick.startsWith('LOVE | 100 drones')) {
+      failures.push(`word button re-click: expected "LOVE | 100 drones", got "${reclick}"`);
     }
     // Button labels are derived from FLEET at load; they must match it too.
     const labels = await evaluate(`Array.from(document.querySelectorAll('[data-fleet]'))
@@ -212,7 +254,7 @@ async function main() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log('Smoke test passed: 5 formations + 3 words + multi-slide + button labels + no JS errors.');
+  console.log('Smoke test passed: 5 formations + 3 words + multi-slide + example pill + reset + re-click + button labels + no JS errors.');
 }
 
 main().catch((err) => { console.error(err.message); process.exit(1); });

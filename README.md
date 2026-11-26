@@ -22,7 +22,10 @@ launch settings), no framework, no build step to view it) with:
 - **Formation Studio** — an interactive canvas preview. Tap a design and
   the fleet assembles it: interlocking hearts, wedding rings, a wine
   glass, a starburst, a grand finale, or your own words (initials, a year,
-  a short word). Every design is sized to the real fleet — see
+  a short word). The word box has a clickable "happy + new year" example
+  pill (try the `+` split with no typing) and a ↺ reset back to LOVE;
+  clicking the already-active "Your words" button resets to LOVE too.
+  Every design is sized to the real fleet — see
   [Fleet sizing](#fleet-sizing).
 - **Three packages** — The Moment, The Signature Show, Show + Party (with
   DJ & MC), plus how-it-works steps, a drones-vs-fireworks comparison, and

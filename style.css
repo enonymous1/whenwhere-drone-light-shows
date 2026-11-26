@@ -89,6 +89,11 @@ nav{position:sticky;top:0;z-index:50;background:#060a1a;background:color-mix(in 
 .shape-btn.active{border-color:var(--gold-bright);background:#16205a}
 .custom-word{display:flex;gap:8px}
 .custom-word input{flex:1;min-width:0;background:var(--night2);border:1px solid #26305c;border-radius:10px;color:#fff;padding:12px 14px;font-family:"Jost",sans-serif;font-size:1rem}
+.word-reset{flex:0 0 auto;width:46px;background:var(--night2);border:1px solid #26305c;border-radius:10px;color:var(--gold-bright);font-size:1.3rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.word-reset:hover{border-color:var(--gold-bright)}
+.word-example{margin:8px 2px 0;color:var(--night-muted);font-size:.9rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.example-pill{background:transparent;border:1px solid var(--gold-bright);color:var(--gold-bright);border-radius:999px;padding:4px 14px;font-family:"Jost",sans-serif;font-size:.9rem;cursor:pointer}
+.example-pill:hover{background:#16205a}
 .stage{background:#03040d;border:1px solid #26305c;border-radius:var(--radius);overflow:hidden}
 .stage canvas{display:block;width:100%;height:auto}
 .stage figcaption{padding:12px 18px;color:var(--night-muted);font-size:.92rem;border-top:1px solid #1b2450;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}

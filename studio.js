@@ -791,10 +791,13 @@
         }
         document.querySelectorAll('.shape-btn').forEach(function (btn) {
           btn.addEventListener('click', function () {
+            var wasActive = btn.classList.contains('active');
             document.querySelectorAll('.shape-btn').forEach(function (b) { b.classList.remove('active'); });
             btn.classList.add('active');
             var key = btn.getAttribute('data-shape');
             if (key === 'word') {
+              // Clicking the already-active word shape resets to the default.
+              if (wasActive) wordInput.value = 'LOVE';
               drawWord('LOVE');
             } else {
               stopWordCycle();
@@ -814,6 +817,24 @@
         wordInput.addEventListener('input', function () {
           var btn = document.getElementById('wordBtn');
           if (btn.classList.contains('active') && !drawWord(' ')) setFormation([], 'Your words in the sky');
+        });
+        // The example pill fills the box with a multi-slide message and
+        // draws it — the quickest way to see the '+' split work, with
+        // no typing. The reset button puts the default back. Both live
+        // outside the content-tagged hint, so the Sheet loader cannot
+        // wipe them. Neither focuses the box: focusing would pop the
+        // mobile keyboard over the sky the visitor wants to see.
+        document.getElementById('exampleWordBtn').addEventListener('click', function () {
+          wordInput.value = 'happy + new year';
+          var btn = document.getElementById('wordBtn');
+          if (!btn.classList.contains('active')) btn.click();
+          else drawWord(' ');
+        });
+        document.getElementById('wordResetBtn').addEventListener('click', function () {
+          wordInput.value = 'LOVE';
+          var btn = document.getElementById('wordBtn');
+          if (!btn.classList.contains('active')) btn.click();
+          else drawWord(' ');
         });
         // If the word tool is used before Marcellus finishes loading,
         // the glyphs rasterize in the Georgia fallback and the dots

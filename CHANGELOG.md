@@ -4,6 +4,25 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## v1.5.2 — 2026-11-26
+
+- 2026-11-26 — Word tools: the "happy + new year" example in the
+  hint is now a clickable pill ("Try it: [happy + new year]") — it
+  fills the box and draws the message, so a visitor sees the '+'
+  split cycle Happy then New Year with no typing. A small ↺ reset
+  button sits in the word-input row and puts the default LOVE back.
+  Clicking the already-active "Your words" shape button also resets
+  to LOVE. The pill and reset button live outside the content-tagged
+  hint paragraph, so the Sheet loader cannot wipe them; neither
+  focuses the box (focusing would pop the mobile keyboard over the
+  sky). The smoke test's word loop now types via 'input' events
+  (how a real visitor changes the word) instead of clicking the word
+  button per word — clicking it per word would now reset to LOVE —
+  and covers the pill (happy + new year, 100 drones, 1 of 2), the
+  reset (LOVE, 100 drones), and the re-click reset (LOVE, 100
+  drones). Verified over HTTP with the proxy: all smoke assertions
+  pass, geometry 52/52, no JS errors.
+
 ## CSS split — 2026-11-26 (no version bump)
 
 - 2026-11-26 — The inline `<style>` block (lines 26–225, ~14 KB) is
