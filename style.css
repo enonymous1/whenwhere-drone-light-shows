@@ -81,7 +81,7 @@ nav{position:sticky;top:0;z-index:50;background:#060a1a;background:color-mix(in 
 /* ---------- formation studio ---------- */
 .night-sec{background:var(--night);color:var(--night-ink)}
 .night-sec .lede{color:var(--night-muted)}
-.studio{display:grid;grid-template-columns:340px 1fr;gap:26px;margin-top:34px;align-items:start}
+.studio{display:grid;grid-template-columns:340px 1fr;gap:26px;margin-top:34px;align-items:center}
 .shape-list{display:flex;flex-direction:column;gap:10px}
 .shape-btn{text-align:left;background:var(--night2);border:1px solid #26305c;color:var(--night-ink);border-radius:10px;padding:13px 16px;font-family:"Jost",sans-serif;font-size:1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .shape-btn span{color:var(--night-muted);font-size:.85rem}

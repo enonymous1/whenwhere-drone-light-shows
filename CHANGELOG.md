@@ -4,6 +4,20 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Studio stage centered — 2026-11-26 (no version bump)
+
+- 2026-11-26 — The controls list (six shape buttons, word box +
+  reset, two hints, example pill, "Use this design" button) had
+  grown to 664px tall while the stage was 485px, so with
+  `align-items:start` the preview hugged the top and left 179px of
+  empty space below it (measured live at 1280px). `.studio` is now
+  `align-items:center`, so the stage sits centered against the
+  controls — ~90px above and below. The preview itself is
+  unchanged (same 900×520 canvas); only its position in the row
+  moved. No effect on the single-column mobile layout (each item
+  is its own row there, sized to content). Verified by measurement
+  + screenshot.
+
 ## v1.5.2 — 2026-11-26
 
 - 2026-11-26 — Word tools: the "happy + new year" example in the
