@@ -1,6 +1,6 @@
 # When&Where Drone Light Shows
 
-![Hero — a drone light show over a festival crowd](docs/screenshots/hero.jpg)
+![Hero — the twinkling starfield behind the headline](docs/screenshots/hero.jpg)
 
 Custom drone light shows for weddings, vineyard celebrations, alumni
 weekends, corporate events, and festivals across Charlottesville and
@@ -453,7 +453,8 @@ crossings.
 
 - **A real phone screenshot** of the studio on a small screen.
 - **A 15-second screen recording** of a full show night, if one exists
-  from a rehearsal — that belongs on the live site's hero, not here.
+  from a rehearsal — that belongs in the gallery/showcase, not the
+  hero (the hero is the starfield canvas now).
 
 ## Project structure
 
@@ -469,8 +470,8 @@ whenwhere-drone-light-shows/
 ├── tools/
 │   ├── build.py                # image optimization + checks (index.html is the source of truth)
 │   └── readability-lab.html    # word-readability diagnostic (drives the live page)
-├── assets/                     # photos (hero + 6 occasion cards, optimized JPEG)
-│   ├── hero.jpg                # hero (1248×832, 161 KB)
+├── assets/                     # photos (social-preview hero + 6 occasion cards, optimized JPEG)
+│   ├── hero.jpg                # og:image only — the hero is the starfield canvas (1248×832, 161 KB)
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
 ├── docs/
 │   ├── content.csv             # the Sheet contents (key | text | image | alt), 133 rows
