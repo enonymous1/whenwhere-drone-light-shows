@@ -1,7 +1,5 @@
 # When&Where Drone Light Shows
 
-![Hero — the twinkling starfield behind the headline](docs/screenshots/hero.jpg?v=3)
-
 Custom drone light shows for weddings, vineyard celebrations, alumni
 weekends, corporate events, and festivals across Charlottesville and
 Central Virginia. Visitors register interest for the 2027 founding season
@@ -15,9 +13,9 @@ the latest deploy went green.
 
 ## Description
 
-A single static page (`index.html`, ~46 KB) plus `studio.js` (~67 KB,
-the page's JavaScript) and `config.js` (~3 KB, the launch settings),
-no framework, no build step to view it) with:
+A single static page (`index.html`, ~32 KB) plus `style.css` (~13 KB),
+`studio.js` (~67 KB, the page's JavaScript) and `config.js` (~3 KB, the
+launch settings), no framework, no build step to view it) with:
 
 - **Hero + six occasion cards** — weddings, vineyards & wineries,
   corporate, festivals, alumni, proposals & private estates.
@@ -80,8 +78,7 @@ Captured from the page in dark mode (the page follows the OS — the
 light rendering is the same layout in warm ivory). Served over HTTP
 so the fonts load.
 
-Desktop — 1920×1080, the most common desktop resolution (also the
-hero at the top of this README):
+Desktop — 1920×1080, the most common desktop resolution:
 
 ![Drone light shows on desktop — the nav, headline, and starfield hero](docs/screenshots/hero.jpg?v=3)
 
@@ -189,9 +186,13 @@ launch settings in `config.js` (loaded before it). Edit them there,
 never inline: `index.html` carries no inline executable script (only
 the JSON-LD data block), and the build fails if one appears, because
 the page's Content Security Policy allows `script-src 'self'` only.
-The policy also covers the Google Fonts stylesheet (`style-src`), the
-font files (`font-src`), and the form's POST (`connect-src` for the
-Apps Script endpoints). The pure geometry functions are exposed as
+The page's CSS lives in `style.css`, linked from `index.html` — edit
+it there, never inline (the page still has a few inline `style=""`
+attributes on individual elements, so `style-src` keeps
+`'unsafe-inline'` alongside `'self'`). The policy also covers the
+Google Fonts stylesheet (`style-src`), the font files (`font-src`),
+and the form's POST (`connect-src` for the Apps Script endpoints).
+The pure geometry functions are exposed as
 `window.WHENWHERE.geometry` and covered by the geometry unit tests.
 
 The build fails loudly (non-zero exit) on a missing or corrupt photo,
@@ -533,6 +534,7 @@ whenwhere-drone-light-shows/
 ├── apps-script/
 │   └── Code.gs                 # Apps Script doPost for the inquiry Sheet
 ├── index.html                  # the page (source of truth — see Local Development)
+├── style.css                   # the page's CSS, linked from index.html
 ├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates, content CSV)
 ├── studio.js                   # page JavaScript (studio, form, shortcuts, nav, content loader)
 ├── tsconfig.json               # TypeScript check settings for config.js + studio.js (no emit)

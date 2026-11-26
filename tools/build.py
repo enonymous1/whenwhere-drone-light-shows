@@ -129,6 +129,9 @@ def _validate_built_html(html):
     assert '<script src="studio.js">' in html, "index.html does not load studio.js"
     assert html.index('<script src="config.js">') < html.index('<script src="studio.js">'), \
         "config.js must load before studio.js"
+    assert '<link rel="stylesheet" href="style.css"' in html, "index.html does not link style.css"
+    style = BASE / "style.css"
+    assert style.is_file(), "style.css missing"
     for m in re.finditer(r"<script\b[^>]*>", html):
         tag = m.group(0)
         assert "src=" in tag or "application/ld+json" in tag, \

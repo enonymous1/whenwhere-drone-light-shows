@@ -4,6 +4,25 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## CSS split — 2026-11-26 (no version bump)
+
+- 2026-11-26 — The inline `<style>` block (lines 26–225, ~14 KB) is
+  now `style.css`, linked from `index.html` — so the repo's languages
+  read HTML / CSS / JavaScript instead of burying the CSS inside the
+  HTML (the JS was already separate: `config.js` + `studio.js`). The
+  CSP's `style-src` gained `'self'` for the external sheet;
+  `'unsafe-inline'` stays, because the page still has 10 inline
+  `style=""` attributes on individual elements. `tools/build.py` now
+  validates that `style.css` is linked and exists, alongside the
+  config.js/studio.js checks. No visual or behaviour change —
+  verified by computed styles (kicker gold, Marcellus h1, dark navy
+  body, gold button), geometry 52/52, and a desktop screenshot
+  identical to the pre-split render. **Fix, same day:** the first
+  cut ran the CSP edit before computing the `<style>` positions, so
+  the 7-char growth staled the splice indices and the `<link>`
+  landed inside the Google Fonts tag (the page rendered unstyled).
+  The script now edits the CSP first, then locates the block.
+
 ## Mobile hero padding — 2026-11-26 (no version bump)
 
 - 2026-11-26 — The hero ran flush to the viewport edges on narrow
