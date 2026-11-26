@@ -168,32 +168,28 @@
     "text": "How it works"
   },
   "img-alumni": {
-    "image": "assets/alumni.jpg",
-    "alt": "Aerial view of a Virginia vineyard estate at sunset beneath the Blue Ridge mountains"
+    "alt": "Aerial view of a Virginia vineyard estate at sunset beneath the Blue Ridge mountains",
+    "image": "assets/alumni.jpg"
   },
   "img-corporate": {
-    "image": "assets/corporate.jpg",
-    "alt": "Guests filming drone formations bursting like fireworks over an evening reception"
+    "alt": "Guests filming drone formations bursting like fireworks over an evening reception",
+    "image": "assets/corporate.jpg"
   },
   "img-festivals": {
-    "image": "assets/festivals.jpg",
-    "alt": "A guest filming a drone formation of a tree with swirling coloured canopy"
-  },
-  "img-hero": {
-    "image": "assets/hero.jpg",
-    "alt": "A drone light show forming swirling galaxies of colored light above a festival crowd at night"
+    "alt": "A guest filming a drone formation of a tree with swirling coloured canopy",
+    "image": "assets/festivals.jpg"
   },
   "img-proposals": {
-    "image": "assets/proposals.jpg",
-    "alt": "A single red heart formed by drones above a moonlit lake"
+    "alt": "A single red heart formed by drones above a moonlit lake",
+    "image": "assets/proposals.jpg"
   },
   "img-vineyards": {
-    "image": "assets/vineyards.jpg",
-    "alt": "Drones forming the outline of a wine glass in a cloudy night sky"
+    "alt": "Drones forming the outline of a wine glass in a cloudy night sky",
+    "image": "assets/vineyards.jpg"
   },
   "img-weddings": {
-    "image": "assets/weddings.jpg",
-    "alt": "Three glowing hearts formed by drones, reflected in a lake at night"
+    "alt": "Three glowing hearts formed by drones, reflected in a lake at night",
+    "image": "assets/weddings.jpg"
   },
   "occ-alum-desc": {
     "text": "Reunions, alumni weekends and graduation parties at estates and venues around Charlottesville. Class years, mascots and inside jokes — if your class lived it, we can draw it."

@@ -284,9 +284,10 @@ Settled-formation stills are plain headless screenshots with
 `--force-prefers-reduced-motion` (which snaps the fleet to its final
 positions), cropped to the stage. The hero still is a plain headless
 screenshot of the top of the page at 1280×900, served over a local
-server so the photo and fonts load — capture it against `file://` and
-the hero photo comes out as a broken image (that is what the old
-`hero.png` showed). Capture it in dark mode (the page follows the OS;
+server so the fonts load. The hero background is the animated
+starfield canvas now (not the old hero photo), so it draws the same
+over `file://` or HTTP — the photo is kept in `assets/` only as the
+social-preview (`og:image`) image. Capture it in dark mode (the page follows the OS;
 the README's hero is the dark rendering, which is where the themed
 scrollbar shows).
 

@@ -166,7 +166,6 @@ deletes it, the page shows a broken image.
 
 | Key | Where it shows |
 |---|---|
-| `img-hero` | The hero banner at the top of the page |
 | `img-weddings` | The weddings occasion card |
 | `img-proposals` | The proposals occasion card |
 | `img-corporate` | The corporate occasion card |

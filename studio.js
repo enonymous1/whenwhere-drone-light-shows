@@ -858,3 +858,72 @@
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
         else run();
       })();
+
+      /* Hero starfield — the Formation Studio's twinkling background,
+         adapted for the hero. Same sky (#03040d) and the same pale-blue
+         stars (#cdd8ff) that twinkle at .35 + .3*sin(t*1.4 + phase).
+         Draws once and stays still under prefers-reduced-motion, and
+         pauses while the hero is scrolled out of view. */
+      (function () {
+        var canvas = document.getElementById('heroStars');
+        var hero = canvas && canvas.closest('.hero');
+        if (!canvas || !hero) return;
+        var ctx = canvas.getContext('2d');
+        var stars = [];
+        var raf = 0;
+        var start = performance.now();
+        var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        function build() {
+          var w = hero.clientWidth, h = hero.clientHeight;
+          if (!w || !h) return;
+          canvas.width = Math.round(w * dpr);
+          canvas.height = Math.round(h * dpr);
+          stars = [];
+          var n = Math.max(60, Math.round(w * h / 5200));
+          for (var i = 0; i < n; i++) {
+            stars.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.3 + .3, p: Math.random() * Math.PI * 2 });
+          }
+        }
+        function paint(now) {
+          var w = hero.clientWidth, h = hero.clientHeight;
+          var t = (now - start) / 1000;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.fillStyle = '#03040d';
+          ctx.fillRect(0, 0, w, h);
+          for (var i = 0; i < stars.length; i++) {
+            var s = stars[i];
+            ctx.globalAlpha = .35 + .3 * Math.sin(t * 1.4 + s.p);
+            ctx.fillStyle = '#cdd8ff';
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+        function frame(now) {
+          paint(now);
+          raf = requestAnimationFrame(frame);
+        }
+        function startLoop() {
+          if (reduced) { paint(start); return; }
+          if (!raf) raf = requestAnimationFrame(frame);
+        }
+        function stopLoop() {
+          if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        }
+        var resizeTimer = 0;
+        window.addEventListener('resize', function () {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(function () { build(); if (reduced) paint(start); }, 200);
+        });
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting) startLoop(); else stopLoop();
+          }).observe(hero);
+        } else {
+          startLoop();
+        }
+        build();
+        if (reduced) paint(start);
+      })();
