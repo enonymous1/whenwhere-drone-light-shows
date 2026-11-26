@@ -4,6 +4,21 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Mobile hero padding — 2026-11-26 (no version bump)
+
+- 2026-11-26 — The hero ran flush to the viewport edges on narrow
+  screens: `.hero-in`'s `padding:110px 0 84px` (and the ≤620px rule's
+  `padding:72px 0 60px`) overrode `.wrap`'s 20px side padding, so at
+  390px the kicker, headline, subtext, buttons and chips all started
+  at x=0. Measured live at 390px (kicker x=0, width 390) before the
+  fix; both rules now carry 20px horizontal padding
+  (`110px 20px 84px` / `72px 20px 60px`), matching the rest of the
+  page. After the fix the kicker sits at x=20, width 350, and the
+  desktop hero is unchanged (the content area narrows 760→720px,
+  imperceptible — `box-sizing: border-box` keeps it centred). The
+  mobile hero screenshot in the Screenshots section is re-captured
+  with the fix.
+
 ## Types — 2026-11-26 (no version bump)
 
 - 2026-11-26 — JSDoc types on `config.js` + `studio.js`, checked by TypeScript (`npx tsc --noEmit`, TypeScript 5.9 as a dev dependency, `tsconfig.json` at the repo root). The page's own shapes are now typedefs at the top of `studio.js` — `Point` (with an optional `c` for the heart colours), `Tuning`, `WordItem`, `Glyph`, `Drone`, `Star`, `Inquiry`, `ContentItem`, plus the `WhenWhereConfig` shape in `config.js` and the `WhenWhereGeometry` / `WhenWhereNS` export shapes — and every pure function carries `@param` / `@returns` (the four that already had JSDoc now use the `Point` typedef). The checker is deliberately not strict: strictNullChecks would flag every `getElementById(...).value` in the DOM wiring, and the value here is catching shape mistakes in the geometry + config, not proving every element exists. No build step and no emit — the `.js` files are still the shipped code, and the check runs in CI alongside the smoke + geometry tests. Four tiny code fixes the checker needed, all behaviour-identical: `config.js` now declares `var WHENWHERE_CONFIG` (a top-level var in a classic script IS a window property) instead of assigning to `window.WHENWHERE_CONFIG`; `thinUniform`'s for-in loop variable is `key`, not `k` (a number elsewhere in the same function); `wordPoints` initialises `items`/`gap`/`totalW` at declaration; and the fleet-count button label writes `String(n)` instead of a bare number. Verified: `tsc --noEmit` clean, and a deliberate `targetMin: "fifty"` is flagged `Type 'string' is not assignable to type 'number'`; geometry 52/52 and the smoke test pass unchanged, no JS errors. No page change. **Fix, same day:** the first cut used `jsconfig.json`, which `tsc` does not pick up on its own — a bare `npx tsc --noEmit` printed the help text and exited 1. Renamed to `tsconfig.json` (with `allowJs: true`, which a tsconfig does not imply the way a jsconfig does), so the bare command now exits 0; README, CHANGELOG and the workflow now name `tsconfig.json`.
