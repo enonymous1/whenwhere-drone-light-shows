@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<meta name="robots" content="noindex" />
+<title>Formation Workbench — When&amp;Where</title>
+<meta name="description" content="The When&Where Formation Workbench — design a drone light show with a customer before it is built. Unlisted: this page is not linked from the site." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Marcellus&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="wb-head">
+  <div class="wb-head-in">
+    <a class="wb-brand" href="../index.html">When<em>&amp;</em>Where<em>.biz</em></a>
+    <span class="wb-title">Formation Workbench</span>
+    <span class="wb-note">Unlisted — for customer meetings</span>
+    <a class="wb-back" href="../index.html">← Back to the drone site</a>
+  </div>
+</header>
+<main class="wb-main">
+  <div class="wb-grid">
+    <section class="wb-controls" aria-label="Design controls">
+      <h1>Design the show</h1>
+      <p class="wb-lede">Pick a formation, try your words, tune it with the
+      customer — then copy the design to carry into the inquiry.</p>
+
+      <h2>Formation</h2>
+      <div class="shape-row" role="group" aria-label="Formations">
+        <button type="button" class="shape-btn active" data-shape="heart">Interlocking hearts <span class="count"><span data-fleet="heart">80</span> drones</span></button>
+        <button type="button" class="shape-btn" data-shape="rings">Wedding rings <span class="count"><span data-fleet="rings">100</span> drones</span></button>
+        <button type="button" class="shape-btn" data-shape="glass">Wine glass <span class="count"><span data-fleet="glass">60</span> drones</span></button>
+        <button type="button" class="shape-btn" data-shape="star">Starburst <span class="count"><span data-fleet="star">200</span> drones</span></button>
+        <button type="button" class="shape-btn" data-shape="finale">Grand finale <span class="count"><span data-fleet="finale">240</span> drones</span></button>
+        <button type="button" class="shape-btn" id="wordBtn" data-shape="word">Your words</button>
+      </div>
+
+      <h2>Your words</h2>
+      <div class="custom-word">
+        <label class="visually-hidden" for="customWord">Your words in the sky</label>
+        <input id="customWord" type="text" maxlength="40" value="LOVE" autocomplete="off" />
+        <button type="button" id="wordResetBtn" class="word-reset" title="Reset to LOVE">↺</button>
+      </div>
+      <p class="hint">Use + to split your message into separate moments — “happy + new year” shows Happy, then New Year.</p>
+      <p class="word-example"><span>Try it:</span> <button type="button" id="exampleWordBtn" class="example-pill">happy + new year</button></p>
+
+      <h2>Word style</h2>
+      <p class="hint">Applies to your words only — the shapes are fixed.</p>
+      <div class="field">
+        <label for="fontSelect">Font</label>
+        <select id="fontSelect"></select>
+      </div>
+      <div class="field">
+        <label for="sizeRange">Type size <output id="sizeVal">190px</output></label>
+        <input id="sizeRange" type="range" min="60" max="190" step="5" value="190" />
+      </div>
+      <div class="field">
+        <label for="perGlyphRange">Drones per letter <output id="perGlyphVal">25</output></label>
+        <input id="perGlyphRange" type="range" min="5" max="40" step="1" value="25" />
+      </div>
+      <div class="field">
+        <label for="minGapRange">Minimum gap between drones <output id="minGapVal">10.5px</output></label>
+        <input id="minGapRange" type="range" min="5" max="20" step="0.5" value="10.5" />
+      </div>
+      <div class="field">
+        <label for="sampleStep">Sampling step</label>
+        <select id="sampleStep">
+          <option value="2" selected>2px — finer (default)</option>
+          <option value="4">4px — coarser</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="thresholdRange">Raster threshold <output id="thresholdVal">110</output></label>
+        <input id="thresholdRange" type="range" min="80" max="160" step="5" value="110" />
+      </div>
+
+      <h2>Timing</h2>
+      <div class="field">
+        <label for="slideMsRange">Seconds per moment <output id="slideMsVal">4s</output></label>
+        <input id="slideMsRange" type="range" min="2" max="8" step="1" value="4" />
+      </div>
+
+      <h2>Palette</h2>
+      <div class="field">
+        <label for="paletteSelect">Colours</label>
+        <select id="paletteSelect">
+          <option value="default" selected>Formation default</option>
+          <option value="heart">Hearts — pinks</option>
+          <option value="rings">Rings — golds</option>
+          <option value="glass">Glass — blues</option>
+          <option value="star">Starburst — mixed</option>
+          <option value="word">Words — gold &amp; white</option>
+          <option value="finale">Finale — mixed</option>
+        </select>
+      </div>
+
+      <h2>Use this design</h2>
+      <button type="button" id="useDesignBtn" class="btn">Copy this design</button>
+      <p class="hint" id="copyNote">Copies a plain-text summary — paste it into
+      the inquiry or a follow-up email.</p>
+      <pre id="designSummary" class="design-summary" aria-live="polite"></pre>
+    </section>
+
+    <section class="wb-stage" aria-label="Sky preview">
+      <div class="stage">
+        <canvas id="sky" width="900" height="732"></canvas>
+        <p class="caption"><span id="shapeName">Interlocking hearts</span> · <span id="droneCount">80 drones — fits our 100-drone opening fleet</span></p>
+      </div>
+      <p class="wb-stage-note">A preview at the real fleet size — the drones
+      you see are the drones that fly. A larger show needs extra lead
+      time to secure additional units.</p>
+    </section>
+  </div>
+</main>
+<footer class="wb-foot">
+  <p>When&amp;Where.biz — Formation Workbench. Designs preview the
+  100-drone opening fleet. <a href="../index.html">Back to the drone
+  light shows page</a>.</p>
+</footer>
+<script src="../config.js"></script>
+<script src="../geometry.js"></script>
+<script src="workbench.js"></script>
+</body>
+</html>

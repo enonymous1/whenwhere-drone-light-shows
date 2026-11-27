@@ -124,6 +124,15 @@ export interface WhenWhereGeometry {
 export interface WhenWhereNS {
   geometry: WhenWhereGeometry;
   tuning: Tuning;
+  workbench?: WhenWhereWorkbench;
+}
+
+/** The workbench page's current design state (workbench/workbench.js). */
+export interface WhenWhereWorkbench {
+  readonly currentName: string;
+  readonly wordSlides: string[];
+  readonly droneCount: number;
+  readonly paletteOverride: string[] | null;
 }
 
 /**

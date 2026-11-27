@@ -1,10 +1,11 @@
 {
-  // Type-check the page's own scripts (config.js + studio.js) with the
-  // JSDoc annotations in them — // @ts-check at the top of each file
-  // turns the checker on for that file. No emit: the .js files are the
-  // shipped code, TypeScript only verifies them. allowJs is what lets
-  // tsc include the .js files at all (a tsconfig.json does not imply
-  // it the way a jsconfig.json does).
+  // Type-check the page's own scripts (config.js + geometry.js +
+  // studio.js + workbench/workbench.js) with the JSDoc annotations in
+  // them — // @ts-check at the top of each file turns the checker on
+  // for that file. No emit: the .js files are the shipped code,
+  // TypeScript only verifies them. allowJs is what lets tsc include
+  // the .js files at all (a tsconfig.json does not imply it the way a
+  // jsconfig.json does).
   //
   // Deliberately NOT strict: strictNullChecks would flag every
   // getElementById(...).value in the DOM wiring, and the value here is
@@ -12,9 +13,11 @@
   // element exists. Unannotated parameters stay implicit any; annotated
   // functions are checked.
   //
-  // The two files are classic scripts (no import/export), so they share
-  // one global scope — the same way the browser loads them — and a
-  // @typedef declared in config.js is visible in studio.js.
+  // The files are classic scripts (no import/export), so they share one
+  // global scope — the same way the browser loads them — and a @typedef
+  // declared in one file is visible in the others. That is also why
+  // each typedef is declared in exactly one file (declaring the same
+  // name twice is a TS6200 conflict).
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
@@ -24,6 +27,6 @@
     "strict": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["config.js", "geometry.js", "studio.js", "types.d.ts"],
+  "include": ["config.js", "geometry.js", "studio.js", "workbench/workbench.js", "types.d.ts"],
   "exclude": ["node_modules"]
 }

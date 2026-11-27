@@ -528,6 +528,16 @@ crossings.
 - **Magic numbers:** if the studio grows a sixth shape, extract a
   `GEOMETRY` object with named fields (heart size, centers, tilt, gap
   radius, crossing thresholds, spin, pulse).
+- **Formation Workbench:** the studio's geometry already lives in
+  `geometry.js`, shared with the unlisted workbench at
+  [`workbench/index.html`](workbench/index.html) — a design tool for
+  customer meetings (formation picker, word style controls, palette
+  picker, "Copy this design" summary). It is unlisted on purpose:
+  no link from the site, `<meta name="robots" content="noindex">`,
+  opened by bookmark or pasted link. The Skybrush export (canvas 2D
+  → real-world 3D + a `.skyc` writer + a sequencer) is the next
+  phase; see the proposal in
+  `~/workspace/your_files/whenwhere-formation-workbench-proposal.md`.
 
 ### Still to capture (needs real shows, cannot be faked)
 
@@ -561,6 +571,10 @@ whenwhere-drone-light-shows/
 ├── tools/
 │   ├── build.py                # image optimization + checks (index.html is the source of truth)
 │   └── readability-lab.html    # word-readability diagnostic (drives the live page)
+├── workbench/
+│   ├── index.html              # Formation Workbench (unlisted, noindex) — design tool for customer meetings
+│   ├── workbench.js            # workbench renderer + controls (loads ../config.js + ../geometry.js)
+│   └── style.css               # workbench styles (Night & Gold, system-aware; the canvas stays a dark sky)
 ├── assets/                     # photos (social-preview hero + 6 occasion cards, optimized JPEG)
 │   ├── hero.jpg                # og:image only — the hero is the starfield canvas (1248×832, 161 KB)
 │   └── weddings.jpg … proposals.jpg   # occasion cards (900 px wide, ~30–104 KB)
@@ -573,6 +587,7 @@ whenwhere-drone-light-shows/
 │   └── screenshots/            # hero (desktop + mobile), mobile studio, formation stills, assembly + finale GIFs (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
+│   ├── workbench-smoke.mjs     # CDP smoke test for the workbench: formations, words, palette, design summary
 │   ├── geometry.mjs            # CDP unit tests: pure geometry, 52 assertions
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
 ├── CHANGELOG.md                # one line per shipped change, dated

@@ -4,6 +4,35 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Formation Workbench — 2026-11-27 (no version bump)
+
+- 2026-11-27 — Phase 2 of the workbench plan: the Formation Workbench
+  is live as an unlisted sub-page at `workbench/index.html`. It loads
+  the shared `../config.js` (FLEET + PALETTES) and `../geometry.js`
+  and renders the five formations on its own 900×732 canvas (the same
+  dimensions as the drone page, so a design here is the design there),
+  with a formation picker, the word box (example pill + reset +
+  multi-slide `+` split), the Readability Lab's word-style controls
+  (font — all 12 sampled faces, loaded on demand — type size, drones
+  per letter, minimum gap, sampling step, threshold), a per-moment
+  timing slider, a palette picker, and a "Copy this design" button
+  that fills a plain-text summary (formation, drones + fleet fit,
+  palette, word style) and copies it to the clipboard. The palette
+  picker colours every dot when set — otherwise heartPair's per-point
+  colours would win and the picker would look broken on the hearts.
+  Unlisted on purpose: no link from the site, `<meta name="robots"
+  content="noindex">`, a "back to the drone site" link on the page.
+  The page is system-aware light/dark; the canvas stays a dark night
+  sky. Verified: tsc clean, build check passes (including the new
+  workbench validation), geometry 52/52, drone smoke suite over HTTP,
+  workbench smoke test (`tests/workbench-smoke.mjs`, 5 formations +
+  words + multi-slide + pill + font picker + palette picker + design
+  summary + no JS errors) passes, and a live render shows HAPPY in
+  the glass-blues palette. Also fixed in passing: a duplicated
+  "Exposed for tests" comment line in studio.js left by the
+  geometry.js extraction. The Skybrush export is still Phase 3, not
+  built.
+
 ## geometry.js — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The formation geometry is extracted from `studio.js`

@@ -82,6 +82,11 @@ jobs:
         env:
           CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
 
+      - name: Smoke test the Formation Workbench
+        run: node tests/workbench-smoke.mjs
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+
       - name: Geometry unit tests
         run: node tests/geometry.mjs
         env:

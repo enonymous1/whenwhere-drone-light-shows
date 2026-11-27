@@ -274,7 +274,6 @@
           dream.focus();
         });
         // Exposed for tests: the pure geometry, without the DOM.
-        // Exposed for tests: the pure geometry, without the DOM.
         window.WHENWHERE = window.WHENWHERE || /** @type {WhenWhereNS} */ ({});
         window.WHENWHERE.geometry = { resample: GEO.resample, resampleRuns: GEO.resampleRuns, heartPair: GEO.heartPair, thinUniform: GEO.thinUniform, wordPoints: GEO.wordPoints, skeletonize: GEO.skeletonize, finalePts: GEO.finalePts, allocateCounts: GEO.allocateCounts, separatePoints: GEO.separatePoints, glyphSkeleton: GEO.glyphSkeleton, splitSlides: GEO.splitSlides };
         window.WHENWHERE.tuning = GEO.tuning;

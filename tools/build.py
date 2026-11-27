@@ -161,6 +161,46 @@ def _validate_built_html(html):
     print("node --check: OK")
 
 
+def _validate_workbench():
+    """Fail the build if the workbench page is broken.
+
+    The workbench (workbench/index.html) is a second page in the same
+    repo: it loads the shared config + geometry from the repo root and
+    its own workbench.js. Same rules as the main page — config before
+    geometry before workbench.js, no inline executable script (there
+    is no CSP on the workbench, but the rule keeps the scripts
+    checkable), the page carries noindex (it is unlisted), and
+    workbench.js passes node --check.
+    """
+    wb = BASE / "workbench" / "index.html"
+    assert wb.is_file(), "workbench/index.html missing"
+    html = wb.read_text(encoding="utf-8")
+    assert '<meta name="robots" content="noindex"' in html, \
+        "workbench/index.html must carry noindex (it is unlisted)"
+    assert '<script src="../config.js">' in html, "workbench does not load ../config.js"
+    assert '<script src="../geometry.js">' in html, "workbench does not load ../geometry.js"
+    assert '<script src="workbench.js">' in html, "workbench does not load workbench.js"
+    assert html.index('<script src="../config.js">') < html.index('<script src="../geometry.js">'), \
+        "workbench: config.js must load before geometry.js"
+    assert html.index('<script src="../geometry.js">') < html.index('<script src="workbench.js">'), \
+        "workbench: geometry.js must load before workbench.js"
+    assert '<link rel="stylesheet" href="style.css"' in html, "workbench does not link style.css"
+    assert (BASE / "workbench" / "style.css").is_file(), "workbench/style.css missing"
+    for m in re.finditer(r"<script\b[^>]*>", html):
+        tag = m.group(0)
+        assert "src=" in tag, \
+            f"inline executable <script> in workbench — move it to workbench.js: {tag[:80]!r}"
+    wbjs = BASE / "workbench" / "workbench.js"
+    assert wbjs.is_file(), "workbench/workbench.js missing"
+    node = shutil.which("node")
+    if not node:
+        print("WARNING: node not found — skipping workbench JS syntax check (install node to enable it)")
+        return
+    r = subprocess.run([node, "--check", str(wbjs)], capture_output=True, text=True)
+    assert r.returncode == 0, f"workbench.js failed node --check:\n{r.stderr}"
+    print("workbench: node --check OK")
+
+
 def build(write=True):
     """Optimize images, sync tag dimensions, validate.
 
@@ -170,6 +210,7 @@ def build(write=True):
     html = INDEX.read_text(encoding="utf-8")
     html, changed = optimize_images(html, write=write)
     _validate_built_html(html)
+    _validate_workbench()
     return html, changed
 
 
