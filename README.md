@@ -165,9 +165,11 @@ python3 tools/build.py --help
 ### Type-checking the page scripts
 
 `config.js` + `studio.js` carry JSDoc types (`// @ts-check` at the top
-of each file; the shapes are typedefs at the top of `studio.js`). The
-checker verifies them and emits nothing — the `.js` files are the
-shipped code. Run it after editing either file:
+of each file). The shapes live in `types.d.ts` — the `.js` files
+reference them via JSDoc `import()` types, so there is one definition
+of each type. The checker verifies them and emits nothing — the `.js`
+files are the shipped code, and `types.d.ts` is never loaded by the
+browser. Run it after editing any of the three files:
 
 ```bash
 npm ci            # once, to install TypeScript (dev-only)
@@ -540,7 +542,8 @@ whenwhere-drone-light-shows/
 ├── style.css                   # the page's CSS, linked from index.html
 ├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates, content CSV)
 ├── studio.js                   # page JavaScript (studio, form, shortcuts, nav, content loader)
-├── tsconfig.json               # TypeScript check settings for config.js + studio.js (no emit)
+├── types.d.ts                  # shared types (the canonical typedefs; referenced by config.js + studio.js)
+├── tsconfig.json               # TypeScript check settings for config.js + studio.js + types.d.ts (no emit)
 ├── package.json                # dev-only: TypeScript for the type check
 ├── package-lock.json           # pins the TypeScript version
 ├── content.json                # the page content, local fallback for the Sheet

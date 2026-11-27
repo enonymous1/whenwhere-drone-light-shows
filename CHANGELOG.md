@@ -4,6 +4,24 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## types.d.ts — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The shared types now live in `types.d.ts` at the repo
+  root (WhenWhereConfig, Point, Tuning, WordItem, Glyph, Drone, Star,
+  Inquiry, ContentItem, WhenWhereGeometry, WhenWhereNS). config.js +
+  studio.js reference them via JSDoc `import()` types, so there is one
+  definition of each type and the JSDoc never drifts from it. The
+  reason is GitHub's language detection: it counts files by extension,
+  so the JSDoc types in the `.js` files were invisible — the repo
+  showed JavaScript / HTML / CSS / Python and no TypeScript despite
+  TypeScript type-checking the page. A `.d.ts` is counted as
+  TypeScript, so the language now appears (a small slice — the file
+  is ~4 KB against ~131 KB of JavaScript). No runtime change:
+  `types.d.ts` is never loaded by the browser, `tsc --noEmit` still
+  passes, and the negative test still flags a mistyped value
+  (FLEET.heart as a string → TS2322). Verified: tsc clean, geometry
+  52/52, full smoke suite over HTTP, no JS errors.
+
 ## v1.5.3 — 2026-11-26
 
 - 2026-11-26 — The studio canvas is taller: 900×520 → 900×732, so

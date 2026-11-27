@@ -11,17 +11,8 @@
  * Launch settings for the drone light shows page, read by studio.js
  * via window.WHENWHERE_CONFIG. Declared as a top-level var (a var in a
  * classic script IS a window property), so the checker knows the shape
- * on both sides of the load.
- * @typedef {Object} WhenWhereConfig
- * @property {string} INQUIRY_ENDPOINT - Deployed Apps Script Web app URL ('' = demo mode: copy/download fallback).
- * @property {{heart: number, rings: number, glass: number, star: number, finale: number}} FLEET - Drones per formation.
- * @property {string[]} COLORS - Fallback colours per formation.
- * @property {{heart: string[], rings: string[], glass: string[], star: string[], word: string[], finale: string[]}} PALETTES - Colours per formation.
- * @property {number} COOLDOWN_MS - Re-send cooldown in ms.
- * @property {string} INQUIRY_KEY - localStorage key recording the last send.
- * @property {number} DATE_MIN_DAYS_AHEAD - Earliest bookable date, days out.
- * @property {string} DATE_MIN_FLOOR - Earliest bookable date, ISO floor ('2027-01-01').
- * @property {string} CONTENT_CSV_URL - Published Sheet CSV for site content ('' = content.json fallback).
+ * on both sides of the load. The shape itself lives in types.d.ts.
+ * @typedef {import('./types').WhenWhereConfig} WhenWhereConfig
  */
 
 /** @type {WhenWhereConfig} */

@@ -12,81 +12,23 @@
       var CFG = window.WHENWHERE_CONFIG;
       if (!CFG) throw new Error('WHENWHERE_CONFIG is missing — config.js did not load');
 
-      /* ============ Types (JSDoc) ============
+      /* ============ Types ============
          The geometry pipeline is points in, points out; the form is
-         strings in, an inquiry object out. These typedefs are the
-         vocabulary the @param/@returns below use. Point.c is set only
+         strings in, an inquiry object out. The types live in
+         types.d.ts — these lines only bring the names into this file
+         so the @param/@returns below can use them. Point.c is set only
          by heartPair (the two hearts get different colours); everywhere
          else the palette supplies the colour. */
-      /**
-       * A single drone position on the canvas.
-       * @typedef {{x: number, y: number, c?: string}} Point
-       */
-      /**
-       * The word renderer tuning (see TUNING in the studio).
-       * @typedef {Object} Tuning
-       * @property {string} font
-       * @property {number} weight
-       * @property {number} size
-       * @property {number} sizeMin
-       * @property {number} maxW
-       * @property {number} perGlyph
-       * @property {number} targetMin
-       * @property {number} targetMax
-       * @property {number} minGap
-       * @property {number} sampleStep
-       * @property {number} threshold
-       */
-      /**
-       * One layout item in wordPoints: a glyph ({c, w}) or a space gap
-       * ({space: true, w}) — a space takes no drones.
-       * @typedef {{space?: boolean, c?: string, w: number}} WordItem
-       */
-      /**
-       * A rasterised + skeletonised glyph.
-       * @typedef {{cp: Point[], tw: number, th: number}} Glyph
-       */
-      /**
-       * A drone on the canvas: start (sx, sy), current (x, y), target
-       * (tx, ty), delay d, colour c, twinkle phase ph.
-       * @typedef {{sx: number, sy: number, x: number, y: number, tx: number, ty: number, d: number, c: string, ph: number}} Drone
-       */
-      /**
-       * A background star (studio + hero starfields).
-       * @typedef {{x: number, y: number, r: number, p: number}} Star
-       */
-      /**
-       * What collectInquiry() returns: the visitor's first name, the
-       * plain-text inquiry, and the URLSearchParams posted to the
-       * Apps Script endpoint.
-       * @typedef {{first: string, lines: string, params: URLSearchParams}} Inquiry
-       */
-      /**
-       * One row of the content Sheet, keyed by content key.
-       * @typedef {{text: string, image: string, alt: string}} ContentItem
-       */
-      /**
-       * The pure geometry the page exposes for tests and the
-       * Readability Lab (window.WHENWHERE.geometry).
-       * @typedef {Object} WhenWhereGeometry
-       * @property {function(Point[], number): Point[]} resample
-       * @property {function(Point[], number): Point[]} resampleRuns
-       * @property {function(number): Point[]} heartPair
-       * @property {function(Point[], number): Point[]} thinUniform
-       * @property {function(string): Point[]} wordPoints
-       * @property {function(number[][]): number[][]} skeletonize
-       * @property {function(number): Point[]} finalePts
-       * @property {function(number[], number): number[]} allocateCounts
-       * @property {function(Point[], number): Point[]} separatePoints
-       * @property {function(string, number): Glyph} glyphSkeleton
-       * @property {function(string): string[]} splitSlides
-       */
-      /**
-       * The namespace the page exposes (window.WHENWHERE).
-       * @typedef {Object} WhenWhereNS
-       * @property {WhenWhereGeometry} geometry
-       * @property {Tuning} tuning
-       */
+      /** @typedef {import('./types').Point} Point */
+      /** @typedef {import('./types').Tuning} Tuning */
+      /** @typedef {import('./types').WordItem} WordItem */
+      /** @typedef {import('./types').Glyph} Glyph */
+      /** @typedef {import('./types').Drone} Drone */
+      /** @typedef {import('./types').Star} Star */
+      /** @typedef {import('./types').Inquiry} Inquiry */
+      /** @typedef {import('./types').ContentItem} ContentItem */
+      /** @typedef {import('./types').WhenWhereGeometry} WhenWhereGeometry */
+      /** @typedef {import('./types').WhenWhereNS} WhenWhereNS */
       /** @type {WhenWhereNS} */
       var WHENWHERE;
       /* ============ Formation Studio ============ */
