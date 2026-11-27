@@ -50,6 +50,11 @@ at the top of `index.html` and add a section below.
   up · 30s hold · 30s down)"). The workbench smoke test now checks
   the hide/show, the right-column layout, the sticky stage, and the
   takeoff/landing show structure.
+- 2026-11-27 — Hover definitions on the three export settings: the
+  Drone spacing, Show altitude and Hold time names now show a plain-
+  language definition on hover (and on keyboard focus), marked by a
+  dotted underline and a help cursor. The tooltip inverts the page
+  colours so it reads in both light and dark mode.
 
 ## Skybrush export (Phase 3, static) — 2026-11-27 (no version bump)
 

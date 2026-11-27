@@ -128,15 +128,15 @@
       width follows from it, and the takeoff grid uses the same
       spacing); the shape is centred on the altitude.</p>
       <div class="field">
-        <label for="spacingRange">Drone spacing <output id="spacingVal">3m</output></label>
+        <label for="spacingRange"><span class="tip" tabindex="0" data-tip="Distance between neighbouring drones. A wider spacing makes the whole picture larger, and the takeoff grid uses the same spacing, so drones sit this far apart on the ground.">Drone spacing</span> <output id="spacingVal">3m</output></label>
         <input id="spacingRange" type="range" min="1" max="5" step="0.5" value="3" />
       </div>
       <div class="field">
-        <label for="altitudeRange">Show altitude <output id="altitudeVal">40m</output></label>
+        <label for="altitudeRange"><span class="tip" tabindex="0" data-tip="Height of the picture's centre above the ground. The shape is centred on this height, so the top reaches about half the picture's height above it and the bottom about half below.">Show altitude</span> <output id="altitudeVal">40m</output></label>
         <input id="altitudeRange" type="range" min="20" max="100" step="5" value="40" />
       </div>
       <div class="field">
-        <label for="holdRange">Hold time <output id="holdVal">30s</output></label>
+        <label for="holdRange"><span class="tip" tabindex="0" data-tip="How long the finished shape is held in the air, in seconds. The full show is 30s up, this hold, then 30s down.">Hold time</span> <output id="holdVal">30s</output></label>
         <input id="holdRange" type="range" min="10" max="120" step="5" value="30" />
       </div>
       <p class="hint" id="exportStats" aria-live="polite"></p>

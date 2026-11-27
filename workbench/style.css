@@ -53,6 +53,17 @@ a{color:var(--gold)}
 .field select,.field input[type="text"]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-family:inherit;font-size:1rem}
 .field select:focus,.field input[type="text"]:focus{outline:2px solid var(--gold-bright);outline-offset:1px}
 .field input[type="range"]{width:100%;accent-color:var(--gold-bright)}
+/* Hover definitions on the export settings. The dotted underline marks
+   the name as hoverable; the tooltip inverts the page colours so it
+   reads in both light and dark mode. Keyboard focus shows it too. */
+.field label .tip{position:relative;cursor:help;border-bottom:1px dotted var(--muted)}
+.field label .tip:hover::after,.field label .tip:focus-visible::after{
+  content:attr(data-tip);position:absolute;left:0;bottom:calc(100% + 8px);
+  width:max-content;max-width:320px;background:var(--ink);color:var(--bg);
+  border:1px solid var(--line);border-radius:8px;padding:8px 12px;
+  font-size:.88rem;font-weight:400;line-height:1.5;
+  box-shadow:0 6px 20px rgba(0,0,0,.28);z-index:20
+}
 
 /* ---------- formation buttons ---------- */
 .shape-row{display:flex;flex-wrap:wrap;gap:8px}
