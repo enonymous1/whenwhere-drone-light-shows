@@ -449,7 +449,9 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     var pts = currentDesignPoints();
     if (!pts.length) { exportStatsEl.textContent = ''; return; }
     var s = WhenWhereSkyc.buildShow({ name: currentName, points: pts }, exportOptions()).stats;
-    exportStatsEl.textContent = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · ' + s.minHeight + '–' + s.maxHeight + 'm above ground · ' + s.gridWidth + 'm × ' + s.gridDepth + 'm takeoff grid · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm · ' + s.totalSeconds + 's total (30s up · ' + Number(holdRange.value) + 's hold · 30s down)';
+    var statsText = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · ' + s.minHeight + '–' + s.maxHeight + 'm above ground · ' + s.gridWidth + 'm × ' + s.gridDepth + 'm takeoff grid · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm · ' + s.totalSeconds + 's total (30s up · ' + Number(holdRange.value) + 's hold · 30s down)';
+    if (s.maxHeight > 120) statsText += ' · ⚠ highest drone above the 120m ceiling';
+    exportStatsEl.textContent = statsText;
   }
   function bindExportRange(el, outId, fmt) {
     var out = document.getElementById(outId);

@@ -475,7 +475,16 @@ var WhenWhereSkyc = (function () {
         },
       },
       settings: {
-        validation: { minDistance: round3((stats.median / 2) * scale) },
+        validation: {
+          minDistance: round3((stats.median / 2) * scale),
+          // FAA Part 107 ceiling (US): no drone may fly above 120m AGL.
+          maxAltitude: 120,
+          // Below the lowest formation drone the drones are on the
+          // ground grid or climbing straight up — do not check
+          // proximity there, or the tight ground grid would read as
+          // a violation of minDistance.
+          minNavAltitude: minHeight,
+        },
       },
       swarm: { drones: drones },
     };

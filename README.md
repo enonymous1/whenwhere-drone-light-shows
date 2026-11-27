@@ -539,7 +539,11 @@ crossings.
   altitude, and hold-time settings; the picture's width follows from
   the drone spacing, and the takeoff grid has its own spacing so the
   ground zone can stay tight; the stats line shows the actual lowest
-  and highest drone and the grid footprint). The takeoff and landing
+  and highest drone and the grid footprint, and warns if the highest
+  drone would exceed the 120m ceiling). The export declares its safety
+  thresholds in the file — a 120m altitude ceiling, the minimum
+  distance between drones, and a navigation floor at the lowest drone
+  so the ground grid isn't flagged as too close. The takeoff and landing
   are straight lines, 30s each; run Skybrush Live's show adaptation
   for a layered takeoff on a real flight. The export sits in the right
   column under the preview. It is unlisted on purpose:

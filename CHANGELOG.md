@@ -68,6 +68,23 @@ at the top of `index.html` and add a section below.
   altitude tooltip points at the stats line for the exact range.
   Verified: a 1m-grid export passes Skybrush's validator, min takeoff
   2D is 1.000m, and the formation is unchanged.
+- 2026-11-27 — Bounds check against what Skybrush actually accepts
+  (his question): the `.skyc` file format itself has no spacing or
+  altitude caps — the limits live in `settings.validation`, which the
+  show declares, and in Live's load check (takeoff/landing ≥0.4m
+  outdoor). The export now declares all three thresholds: a 120m
+  altitude ceiling (the FAA Part 107 limit), the minimum distance
+  between drones, and a navigation floor at the lowest drone so the
+  tight ground grid isn't flagged as too close. The stats line warns
+  when the highest drone would exceed 120m (at 5m spacing + 100m
+  altitude the hearts top out near 142m), and the altitude tooltip
+  states the ceiling. The lights were already correct — dark during
+  the 30s takeoff and landing, lit only while the shape is held, so
+  the image lights up once the drones are in position. Slider bounds
+  unchanged: Skybrush accepts the full 1–5m drone spacing and 0.5–5m
+  takeoff spacing ranges, and the 0.5m takeoff floor clears Live's
+  0.4m check — though at 1m drone spacing the closest pair is
+  ~0.67m, tight for real show hardware.
 
 ## Skybrush export (Phase 3, static) — 2026-11-27 (no version bump)
 

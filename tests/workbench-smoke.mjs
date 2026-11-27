@@ -327,6 +327,9 @@ async function main() {
         gridDepth: show.stats.gridDepth,
         minHeight: show.stats.minHeight,
         maxHeight: show.stats.maxHeight,
+        validationMaxAltitude: show.show.settings.validation.maxAltitude,
+        validationMinNavAltitude: show.show.settings.validation.minNavAltitude,
+        validationMinDistance: show.show.settings.validation.minDistance,
       });
     })()`);
     const showObj = JSON.parse(show);
@@ -343,6 +346,8 @@ async function main() {
     check('exported show: no two drones share a formation position', showObj.uniqueFormation === 80);
     check('exported show: takeoff grid min 2D distance is 1m (the split takeoff spacing, >= 0.4m Live outdoor threshold)', Math.abs(showObj.minTakeoff2D - 1) < 0.001);
     check('exported show: tight 1m takeoff grid, 8x8m footprint, formation spacing still 3m', showObj.gridSpacing === 1 && showObj.gridWidth === 8 && showObj.gridDepth === 8 && showObj.medianSpacing === 3);
+    check('exported show: validation declares 120m ceiling, minNavAltitude = lowest drone (12.5m), minDistance = half spacing (1.5m)',
+      showObj.validationMaxAltitude === 120 && showObj.validationMinNavAltitude === 12.5 && showObj.validationMinDistance === 1.5);
     check('exported show: height range 12.5-64.9m above ground (matches Live max AHL)', Math.abs(showObj.minHeight - 12.5) < 0.1 && Math.abs(showObj.maxHeight - 64.9) < 0.1);
     check('exported show: home is the ground takeoff slot, first point is the last', showObj.homeIsFirst === true && showObj.firstIsLast === true && showObj.firstOnGround === true);
     check('exported show: min spacing >= 1.5m, median 3m', showObj.minSpacing >= 1.5 && showObj.medianSpacing === 3);
@@ -371,6 +376,22 @@ async function main() {
     })()`);
     check('takeoff spacing slider shrinks the grid footprint only (1m grid, 8x8m, formation still 3m)', typeof tighter === 'string'
       && tighter.includes('8m × 8m takeoff grid') && tighter.includes('typical spacing 3m'));
+    // Raising the altitude and widening the spacing pushes the top of
+    // the picture above the 120m ceiling — the stats line must say so.
+    const overCeiling = await evaluate(`(function () {
+      var s = document.getElementById('spacingRange');
+      s.value = '5';
+      s.dispatchEvent(new Event('input'));
+      var a = document.getElementById('altitudeRange');
+      a.value = '100';
+      a.dispatchEvent(new Event('input'));
+      var text = document.getElementById('exportStats').textContent;
+      s.value = '3'; s.dispatchEvent(new Event('input'));
+      a.value = '40'; a.dispatchEvent(new Event('input'));
+      return text;
+    })()`);
+    check('stats line warns when the highest drone exceeds the 120m ceiling (5m spacing, 100m altitude)', typeof overCeiling === 'string'
+      && overCeiling.includes('above the 120m ceiling'));
     const errors = await evaluate(`window.__errors`);
     check('no JS errors', Array.isArray(errors) && errors.length === 0);
     if (Array.isArray(errors) && errors.length) console.log('JS errors:', errors);
