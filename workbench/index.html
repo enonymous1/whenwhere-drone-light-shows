@@ -125,14 +125,19 @@
       show file — a takeoff from a ground grid, the held shape, and a
       landing back to the grid — ready to load in Skybrush Viewer or
       Live. The drones are spaced by the setting below (the picture's
-      width follows from it, and the takeoff grid uses the same
-      spacing); the shape is centred on the altitude.</p>
+      width follows from it); the takeoff grid has its own spacing,
+      below, so the ground crew is not forced to match the picture's
+      spread. The shape is centred on the altitude.</p>
       <div class="field">
-        <label for="spacingRange"><span class="tip" tabindex="0" data-tip="Distance between neighbouring drones. A wider spacing makes the whole picture larger, and the takeoff grid uses the same spacing, so drones sit this far apart on the ground.">Drone spacing</span> <output id="spacingVal">3m</output></label>
+        <label for="spacingRange"><span class="tip" tabindex="0" data-tip="Distance between neighbouring drones in the air. A wider spacing makes the whole picture larger.">Drone spacing</span> <output id="spacingVal">3m</output></label>
         <input id="spacingRange" type="range" min="1" max="5" step="0.5" value="3" />
       </div>
       <div class="field">
-        <label for="altitudeRange"><span class="tip" tabindex="0" data-tip="Height of the picture's centre above the ground. The shape is centred on this height, so the top reaches about half the picture's height above it and the bottom about half below.">Show altitude</span> <output id="altitudeVal">40m</output></label>
+        <label for="takeoffSpacingRange"><span class="tip" tabindex="0" data-tip="Spacing between drones on the takeoff grid, on the ground. Independent of the in-air spacing — tighten it to shrink the takeoff zone without changing the picture. Minimum 0.5m keeps the grid clear of Skybrush Live's 0.4m outdoor takeoff check.">Takeoff spacing</span> <output id="takeoffSpacingVal">3m</output></label>
+        <input id="takeoffSpacingRange" type="range" min="0.5" max="5" step="0.5" value="3" />
+      </div>
+      <div class="field">
+        <label for="altitudeRange"><span class="tip" tabindex="0" data-tip="Height of the picture's centre above the ground. The shape is centred on this height, so the top reaches about half the picture's height above it and the bottom about half below. The stats line below shows the actual lowest and highest drone for this shape.">Show altitude</span> <output id="altitudeVal">40m</output></label>
         <input id="altitudeRange" type="range" min="20" max="100" step="5" value="40" />
       </div>
       <div class="field">
@@ -142,10 +147,10 @@
       <p class="hint" id="exportStats" aria-live="polite"></p>
       <button type="button" id="exportSkycBtn" class="btn">Export .skyc</button>
       <p class="hint" id="exportNote">The drones take off from a ground
-      grid (the same spacing as the formation), fly straight up to the
-      held shape, then land back on the grid. Takeoff and landing are
-      30s each, straight lines — run Skybrush Live's show adaptation
-      for a layered takeoff on a real flight.</p>
+      grid (its own spacing — see Takeoff spacing above), fly straight
+      up to the held shape, then land back on the grid. Takeoff and
+      landing are 30s each, straight lines — run Skybrush Live's show
+      adaptation for a layered takeoff on a real flight.</p>
     </section>
     </div>
   </div>

@@ -55,6 +55,19 @@ at the top of `index.html` and add a section below.
   language definition on hover (and on keyboard focus), marked by a
   dotted underline and a help cursor. The tooltip inverts the page
   colours so it reads in both light and dark mode.
+- 2026-11-27 — The takeoff grid spacing is now independent of the
+  in-air drone spacing (his call, from the live test): a new Takeoff
+  spacing slider (0.5–5m, default 3m) sets the ground grid, so the
+  ground crew can keep the takeoff zone tight without shrinking the
+  picture in the air — at 1m the hearts' 9×9 grid is 8m × 8m instead
+  of 24m × 24m. The slider floors at 0.5m, clear of Skybrush Live's
+  0.4m outdoor takeoff check. The stats line now shows the actual
+  lowest and highest drone ("12.5–64.9m above ground" for the hearts
+  at 40m — the 64.9m matches what Live reported as max AHL) and the
+  grid footprint, and the export note reports the footprint too. The
+  altitude tooltip points at the stats line for the exact range.
+  Verified: a 1m-grid export passes Skybrush's validator, min takeoff
+  2D is 1.000m, and the formation is unchanged.
 
 ## Skybrush export (Phase 3, static) — 2026-11-27 (no version bump)
 

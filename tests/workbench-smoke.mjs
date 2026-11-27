@@ -265,6 +265,7 @@ async function main() {
       return JSON.stringify({
         btn: !!document.getElementById('exportSkycBtn'),
         spacing: !!document.getElementById('spacingRange'),
+        takeoffSpacing: !!document.getElementById('takeoffSpacingRange'),
         altitude: !!document.getElementById('altitudeRange'),
         hold: !!document.getElementById('holdRange'),
         stats: document.getElementById('exportStats').textContent,
@@ -272,17 +273,19 @@ async function main() {
       });
     })()`);
     const exportUiObj = JSON.parse(exportUi);
-    check('export UI present (button + 3 sliders + stats + note)', exportUiObj.btn && exportUiObj.spacing && exportUiObj.altitude && exportUiObj.hold);
-    check('export stats populate on load (80 drones, 3m spacing, 90s total)', typeof exportUiObj.stats === 'string'
-      && exportUiObj.stats.startsWith('80 drones') && exportUiObj.stats.includes('typical spacing 3m') && exportUiObj.stats.includes('90s total'));
+    check('export UI present (button + 4 sliders + stats + note)', exportUiObj.btn && exportUiObj.spacing && exportUiObj.takeoffSpacing && exportUiObj.altitude && exportUiObj.hold);
+    check('export stats populate on load (80 drones, 3m spacing, 90s total, height range, grid)', typeof exportUiObj.stats === 'string'
+      && exportUiObj.stats.startsWith('80 drones') && exportUiObj.stats.includes('typical spacing 3m') && exportUiObj.stats.includes('90s total')
+      && exportUiObj.stats.includes('above ground') && exportUiObj.stats.includes('takeoff grid'));
     check('export note describes the ground-grid takeoff + landing', typeof exportUiObj.note === 'string'
       && exportUiObj.note.replace(/\s+/g, ' ').includes('ground grid')
-      && exportUiObj.note.includes('30s each') && exportUiObj.note.includes('show adaptation'));
+      && exportUiObj.note.replace(/\s+/g, ' ').includes('30s each')
+      && exportUiObj.note.replace(/\s+/g, ' ').includes('show adaptation'));
     const show = await evaluate(`(function () {
       var wb = window.WHENWHERE.workbench;
       var show = WhenWhereSkyc.buildShow(
         { name: wb.currentName, points: wb.points },
-        { spacing: 3, altitude: 40, holdSeconds: 30, separatePoints: window.WHENWHERE.geometry.separatePoints });
+        { spacing: 3, takeoffSpacing: 1, altitude: 40, holdSeconds: 30, separatePoints: window.WHENWHERE.geometry.separatePoints });
       var drones = show.show.swarm.drones;
       function min2D(pts) {
         var m = Infinity;
@@ -319,6 +322,11 @@ async function main() {
         firstOnGround: first.every(function (p) { return p[2] === 0; }),
         minSpacing: show.stats.minSpacing,
         medianSpacing: show.stats.medianSpacing,
+        gridSpacing: show.stats.gridSpacing,
+        gridWidth: show.stats.gridWidth,
+        gridDepth: show.stats.gridDepth,
+        minHeight: show.stats.minHeight,
+        maxHeight: show.stats.maxHeight,
       });
     })()`);
     const showObj = JSON.parse(show);
@@ -333,7 +341,9 @@ async function main() {
       showObj.pointsPerDrone === 4 && JSON.stringify(showObj.pointTimes) === '[0,30,60,90]'
       && showObj.takeoffTime === 0 && showObj.landingTime === 90);
     check('exported show: no two drones share a formation position', showObj.uniqueFormation === 80);
-    check('exported show: takeoff grid min 2D distance is 3m (>= 0.4m Live outdoor threshold)', Math.abs(showObj.minTakeoff2D - 3) < 0.001);
+    check('exported show: takeoff grid min 2D distance is 1m (the split takeoff spacing, >= 0.4m Live outdoor threshold)', Math.abs(showObj.minTakeoff2D - 1) < 0.001);
+    check('exported show: tight 1m takeoff grid, 8x8m footprint, formation spacing still 3m', showObj.gridSpacing === 1 && showObj.gridWidth === 8 && showObj.gridDepth === 8 && showObj.medianSpacing === 3);
+    check('exported show: height range 12.5-64.9m above ground (matches Live max AHL)', Math.abs(showObj.minHeight - 12.5) < 0.1 && Math.abs(showObj.maxHeight - 64.9) < 0.1);
     check('exported show: home is the ground takeoff slot, first point is the last', showObj.homeIsFirst === true && showObj.firstIsLast === true && showObj.firstOnGround === true);
     check('exported show: min spacing >= 1.5m, median 3m', showObj.minSpacing >= 1.5 && showObj.medianSpacing === 3);
     // Moving the spacing slider re-derives the stats (narrower spacing
@@ -346,6 +356,21 @@ async function main() {
     })()`);
     check('spacing slider re-derives stats (2m, same 80 drones, narrower)', typeof narrower === 'string'
       && narrower.startsWith('80 drones') && narrower.includes('typical spacing 2m'));
+    // Moving the takeoff spacing slider re-derives the grid footprint
+    // in the stats line but leaves the formation (typical spacing 3m,
+    // after the spacing slider above set it to 2m — reset first) alone.
+    // Reset the formation spacing to 3m, then tighten the ground grid.
+    const tighter = await evaluate(`(function () {
+      var s = document.getElementById('spacingRange');
+      s.value = '3';
+      s.dispatchEvent(new Event('input'));
+      var t = document.getElementById('takeoffSpacingRange');
+      t.value = '1';
+      t.dispatchEvent(new Event('input'));
+      return document.getElementById('exportStats').textContent;
+    })()`);
+    check('takeoff spacing slider shrinks the grid footprint only (1m grid, 8x8m, formation still 3m)', typeof tighter === 'string'
+      && tighter.includes('8m × 8m takeoff grid') && tighter.includes('typical spacing 3m'));
     const errors = await evaluate(`window.__errors`);
     check('no JS errors', Array.isArray(errors) && errors.length === 0);
     if (Array.isArray(errors) && errors.length) console.log('JS errors:', errors);

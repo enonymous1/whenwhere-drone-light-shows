@@ -78,9 +78,13 @@
 // back, so the user can see how big the picture is and how close the
 // closest pair ends up.
 //
-// The takeoff grid uses the same spacing as the formation (so the grid
-// is safely spaced in 2D by construction) and is centred under the
-// formation at (0, 0, 0). Each formation drone is paired to a grid slot
+// The takeoff grid has its own spacing, independent of the formation
+// spacing, so the ground crew can keep the takeoff zone tight without
+// shrinking the picture in the air. It is safely spaced in 2D by
+// construction — the grid spacing is the minimum ground-plane
+// separation, and the UI floors it at 0.5m, clear of Live's 0.4m
+// outdoor threshold. The grid is centred under the formation at
+// (0, 0, 0). Each formation drone is paired to a grid slot
 // by sorting both by y (then by the other axis) and pairing in order,
 // so nearby formation drones take off from nearby grid slots and the
 // straight-line takeoff paths cross as little as possible.
@@ -189,11 +193,11 @@ var WhenWhereSkyc = (function () {
 
   /**
    * A regular takeoff grid on the ground (z=0), centred at (0, 0),
-   * `spacing` apart — the same spacing as the formation, so the grid
-   * is safely spaced in 2D by construction (Skybrush Live checks the
-   * first/last trajectory points' ground-plane separation against a
-   * 0.4m outdoor threshold; a 3m grid clears it by an order of
-   * magnitude). Near-square: cols = ceil(sqrt(n)), rows = ceil(n/cols).
+   * `spacing` apart — so the grid is safely spaced in 2D by
+   * construction (Skybrush Live checks the first/last trajectory
+   * points' ground-plane separation against a 0.4m outdoor threshold;
+   * the UI floors the spacing at 0.5m). Near-square:
+   * cols = ceil(sqrt(n)), rows = ceil(n/cols).
    * @param {number} count - number of grid slots.
    * @param {number} spacing - grid spacing in meters.
    * @returns {number[][]} [x, y, 0] slots, row-major (y, then x).
@@ -346,21 +350,33 @@ var WhenWhereSkyc = (function () {
   }
 
   /**
+   * Round to 1 decimal — for the human-facing heights and grid
+   * footprint, where 0.1m is plenty (and it matches what Skybrush
+   * Live shows for max AHL).
+   * @param {number} v
+   * @returns {number}
+   */
+  function round1(v) {
+    return Math.round(v * 10) / 10;
+  }
+
+  /**
    * Build the show.json for one formation: a takeoff from a ground grid,
    * the held shape, and a landing back to the grid.
    *
    * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
    *   The formation: its name and its canvas points (c = the drone's
    *   hex colour, as drawn; defaults to white when absent).
-   * @param {{ spacing: number, altitude: number, holdSeconds: number,
+   * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
    *   spacing = the nominal drone spacing in meters (the median
-   *   nearest-neighbour distance maps to this, and the takeoff grid uses
-   *   the same spacing); altitude = the show altitude in meters (the
-   *   formation is centred on it); holdSeconds = how long the shape is
-   *   held; separatePoints = geometry's min-gap enforcement, used to
-   *   push near-duplicate points apart.
-   * @returns {{ show: object, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number } }}
+   *   nearest-neighbour distance maps to this); takeoffSpacing = the
+   *   ground grid spacing in meters, independent of the formation
+   *   spacing (falls back to spacing when absent); altitude = the show
+   *   altitude in meters (the formation is centred on it); holdSeconds
+   *   = how long the shape is held; separatePoints = geometry's
+   *   min-gap enforcement, used to push near-duplicate points apart.
+   * @returns {{ show: object, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number, minHeight: number, maxHeight: number, gridSpacing: number, gridWidth: number, gridDepth: number } }}
    */
   function buildShow(design, options) {
     var pts = design.points.map(function (p) {
@@ -385,10 +401,21 @@ var WhenWhereSkyc = (function () {
         round3(options.altitude + (H / 2 - p.y) * scale),
       ];
     });
-    // Takeoff grid on the ground, same spacing as the formation.
-    var grid = takeoffGrid(pts.length, options.spacing);
+    // The actual lowest and highest drone heights (above home level),
+    // from the mapped formation — what Skybrush Live reports as the
+    // height range, not the design canvas height.
+    var heights = formation.map(function (p) { return p[2]; });
+    var minHeight = round1(Math.min.apply(null, heights));
+    var maxHeight = round1(Math.max.apply(null, heights));
+    // Takeoff grid on the ground, its own spacing (independent of the
+    // formation). Falls back to the formation spacing when the caller
+    // does not pass one.
+    var takeoffSpacing = options.takeoffSpacing == null ? options.spacing : options.takeoffSpacing;
+    var grid = takeoffGrid(pts.length, takeoffSpacing);
     var gridCols = Math.ceil(Math.sqrt(pts.length));
     var gridRows = Math.ceil(pts.length / gridCols);
+    var gridWidth = round1((gridCols - 1) * takeoffSpacing);
+    var gridDepth = round1((gridRows - 1) * takeoffSpacing);
     // Pair each formation drone to a grid slot: sort both by y, then
     // by the other axis, and pair in order, so nearby formation drones
     // take off from nearby grid slots and the straight-line takeoff
@@ -464,6 +491,11 @@ var WhenWhereSkyc = (function () {
         totalSeconds: total,
         gridCols: gridCols,
         gridRows: gridRows,
+        minHeight: minHeight,
+        maxHeight: maxHeight,
+        gridSpacing: takeoffSpacing,
+        gridWidth: gridWidth,
+        gridDepth: gridDepth,
       },
     };
   }
@@ -473,9 +505,9 @@ var WhenWhereSkyc = (function () {
    * takeoff from a ground grid, the held shape, and a landing back to
    * the grid, ready to download.
    * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
-   * @param {{ spacing: number, altitude: number, holdSeconds: number,
+   * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
-   * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number } }}
+   * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number, minHeight: number, maxHeight: number, gridSpacing: number, gridWidth: number, gridDepth: number } }}
    */
   function exportSkyc(design, options) {
     var built = buildShow(design, options);

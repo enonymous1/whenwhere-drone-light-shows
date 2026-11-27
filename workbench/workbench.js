@@ -409,6 +409,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
 
   // ---- Export to Skybrush (.skyc) ----
   var spacingRange = /** @type {HTMLInputElement} */ (document.getElementById('spacingRange'));
+  var takeoffSpacingRange = /** @type {HTMLInputElement} */ (document.getElementById('takeoffSpacingRange'));
   var altitudeRange = /** @type {HTMLInputElement} */ (document.getElementById('altitudeRange'));
   var holdRange = /** @type {HTMLInputElement} */ (document.getElementById('holdRange'));
   var exportStatsEl = document.getElementById('exportStats');
@@ -431,6 +432,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
   function exportOptions() {
     return {
       spacing: Number(spacingRange.value),
+      takeoffSpacing: Number(takeoffSpacingRange.value),
       altitude: Number(altitudeRange.value),
       holdSeconds: Number(holdRange.value),
       separatePoints: GEO.separatePoints,
@@ -447,7 +449,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     var pts = currentDesignPoints();
     if (!pts.length) { exportStatsEl.textContent = ''; return; }
     var s = WhenWhereSkyc.buildShow({ name: currentName, points: pts }, exportOptions()).stats;
-    exportStatsEl.textContent = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm · ' + s.totalSeconds + 's total (30s up · ' + Number(holdRange.value) + 's hold · 30s down)';
+    exportStatsEl.textContent = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · ' + s.minHeight + '–' + s.maxHeight + 'm above ground · ' + s.gridWidth + 'm × ' + s.gridDepth + 'm takeoff grid · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm · ' + s.totalSeconds + 's total (30s up · ' + Number(holdRange.value) + 's hold · 30s down)';
   }
   function bindExportRange(el, outId, fmt) {
     var out = document.getElementById(outId);
@@ -457,6 +459,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     });
   }
   bindExportRange(spacingRange, 'spacingVal', function (v) { return v + 'm'; });
+  bindExportRange(takeoffSpacingRange, 'takeoffSpacingVal', function (v) { return v + 'm'; });
   bindExportRange(altitudeRange, 'altitudeVal', function (v) { return v + 'm'; });
   bindExportRange(holdRange, 'holdVal', function (v) { return v + 's'; });
   document.getElementById('exportSkycBtn').addEventListener('click', function () {
@@ -472,7 +475,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' drones, ' + out.stats.width + 'm wide at ' + Number(altitudeRange.value) + 'm, ' + out.stats.totalSeconds + 's total (30s takeoff from a ' + out.stats.gridCols + '×' + out.stats.gridRows + ' ground grid, ' + Number(holdRange.value) + 's hold, 30s landing).';
+    exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' drones, ' + out.stats.width + 'm wide at ' + Number(altitudeRange.value) + 'm, ' + out.stats.totalSeconds + 's total (30s takeoff from a ' + out.stats.gridCols + '×' + out.stats.gridRows + ' ground grid, ' + out.stats.gridWidth + 'm × ' + out.stats.gridDepth + 'm, ' + Number(holdRange.value) + 's hold, 30s landing).';
   });
 
   // Exposed for tests: the pure geometry, without the DOM, plus the

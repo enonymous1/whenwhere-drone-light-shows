@@ -151,6 +151,13 @@ export interface WhenWhereSkycStats {
   /** The takeoff grid's columns and rows. */
   readonly gridCols: number;
   readonly gridRows: number;
+  /** Lowest and highest drone height above home level, in metres. */
+  readonly minHeight: number;
+  readonly maxHeight: number;
+  /** The takeoff grid spacing and its footprint, in metres. */
+  readonly gridSpacing: number;
+  readonly gridWidth: number;
+  readonly gridDepth: number;
 }
 
 /** One formation, as the .skyc exporter takes it. */
@@ -162,6 +169,8 @@ export interface WhenWhereSkycDesign {
 /** The export settings (workbench/skyc.js). */
 export interface WhenWhereSkycOptions {
   readonly spacing: number;
+  /** Ground grid spacing, independent of the formation spacing. */
+  readonly takeoffSpacing?: number;
   readonly altitude: number;
   readonly holdSeconds: number;
   readonly title?: string;

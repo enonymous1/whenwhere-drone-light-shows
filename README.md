@@ -535,12 +535,14 @@ crossings.
   show when words are active, palette picker, "Copy this design"
   summary). It also exports the formation on screen as a Skybrush
   `.skyc` show file — a takeoff from a ground grid, the held shape,
-  and a landing back to the grid (spacing, altitude, and hold-time
-  settings; the picture's width follows from the spacing, and the
-  grid uses the same spacing). The takeoff and landing are straight
-  lines, 30s each; run Skybrush Live's show adaptation for a layered
-  takeoff on a real flight. The export sits in the right column under
-  the preview. It is unlisted on purpose:
+  and a landing back to the grid (drone spacing, takeoff spacing,
+  altitude, and hold-time settings; the picture's width follows from
+  the drone spacing, and the takeoff grid has its own spacing so the
+  ground zone can stay tight; the stats line shows the actual lowest
+  and highest drone and the grid footprint). The takeoff and landing
+  are straight lines, 30s each; run Skybrush Live's show adaptation
+  for a layered takeoff on a real flight. The export sits in the right
+  column under the preview. It is unlisted on purpose:
   no link from the site, `<meta name="robots" content="noindex">`,
   opened by bookmark or pasted link. The sequencer is the next
   phase; see the proposal in
