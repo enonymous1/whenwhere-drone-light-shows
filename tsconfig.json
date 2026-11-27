@@ -24,6 +24,6 @@
     "strict": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["config.js", "studio.js", "types.d.ts"],
+  "include": ["config.js", "geometry.js", "studio.js", "types.d.ts"],
   "exclude": ["node_modules"]
 }

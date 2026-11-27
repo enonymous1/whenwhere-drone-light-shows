@@ -14,7 +14,8 @@ the latest deploy went green.
 ## Description
 
 A single static page (`index.html`, ~32 KB) plus `style.css` (~13 KB),
-`studio.js` (~67 KB, the page's JavaScript) and `config.js` (~3 KB, the
+`studio.js` (~38 KB, the page's JavaScript), `geometry.js` (~29 KB,
+the formation geometry — see below) and `config.js` (~3 KB, the
 launch settings), no framework, no build step to view it) with:
 
 - **Hero + six occasion cards** — weddings, vineyards & wineries,
@@ -164,12 +165,13 @@ python3 tools/build.py --help
 
 ### Type-checking the page scripts
 
-`config.js` + `studio.js` carry JSDoc types (`// @ts-check` at the top
-of each file). The shapes live in `types.d.ts` — the `.js` files
-reference them via JSDoc `import()` types, so there is one definition
-of each type. The checker verifies them and emits nothing — the `.js`
-files are the shipped code, and `types.d.ts` is never loaded by the
-browser. Run it after editing any of the three files:
+`config.js` + `geometry.js` + `studio.js` carry JSDoc types
+(`// @ts-check` at the top of each file). The shapes live in
+`types.d.ts` — the `.js` files reference them via JSDoc `import()`
+types, so there is one definition of each type. The checker verifies
+them and emits nothing — the `.js` files are the shipped code, and
+`types.d.ts` is never loaded by the browser. Run it after editing any
+of the three `.js` files (or `types.d.ts`):
 
 ```bash
 npm ci            # once, to install TypeScript (dev-only)
@@ -185,12 +187,19 @@ comment at the top so it can be traced to a build; releases are listed
 in [CHANGELOG.md](CHANGELOG.md). To release a new version, bump that
 comment in `index.html` and add a section to the changelog.
 
-The page's JavaScript lives in `studio.js` — the Formation Studio, the
-inquiry form, the package shortcuts, and the mobile nav — with the
-launch settings in `config.js` (loaded before it). Edit them there,
-never inline: `index.html` carries no inline executable script (only
-the JSON-LD data block), and the build fails if one appears, because
-the page's Content Security Policy allows `script-src 'self'` only.
+The page's JavaScript lives in `studio.js` — the Formation Studio
+renderer, the inquiry form, the package shortcuts, and the mobile
+nav — with the launch settings in `config.js` (loaded before it).
+The formation geometry itself lives in `geometry.js`, loaded between
+`config.js` and `studio.js`: a `WhenWhereGeometry.create(W, H,
+palettes)` factory that returns the formation functions, the word
+renderer, and TUNING bound to a canvas of W×H (the drone page passes
+900×732). `studio.js` calls it once and aliases the functions it uses;
+the same file is what the workbench will load, so the geometry is
+never duplicated. Edit them there, never inline: `index.html` carries
+no inline executable script (only the JSON-LD data block), and the
+build fails if one appears, because the page's Content Security Policy
+allows `script-src 'self'` only.
 The page's CSS lives in `style.css`, linked from `index.html` — edit
 it there, never inline (the page still has a few inline `style=""`
 attributes on individual elements, so `style-src` keeps
@@ -201,8 +210,9 @@ The pure geometry functions are exposed as
 `window.WHENWHERE.geometry` and covered by the geometry unit tests.
 
 The build fails loudly (non-zero exit) on a missing or corrupt photo,
-and it validates the result: it runs both `config.js` and `studio.js`
-through `node --check` when Node is available and asserts the fleet
+and it validates the result: it runs `config.js`, `geometry.js`, and
+`studio.js` through `node --check` when Node is available, asserts the
+load order (config → geometry → studio), and asserts the fleet
 counts are present in `config.js`. A rebuild with nothing changed is a no-op. Run it from any
 directory — paths resolve from the script's own location.
 
@@ -541,9 +551,10 @@ whenwhere-drone-light-shows/
 ├── index.html                  # the page (source of truth — see Local Development)
 ├── style.css                   # the page's CSS, linked from index.html
 ├── config.js                   # launch settings (endpoint, fleet, palettes, cooldown, dates, content CSV)
-├── studio.js                   # page JavaScript (studio, form, shortcuts, nav, content loader)
-├── types.d.ts                  # shared types (the canonical typedefs; referenced by config.js + studio.js)
-├── tsconfig.json               # TypeScript check settings for config.js + studio.js + types.d.ts (no emit)
+├── geometry.js                 # formation geometry (createGeometry factory: shapes, words, TUNING)
+├── studio.js                   # page JavaScript (studio renderer, form, shortcuts, nav, content loader)
+├── types.d.ts                  # shared types (the canonical typedefs; referenced by config.js + geometry.js + studio.js)
+├── tsconfig.json               # TypeScript check settings for config.js + geometry.js + studio.js + types.d.ts (no emit)
 ├── package.json                # dev-only: TypeScript for the type check
 ├── package-lock.json           # pins the TypeScript version
 ├── content.json                # the page content, local fallback for the Sheet

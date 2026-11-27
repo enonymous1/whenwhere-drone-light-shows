@@ -4,6 +4,32 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## geometry.js — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The formation geometry is extracted from `studio.js`
+  into its own file, `geometry.js` (Phase 1 of the workbench plan —
+  see `~/workspace/your_files/whenwhere-formation-workbench-proposal.md`).
+  A `WhenWhereGeometry.create(W, H, palettes)` factory returns the
+  formation functions, the word renderer, and TUNING bound to a canvas
+  of W×H; the drone page passes 900×732 and its palettes, `studio.js`
+  calls it once and aliases the seven functions its UI uses. The
+  geometry functions close over W/H (hearts at W*.42, the finale at
+  W/2, H/2, words fit to W-40) and `heartPair` colours each point from
+  the palettes — those are the two dependencies the factory carries,
+  and the palettes one was caught by `tsc` (a `PALETTES` reference the
+  first extraction left behind). No user-visible change: the page loads
+  config → geometry → studio, the `window.WHENWHERE.geometry` /
+  `.tuning` export is identical, and the geometry suite passes 52/52
+  on both the old and the new code. The typedefs are now declared once
+  (in geometry.js — the files share a global scope, so studio.js uses
+  them without re-declaring; declaring them in both was a TS6200
+  conflict). `studio.js` drops 1262 → 738 lines; `geometry.js` is
+  ~29 KB. Verified: tsc clean, build check passes, geometry 52/52,
+  full smoke suite over HTTP, no JS errors; the hearts render is
+  pixel-identical to the old code within animation noise (two shots of
+  the same code differ by 14.0%, old-vs-new by 15.1% — the drones bob
+  and twinkle and the 90 background stars are random per load).
+
 ## types.d.ts — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The shared types now live in `types.d.ts` at the repo

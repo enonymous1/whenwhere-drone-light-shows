@@ -111,12 +111,14 @@ def _validate_built_html(html):
     """Fail the build if the shipped page is broken.
 
     The page is hand-edited and its JavaScript lives in config.js (the
-    launch settings) and studio.js (the machinery), so a typo in either
-    would ship silently without this. Check the page loads config.js
-    before studio.js, carries no inline executable script (the Content
-    Security Policy allows script-src 'self' only), and run both files
-    through `node --check` when node is available; also assert the fleet
-    counts made it into the page.
+    launch settings), geometry.js (the formation geometry, bound by the
+    createGeometry factory), and studio.js (the machinery), so a typo in
+    any of them would ship silently without this. Check the page loads
+    config.js before geometry.js before studio.js, carries no inline
+    executable script (the Content Security Policy allows script-src
+    'self' only), and run all three files through `node --check` when
+    node is available; also assert the fleet counts made it into the
+    page.
     """
     # the button labels are filled from FLEET at load, so check the wiring
     # (data-fleet spans) in the page and the source (the FLEET map) in
@@ -126,9 +128,12 @@ def _validate_built_html(html):
                        ("star", 200), ("finale", 240)):
         assert f'data-fleet="{key}"' in html, f"fleet button missing for {key}"
     assert '<script src="config.js">' in html, "index.html does not load config.js"
+    assert '<script src="geometry.js">' in html, "index.html does not load geometry.js"
     assert '<script src="studio.js">' in html, "index.html does not load studio.js"
-    assert html.index('<script src="config.js">') < html.index('<script src="studio.js">'), \
-        "config.js must load before studio.js"
+    assert html.index('<script src="config.js">') < html.index('<script src="geometry.js">'), \
+        "config.js must load before geometry.js"
+    assert html.index('<script src="geometry.js">') < html.index('<script src="studio.js">'), \
+        "geometry.js must load before studio.js"
     assert '<link rel="stylesheet" href="style.css"' in html, "index.html does not link style.css"
     style = BASE / "style.css"
     assert style.is_file(), "style.css missing"
@@ -144,11 +149,13 @@ def _validate_built_html(html):
         assert f"{key}: {count}" in config_text, f"FLEET count missing for {key}"
     studio = BASE / "studio.js"
     assert studio.is_file(), "studio.js missing"
+    geometry = BASE / "geometry.js"
+    assert geometry.is_file(), "geometry.js missing"
     node = shutil.which("node")
     if not node:
         print("WARNING: node not found — skipping JS syntax check (install node to enable it)")
         return
-    for js in (config, studio):
+    for js in (config, geometry, studio):
         r = subprocess.run([node, "--check", str(js)], capture_output=True, text=True)
         assert r.returncode == 0, f"{js.name} failed node --check:\n{r.stderr}"
     print("node --check: OK")

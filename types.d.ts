@@ -125,3 +125,17 @@ export interface WhenWhereNS {
   geometry: WhenWhereGeometry;
   tuning: Tuning;
 }
+
+/**
+ * The full set a geometry instance provides: the 11 functions the
+ * tests and the Readability Lab read through window.WHENWHERE.geometry,
+ * plus the formation functions the page's SHAPES registry needs
+ * (ringsPts / glassPts / starPts are not in the 11), plus TUNING.
+ * Returned by WhenWhereGeometry.create(W, H) in geometry.js.
+ */
+export interface WhenWhereGeometrySet extends WhenWhereGeometry {
+  ringsPts: (n: number) => Point[];
+  glassPts: (n: number) => Point[];
+  starPts: (n: number) => Point[];
+  tuning: Tuning;
+}

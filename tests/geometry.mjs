@@ -1,4 +1,4 @@
-// Unit tests for the pure geometry in studio.js.
+// Unit tests for the pure geometry in geometry.js.
 //
 // The geometry functions (resample, resampleRuns, heartPair, thinUniform,
 // wordPoints, skeletonize, finalePts, allocateCounts, separatePoints) are
