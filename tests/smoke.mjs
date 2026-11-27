@@ -135,6 +135,16 @@ async function main() {
     };
     await send('Runtime.enable');
     await send('Page.enable');
+    // Wait for the studio to initialise before clicking: the shape
+    // handlers are only attached once studio.js runs, and the
+    // compliance line's buildShow on the initial formation makes
+    // that a little slower than it was. window.WHENWHERE.geometry is
+    // set at the end of studio.js, after the handlers are attached.
+    for (let i = 0; i < 100; i++) {
+      const ready = await evaluate(`!!(window.WHENWHERE && window.WHENWHERE.geometry)`);
+      if (ready) break;
+      await sleep(100);
+    }
     // Collect page errors from the start.
     await evaluate(`window.__errors = [];
       window.addEventListener('error', (e) => window.__errors.push(String(e.message)));`);
@@ -149,6 +159,16 @@ async function main() {
       if (!got.startsWith(`${count} drones`)) {
         failures.push(`${shape}: expected "${count} drones", got "${got}"`);
       }
+    }
+    // Compliance line (rules.js): the hearts at the reference scale
+    // (3m spacing, 40m centre altitude) top out at 64.9m with a
+    // 2.024m closest pair — inside the 120m FAA ceiling.
+    const rules = await evaluate(`(function () {
+      document.querySelector('[data-shape="heart"]').click();
+      return document.getElementById('skyRules').textContent;
+    })()`);
+    if (!rules.includes('highest drone 64.9m') || !rules.includes('closest pair 2.024m') || !rules.includes('Inside the 120m FAA ceiling')) {
+      failures.push(`compliance line: expected "highest drone 64.9m" + "closest pair 2.024m" + "Inside the 120m FAA ceiling", got "${rules}"`);
     }
     // Words are typed, not clicked: the word shape is activated once,
     // then each word is set + an 'input' event is dispatched, which is

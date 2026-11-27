@@ -540,10 +540,19 @@ crossings.
   the drone spacing, and the takeoff grid has its own spacing so the
   ground zone can stay tight; the stats line shows the actual lowest
   and highest drone and the grid footprint, and warns if the highest
-  drone would exceed the 120m ceiling). The export declares its safety
-  thresholds in the file — a 120m altitude ceiling, the minimum
+  drone would exceed the ceiling, or the closest pair would fall under
+  the minimum distance). The limits live in one place — `rules.js` at
+  the repo root, the FAA Part 107 baseline (120m ceiling, 0.5m takeoff
+  floor, 1.5m minimum distance) plus an optional per-venue override,
+  so a venue with a waiver only edits that file and the preview, the
+  warnings, and the export all move together. The export declares its
+  safety thresholds in the file — the ceiling in force, the minimum
   distance between drones, and a navigation floor at the lowest drone
-  so the ground grid isn't flagged as too close. The takeoff and landing
+  so the ground grid isn't flagged as too close. The studio preview
+  shows the same rules as a compliance line under the canvas: the
+  formation as a real show at 3m spacing and 40m centre altitude, with
+  its highest drone and closest pair, and whether it sits inside the
+  ceiling in force. The takeoff and landing
   are straight lines, 30s each; run Skybrush Live's show adaptation
   for a layered takeoff on a real flight. The export sits in the right
   column under the preview. It is unlisted on purpose:

@@ -392,6 +392,21 @@ async function main() {
     })()`);
     check('stats line warns when the highest drone exceeds the 120m ceiling (5m spacing, 100m altitude)', typeof overCeiling === 'string'
       && overCeiling.includes('above the 120m ceiling'));
+    // Tightening the formation spacing below the rules floor warns:
+    // at 1m spacing the closest pair is ~0.675m, under the 1.5m minimum.
+    const tight = await evaluate(`(function () {
+      var s = document.getElementById('spacingRange');
+      s.value = '1';
+      s.dispatchEvent(new Event('input'));
+      var text = document.getElementById('exportStats').textContent;
+      s.value = '3'; s.dispatchEvent(new Event('input'));
+      return text;
+    })()`);
+    check('stats line warns when the closest pair is below the 1.5m minimum (1m spacing)', typeof tight === 'string'
+      && tight.includes('below the 1.5m minimum'));
+    // The Takeoff spacing slider floor follows the rules file.
+    const takeoffMin = await evaluate(`document.getElementById('takeoffSpacingRange').min`);
+    check('takeoff spacing slider floor follows the rules (min 0.5m)', takeoffMin === '0.5');
     const errors = await evaluate(`window.__errors`);
     check('no JS errors', Array.isArray(errors) && errors.length === 0);
     if (Array.isArray(errors) && errors.length) console.log('JS errors:', errors);

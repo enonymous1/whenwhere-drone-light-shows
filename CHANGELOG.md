@@ -4,6 +4,34 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Flight rules file (rules.js) — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The FAA limits are now a config file, not constants
+  scattered through the code: `rules.js` at the repo root holds the
+  Part 107 baseline (120m ceiling, 0.5m takeoff-spacing floor, 1.5m
+  minimum distance between drones) plus an optional per-venue
+  override, and resolves them into `WHENWHERE_RULES_EFFECTIVE`. Both
+  pages load it (after `config.js`), and both read the resolved rules:
+  the workbench's export declares the ceiling in force in
+  `settings.validation.maxAltitude`, its stats line warns when the
+  highest drone exceeds that ceiling or the closest pair falls under
+  the minimum distance, the Takeoff spacing slider cannot go below the
+  rules floor, and the altitude tooltip states the ceiling in force.
+  The main site's Formation Studio shows the same rules as a
+  compliance line under the canvas — the formation as a real show at
+  3m spacing and 40m centre altitude, with its highest drone and
+  closest pair, and whether it sits inside the ceiling in force
+  (hearts: 64.9m, 2.024m, inside the 120m FAA ceiling). A venue with a
+  waiver only edits `rules.js` — verified end to end with a temporary
+  150m venue, which moved the compliance line, the export validation,
+  and the warnings together, then reverted to the 120m baseline.
+  `skyc.js` falls back to 120m if `rules.js` did not load, so the
+  exporter still works standalone. The main smoke test gained a
+  readiness wait for `window.WHENWHERE.geometry` before its first
+  click: the compliance line's `buildShow` on the initial formation
+  makes the studio initialise just slow enough that the click landed
+  before the shape handlers attached.
+
 ## Skybrush export: takeoff/landing + workbench layout — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The first live-demo check caught a real export bug:

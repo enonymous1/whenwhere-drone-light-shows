@@ -34,6 +34,39 @@ export interface WhenWhereConfig {
   CONTENT_CSV_URL: string;
 }
 
+/** One venue's rule overrides (rules.js). Any field left out keeps the FAA baseline. */
+export interface WhenWhereVenue {
+  /** Human-readable venue name, shown where the rules are in force. */
+  name?: string;
+  /** Ceiling for this venue, in metres above ground level. */
+  maxAltitudeMeters?: number;
+  /** Takeoff grid spacing floor for this venue, in metres. */
+  minTakeoffSpacingMeters?: number;
+  /** Minimum distance between drones in flight for this venue, in metres. */
+  minDroneDistanceMeters?: number;
+}
+
+/** Flight rules (rules.js): the FAA Part 107 baseline, plus an optional venue override. */
+export interface WhenWhereRules {
+  /** Maximum altitude above ground level, in metres (FAA Part 107: 120m / 400ft). */
+  maxAltitudeMeters: number;
+  /** Takeoff grid spacing floor, in metres (must clear Skybrush Live's 0.4m outdoor check). */
+  minTakeoffSpacingMeters: number;
+  /** Minimum distance between drones in flight, in metres. */
+  minDroneDistanceMeters: number;
+  /** Venue override, or null for the FAA baseline. */
+  venue?: WhenWhereVenue | null;
+}
+
+/** The rules in force: the FAA baseline with any venue override applied (rules.js). */
+export interface WhenWhereRulesEffective {
+  readonly maxAltitudeMeters: number;
+  readonly minTakeoffSpacingMeters: number;
+  readonly minDroneDistanceMeters: number;
+  /** The venue name, or null when the FAA baseline is in force. */
+  readonly venueName: string | null;
+}
+
 /** A single drone position on the canvas. `c` is set only by heartPair. */
 export interface Point {
   x: number;

@@ -98,6 +98,8 @@ nav{position:sticky;top:0;z-index:50;background:#060a1a;background:color-mix(in 
 .stage canvas{display:block;width:100%;height:auto}
 .stage figcaption{padding:12px 18px;color:var(--night-muted);font-size:.92rem;border-top:1px solid #1b2450;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .stage figcaption b{color:#fff;font-weight:500}
+.stage .sky-rules{padding:10px 18px 14px;color:var(--night-muted);font-size:.88rem;border-top:1px solid #1b2450;margin:0}
+.stage .sky-rules.over{color:#ffb36b}
 /* ---------- packages ---------- */
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:36px}
 .tier{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px 26px;display:flex;flex-direction:column;gap:10px}

@@ -27,6 +27,6 @@
     "strict": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["config.js", "geometry.js", "studio.js", "workbench/workbench.js", "workbench/skyc.js", "types.d.ts"],
+  "include": ["config.js", "rules.js", "geometry.js", "studio.js", "workbench/workbench.js", "workbench/skyc.js", "types.d.ts"],
   "exclude": ["node_modules"]
 }

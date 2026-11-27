@@ -32,6 +32,7 @@
         var W = canvas.width, H = canvas.height;
         var nameEl = document.getElementById('shapeName');
         var countEl = document.getElementById('droneCount');
+        var rulesEl = document.getElementById('skyRules');
         var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // background stars
@@ -68,10 +69,51 @@
          * @param {string} name - the caption (e.g. 'Two hearts').
          * @param {string[]} [palette] - colours to cycle; CFG.COLORS when omitted.
          */
+        /**
+         * The compliance line under the canvas: this formation as a
+         * real show at the reference scale (3m spacing, 40m centre
+         * altitude), checked against the rules in force (rules.js).
+         * It uses the same exporter the workbench uses
+         * (WhenWhereSkyc.buildShow), so the numbers here and in the
+         * workbench can never drift. If rules.js or skyc.js did not
+         * load, or the formation is empty, the line stays blank — the
+         * animation must never break for a missing compliance readout.
+         * @param {Point[]} pts - the formation's target positions.
+         * @param {string} name - the formation name.
+         */
+        function updateRulesLine(pts, name) {
+          if (!rulesEl) return;
+          rulesEl.textContent = '';
+          rulesEl.classList.remove('over');
+          if (!pts.length) return;
+          var rules = window.WHENWHERE_RULES_EFFECTIVE;
+          if (!rules || typeof WhenWhereSkyc === 'undefined') return;
+          try {
+            var ref = WhenWhereSkyc.buildShow(
+              { name: name, points: pts },
+              { spacing: 3, takeoffSpacing: 3, altitude: 40, holdSeconds: 30, separatePoints: GEO.separatePoints }
+            ).stats;
+            var ceiling = rules.maxAltitudeMeters;
+            var ceilingLabel = rules.venueName
+              ? ceiling + 'm ceiling (' + rules.venueName + ')'
+              : ceiling + 'm FAA ceiling';
+            var over = ref.maxHeight > ceiling;
+            var tight = ref.minSpacing < rules.minDroneDistanceMeters;
+            var text = 'Reference show (3m spacing, 40m centre altitude): highest drone ' + ref.maxHeight + 'm, closest pair ' + ref.minSpacing + 'm. ';
+            if (over) text += '⚠ Above the ' + ceilingLabel + ' — we would tighten the spacing or lower the altitude for your venue.';
+            else text += 'Inside the ' + ceilingLabel + '.';
+            if (tight) text += ' Closest pair is below the ' + rules.minDroneDistanceMeters + 'm minimum.';
+            rulesEl.textContent = text;
+            if (over || tight) rulesEl.classList.add('over');
+          } catch (e) {
+            rulesEl.textContent = '';
+          }
+        }
         function setFormation(pts, name, palette) {
           currentName = name;
           nameEl.textContent = name;
           countEl.textContent = pts.length + ' drones — ' + (pts.length > 100 ? 'a larger show; extra lead time to secure additional units' : 'fits our 100-drone opening fleet');
+          updateRulesLine(pts, name);
           drones = pts.map(function (p, idx) {
             var old = drones[idx];
             return {

@@ -350,6 +350,20 @@ var WhenWhereSkyc = (function () {
   }
 
   /**
+   * The altitude ceiling in force, in metres: the rules file's
+   * effective ceiling when rules.js loaded, else the FAA Part 107
+   * ceiling (120m). The typeof guard keeps this working when the
+   * exporter is used standalone (tests, Readability Lab) without
+   * rules.js on the page.
+   */
+  function rulesMaxAltitude() {
+    if (typeof window !== 'undefined' && window.WHENWHERE_RULES_EFFECTIVE) {
+      return window.WHENWHERE_RULES_EFFECTIVE.maxAltitudeMeters;
+    }
+    return 120;
+  }
+
+  /**
    * Round to 1 decimal — for the human-facing heights and grid
    * footprint, where 0.1m is plenty (and it matches what Skybrush
    * Live shows for max AHL).
@@ -477,8 +491,9 @@ var WhenWhereSkyc = (function () {
       settings: {
         validation: {
           minDistance: round3((stats.median / 2) * scale),
-          // FAA Part 107 ceiling (US): no drone may fly above 120m AGL.
-          maxAltitude: 120,
+          // Altitude ceiling in force (rules.js: FAA Part 107, or a
+          // venue override). No drone may fly above this.
+          maxAltitude: rulesMaxAltitude(),
           // Below the lowest formation drone the drones are on the
           // ground grid or climbing straight up — do not check
           // proximity there, or the tight ground grid would read as
