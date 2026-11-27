@@ -65,6 +65,18 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
    */
   function setFormation(pts, name, palette) {
     currentName = name;
+    // Word-only controls (word style + timing) are only meaningful
+    // when the words are the active formation. The shapes are fixed
+    // and a shape has one moment, so those sections hide on shapes
+    // and show on words. The word input itself stays visible — it is
+    // how you switch to words. The settings are preserved while hidden.
+    var isWord = false;
+    var activeBtn = document.querySelector('.shape-btn.active');
+    if (activeBtn) isWord = activeBtn.getAttribute('data-shape') === 'word';
+    var wordStyle = document.getElementById('wordStyleBlock');
+    var timing = document.getElementById('timingBlock');
+    if (wordStyle) wordStyle.hidden = !isWord;
+    if (timing) timing.hidden = !isWord;
     nameEl.textContent = name;
     countEl.textContent = pts.length + ' drones — ' + (pts.length > 100 ? 'a larger show; extra lead time to secure additional units' : 'fits our 100-drone opening fleet');
     drones = pts.map(function (p, idx) {
@@ -435,7 +447,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     var pts = currentDesignPoints();
     if (!pts.length) { exportStatsEl.textContent = ''; return; }
     var s = WhenWhereSkyc.buildShow({ name: currentName, points: pts }, exportOptions()).stats;
-    exportStatsEl.textContent = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm';
+    exportStatsEl.textContent = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm · ' + s.totalSeconds + 's total (30s up · ' + Number(holdRange.value) + 's hold · 30s down)';
   }
   function bindExportRange(el, outId, fmt) {
     var out = document.getElementById(outId);
@@ -460,7 +472,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' drones, ' + out.stats.width + 'm wide at ' + Number(altitudeRange.value) + 'm, held ' + Number(holdRange.value) + 's. This exports the formation only — a held shape, no takeoff, no return-to-home, no landing.';
+    exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' drones, ' + out.stats.width + 'm wide at ' + Number(altitudeRange.value) + 'm, ' + out.stats.totalSeconds + 's total (30s takeoff from a ' + out.stats.gridCols + '×' + out.stats.gridRows + ' ground grid, ' + Number(holdRange.value) + 's hold, 30s landing).';
   });
 
   // Exposed for tests: the pure geometry, without the DOM, plus the

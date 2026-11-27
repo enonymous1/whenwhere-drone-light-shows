@@ -4,6 +4,53 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Skybrush export: takeoff/landing + workbench layout — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The first live-demo check caught a real export bug:
+  loading the hearts `.skyc` in Skybrush Live reported "Takeoff
+  positions are too close". The cause: Skybrush Live 2.9.0+ validates
+  a show on load by measuring the minimum distance between the FIRST
+  points of the trajectories ("takeoff positions") and between the
+  LAST points ("landing positions"), in the ground plane, against a
+  0.4m outdoor threshold — and the check reads the trajectory's first
+  and last points, not `home`. A hold-only trajectory starts and ends
+  at the formation, and a vertical-plane formation collapses to a line
+  in the ground plane (the hearts' closest 2D pair was 0.016m, 34
+  pairs under 0.4m), so it can never pass. The export now includes a
+  takeoff and a landing: each drone takes off from a regular ground
+  grid (same spacing as the formation, centred under it at z=0), flies
+  straight up to the held shape, then lands back on the grid — 30s
+  takeoff, the hold, 30s landing (90s total at the default 30s hold).
+  Grid slots are paired to formation drones by sorting both by y, so
+  nearby formation drones take off from nearby grid slots. `home` is
+  the drone's grid slot. The light program is dark during takeoff and
+  landing and lit only for the held shape. The takeoff/landing are
+  straight lines — run Skybrush Live's show adaptation for a layered
+  takeoff on a real flight. Also fixed in the same pass: the segment
+  keys are lowercase (`takeoff`/`show`/`landing`, per the
+  `ShowSegmentId` type — the export had written `Show`, which is not
+  a recognized segment id), and the title no longer says "(static)".
+  Verified end to end: the exported hearts `.skyc` passes Skybrush's
+  own validator, the takeoff and landing positions' minimum 2D
+  distance is 3.000m (was 0.016m), the trajectory is 4 points at
+  0/30/60/90 with `landingTime` 90, the segments are [0,30]/[30,60]/
+  [60,90], the lights decode to black 1500 frames / colour 1500
+  frames / black 1500 frames / END, and the formation mapping is
+  unchanged (bbox centre y~0, z~38.7, min 3D 2.02m).
+- 2026-11-27 — Workbench layout reorganization (his call, from the
+  live test): the Word style and Timing sections are word-only, so
+  they now hide whenever a shape is active and show when "Your words"
+  is active (the word input itself stays visible — it is the switch;
+  the settings are preserved while hidden). The Export section moved
+  out of the left controls column into the right column, under the
+  preview, so the page reads design inputs on the left and preview +
+  export on the right; the stage stays sticky, so the canvas follows
+  the scroll while the export sits below it in normal flow. The
+  export stats line now shows the total show time ("90s total (30s
+  up · 30s hold · 30s down)"). The workbench smoke test now checks
+  the hide/show, the right-column layout, the sticky stage, and the
+  takeoff/landing show structure.
+
 ## Skybrush export (Phase 3, static) — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The Formation Workbench gains an "Export to Skybrush
@@ -42,6 +89,13 @@ at the top of `index.html` and add a section below.
   (loading the `.skyc` in a source-built Skybrush Live/Viewer) is
   still a his-side step. Also updated the Phase 2 changelog entry
   below, which said the export was "still Phase 3, not built".
+  **Superseded in part by the section above (same day):** the live
+  test showed a hold-only trajectory cannot pass Skybrush Live's
+  takeoff/landing position check, so the export now includes a ground
+  grid takeoff and landing, `home` is the grid slot, the segments are
+  lowercase `takeoff`/`show`/`landing`, and the title no longer says
+  "(static)". The mapping, scale, and validation numbers above are
+  unchanged.
 
 ## Formation Workbench — 2026-11-27 (no version bump)
 

@@ -85,6 +85,7 @@ async function main() {
   const port = Number(process.env.CDP_PORT) || 9300 + Math.floor(Math.random() * 500);
   const child = spawn(chrome, [
     '--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
+    '--window-size=1440,900',
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
     '--force-prefers-reduced-motion', 'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
@@ -142,6 +143,19 @@ async function main() {
     // The page is unlisted: noindex, and no link to it from here.
     check('noindex meta', await evaluate(`!!document.querySelector('meta[name="robots"][content="noindex"]')`));
     check('back link to the drone site', await evaluate(`!!document.querySelector('a[href="../index.html"]')`));
+    // Word-only controls hide on shapes and show on words. On load
+    // the hearts are active, so the Word style and Timing sections are
+    // hidden (the word input itself stays visible — it is the switch).
+    const hiddenOnShape = await evaluate(`(function () {
+      return JSON.stringify({
+        wordStyle: document.getElementById('wordStyleBlock').hidden,
+        timing: document.getElementById('timingBlock').hidden,
+        wordInputVisible: !!document.getElementById('customWord'),
+      });
+    })()`);
+    const hiddenOnShapeObj = JSON.parse(hiddenOnShape);
+    check('word style + timing hidden on a shape (hearts)', hiddenOnShapeObj.wordStyle === true && hiddenOnShapeObj.timing === true);
+    check('word input stays visible on a shape', hiddenOnShapeObj.wordInputVisible === true);
     // The five formations, with the FLEET counts.
     for (const [shape, count] of Object.entries(EXPECTED)) {
       const got = await evaluate(`(function () {
@@ -162,6 +176,15 @@ async function main() {
     // would not work — clicking the already-active word shape resets
     // to the default LOVE.
     await evaluate(`document.querySelector('[data-shape="word"]').click();`);
+    // Switching to words reveals the word-only controls.
+    const shownOnWord = await evaluate(`(function () {
+      return JSON.stringify({
+        wordStyle: document.getElementById('wordStyleBlock').hidden,
+        timing: document.getElementById('timingBlock').hidden,
+      });
+    })()`);
+    const shownOnWordObj = JSON.parse(shownOnWord);
+    check('word style + timing shown on words', shownOnWordObj.wordStyle === false && shownOnWordObj.timing === false);
     // Words: LOVE is 100 drones; 'E + J' is two slides (50 + "(1 of 2)").
     const word = await evaluate(`(function () {
       var input = document.getElementById('customWord');
@@ -204,12 +227,40 @@ async function main() {
     })()`);
     check('design summary has formation + drones + palette', typeof summary === 'string'
       && summary.includes('Formation:') && summary.includes('Drones:') && summary.includes('Palette:'));
-    // Skybrush export: the section exists, the stats line populates on
+    // Skybrush export: the section lives in the right column under the
+    // preview (not in the left controls), the stats line populates on
     // load, and the builder returns a show Skybrush's own validator
-    // accepts (version 1, outdoor, one trajectory + one light program
-    // per drone, no two drones sharing a position). Click back to the
-    // hearts first so the counts below are the known 80.
+    // accepts — a takeoff from a ground grid, the held shape, and a
+    // landing back to the grid (version 1, outdoor, 4 trajectory
+    // points per drone, lowercase segments, lights dark during
+    // takeoff/landing). Click back to the hearts first so the counts
+    // below are the known 80.
     await evaluate(`document.querySelector('[data-shape="heart"]').click();`);
+    // Back on a shape, the word-only controls hide again.
+    const hiddenAgain = await evaluate(`(function () {
+      return JSON.stringify({
+        wordStyle: document.getElementById('wordStyleBlock').hidden,
+        timing: document.getElementById('timingBlock').hidden,
+      });
+    })()`);
+    const hiddenAgainObj = JSON.parse(hiddenAgain);
+    check('word style + timing hide again on a shape', hiddenAgainObj.wordStyle === true && hiddenAgainObj.timing === true);
+    // The export sits in the right column under the preview; the left
+    // controls column holds the design inputs only.
+    const layout = await evaluate(`(function () {
+      var side = document.querySelector('.wb-side');
+      var controls = document.querySelector('.wb-controls');
+      var stage = document.querySelector('.wb-stage');
+      return JSON.stringify({
+        exportInSide: !!(side && side.querySelector('#exportSkycBtn')),
+        exportNotInControls: !(controls && controls.querySelector('#exportSkycBtn')),
+        stageInSide: !!(side && side.contains(stage)),
+        stageSticky: stage ? getComputedStyle(stage).position === 'sticky' : false,
+      });
+    })()`);
+    const layoutObj = JSON.parse(layout);
+    check('export is in the right column under the preview', layoutObj.exportInSide === true && layoutObj.exportNotInControls === true);
+    check('stage is in the right column and stays sticky', layoutObj.stageInSide === true && layoutObj.stageSticky === true);
     const exportUi = await evaluate(`(function () {
       return JSON.stringify({
         btn: !!document.getElementById('exportSkycBtn'),
@@ -222,23 +273,50 @@ async function main() {
     })()`);
     const exportUiObj = JSON.parse(exportUi);
     check('export UI present (button + 3 sliders + stats + note)', exportUiObj.btn && exportUiObj.spacing && exportUiObj.altitude && exportUiObj.hold);
-    check('export stats populate on load (80 drones, 3m spacing)', typeof exportUiObj.stats === 'string'
-      && exportUiObj.stats.startsWith('80 drones') && exportUiObj.stats.includes('typical spacing 3m'));
-    check('export note says no takeoff / RTH / landing', typeof exportUiObj.note === 'string'
-      && exportUiObj.note.includes('no takeoff') && exportUiObj.note.includes('no landing'));
+    check('export stats populate on load (80 drones, 3m spacing, 90s total)', typeof exportUiObj.stats === 'string'
+      && exportUiObj.stats.startsWith('80 drones') && exportUiObj.stats.includes('typical spacing 3m') && exportUiObj.stats.includes('90s total'));
+    check('export note describes the ground-grid takeoff + landing', typeof exportUiObj.note === 'string'
+      && exportUiObj.note.replace(/\s+/g, ' ').includes('ground grid')
+      && exportUiObj.note.includes('30s each') && exportUiObj.note.includes('show adaptation'));
     const show = await evaluate(`(function () {
       var wb = window.WHENWHERE.workbench;
       var show = WhenWhereSkyc.buildShow(
         { name: wb.currentName, points: wb.points },
         { spacing: 3, altitude: 40, holdSeconds: 30, separatePoints: window.WHENWHERE.geometry.separatePoints });
-      var pts = show.show.swarm.drones.map(function (d) { return d.settings.trajectory.points[0][1].join(','); });
+      var drones = show.show.swarm.drones;
+      function min2D(pts) {
+        var m = Infinity;
+        for (var i = 0; i < pts.length; i++) for (var j = i + 1; j < pts.length; j++) {
+          var dx = pts[i][0] - pts[j][0], dy = pts[i][1] - pts[j][1];
+          m = Math.min(m, Math.sqrt(dx * dx + dy * dy));
+        }
+        return m;
+      }
+      var first = drones.map(function (d) { return d.settings.trajectory.points[0][1]; });
+      var form = drones.map(function (d) { return d.settings.trajectory.points[1][1]; });
       return JSON.stringify({
         version: show.show.version,
         env: show.show.environment.type,
-        drones: show.show.swarm.drones.length,
-        trajVersion: show.show.swarm.drones[0].settings.trajectory.version,
-        lightsVersion: show.show.swarm.drones[0].settings.lights.version,
-        uniquePositions: new Set(pts).size,
+        drones: drones.length,
+        trajVersion: drones[0].settings.trajectory.version,
+        lightsVersion: drones[0].settings.lights.version,
+        title: show.show.meta.title,
+        segmentKeys: Object.keys(show.show.meta.segments).sort(),
+        takeoffSeg: show.show.meta.segments.takeoff,
+        showSeg: show.show.meta.segments.show,
+        landingSeg: show.show.meta.segments.landing,
+        totalSeconds: show.stats.totalSeconds,
+        gridCols: show.stats.gridCols,
+        gridRows: show.stats.gridRows,
+        pointsPerDrone: drones[0].settings.trajectory.points.length,
+        pointTimes: drones[0].settings.trajectory.points.map(function (p) { return p[0]; }),
+        takeoffTime: drones[0].settings.trajectory.takeoffTime,
+        landingTime: drones[0].settings.trajectory.landingTime,
+        uniqueFormation: new Set(form.map(function (p) { return p.join(','); })).size,
+        minTakeoff2D: min2D(first),
+        homeIsFirst: drones.every(function (d) { return JSON.stringify(d.settings.home) === JSON.stringify(d.settings.trajectory.points[0][1]); }),
+        firstIsLast: drones.every(function (d) { return JSON.stringify(d.settings.trajectory.points[0][1]) === JSON.stringify(d.settings.trajectory.points[3][1]); }),
+        firstOnGround: first.every(function (p) { return p[2] === 0; }),
         minSpacing: show.stats.minSpacing,
         medianSpacing: show.stats.medianSpacing,
       });
@@ -246,7 +324,17 @@ async function main() {
     const showObj = JSON.parse(show);
     check('exported show: version 1, outdoor, 80 drones', showObj.version === 1 && showObj.env === 'outdoor' && showObj.drones === 80);
     check('exported show: trajectory + lights version 1', showObj.trajVersion === 1 && showObj.lightsVersion === 1);
-    check('exported show: no two drones share a position', showObj.uniquePositions === 80);
+    check('exported show: title has no (static)', typeof showObj.title === 'string' && !showObj.title.includes('(static)'));
+    check('exported show: segments are lowercase takeoff/show/landing [0,30] [30,60] [60,90]',
+      JSON.stringify(showObj.segmentKeys) === '["landing","show","takeoff"]'
+      && JSON.stringify(showObj.takeoffSeg) === '[0,30]' && JSON.stringify(showObj.showSeg) === '[30,60]' && JSON.stringify(showObj.landingSeg) === '[60,90]');
+    check('exported show: 90s total, 9x9 takeoff grid', showObj.totalSeconds === 90 && showObj.gridCols === 9 && showObj.gridRows === 9);
+    check('exported show: 4 trajectory points at 0/30/60/90, takeoffTime 0, landingTime 90',
+      showObj.pointsPerDrone === 4 && JSON.stringify(showObj.pointTimes) === '[0,30,60,90]'
+      && showObj.takeoffTime === 0 && showObj.landingTime === 90);
+    check('exported show: no two drones share a formation position', showObj.uniqueFormation === 80);
+    check('exported show: takeoff grid min 2D distance is 3m (>= 0.4m Live outdoor threshold)', Math.abs(showObj.minTakeoff2D - 3) < 0.001);
+    check('exported show: home is the ground takeoff slot, first point is the last', showObj.homeIsFirst === true && showObj.firstIsLast === true && showObj.firstOnGround === true);
     check('exported show: min spacing >= 1.5m, median 3m', showObj.minSpacing >= 1.5 && showObj.medianSpacing === 3);
     // Moving the spacing slider re-derives the stats (narrower spacing
     // = narrower picture, same drone count).
@@ -278,7 +366,7 @@ async function main() {
     console.error(`\n${failures.length} failure(s):\n- ${failures.join('\n- ')}`);
     process.exit(1);
   }
-  console.log('\nWorkbench smoke tests passed: 5 formations + words + multi-slide + example pill + font picker + palette picker + design summary + Skybrush export (UI + show structure + spacing slider) + no JS errors.');
+  console.log('\nWorkbench smoke tests passed: 5 formations + word-only controls hide/show + words + multi-slide + example pill + font picker + palette picker + design summary + Skybrush export (right-column layout + UI + takeoff/landing show structure + spacing slider) + no JS errors.');
 }
 
 main();

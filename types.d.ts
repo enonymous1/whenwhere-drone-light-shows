@@ -146,6 +146,11 @@ export interface WhenWhereSkycStats {
   readonly minSpacing: number;
   readonly medianSpacing: number;
   readonly drones: number;
+  /** Takeoff + hold + landing, in seconds. */
+  readonly totalSeconds: number;
+  /** The takeoff grid's columns and rows. */
+  readonly gridCols: number;
+  readonly gridRows: number;
 }
 
 /** One formation, as the .skyc exporter takes it. */
@@ -169,6 +174,10 @@ export interface WhenWhereSkycModule {
   hexToRgb(hex: string): number[];
   encodeVaruint(n: number): number[];
   encodeLightProgram(rgb: number[], holdSeconds: number): Uint8Array;
+  encodeLightProgramSegments(
+    segments: { rgb: number[]; seconds: number }[],
+  ): Uint8Array;
+  takeoffGrid(count: number, spacing: number): number[][];
   base64(bytes: Uint8Array): string;
   crc32(bytes: Uint8Array): number;
   buildZip(files: { name: string; data: Uint8Array }[]): Uint8Array<ArrayBuffer>;

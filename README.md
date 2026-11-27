@@ -531,13 +531,16 @@ crossings.
 - **Formation Workbench:** the studio's geometry already lives in
   `geometry.js`, shared with the unlisted workbench at
   [`workbench/index.html`](workbench/index.html) — a design tool for
-  customer meetings (formation picker, word style controls, palette
-  picker, "Copy this design" summary). It also exports the formation
-  on screen as a Skybrush `.skyc` show file (one held shape; spacing,
-  altitude, and hold-time settings; the picture's width follows from
-  the spacing). The export is the net show only — no takeoff, no
-  return-to-home, no landing; those come from Skybrush Live's show
-  adaptation or the sequencer. It is unlisted on purpose:
+  customer meetings (formation picker, word style controls that only
+  show when words are active, palette picker, "Copy this design"
+  summary). It also exports the formation on screen as a Skybrush
+  `.skyc` show file — a takeoff from a ground grid, the held shape,
+  and a landing back to the grid (spacing, altitude, and hold-time
+  settings; the picture's width follows from the spacing, and the
+  grid uses the same spacing). The takeoff and landing are straight
+  lines, 30s each; run Skybrush Live's show adaptation for a layered
+  takeoff on a real flight. The export sits in the right column under
+  the preview. It is unlisted on purpose:
   no link from the site, `<meta name="robots" content="noindex">`,
   opened by bookmark or pasted link. The sequencer is the next
   phase; see the proposal in

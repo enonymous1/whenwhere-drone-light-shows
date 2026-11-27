@@ -2,7 +2,8 @@
 // Skybrush export for the Formation Workbench.
 //
 // Builds a .skyc file (Skybrush Compiled Format) for the formation
-// currently on the workbench canvas: one static held shape.
+// currently on the workbench canvas: a takeoff from a ground grid, the
+// held shape, and a landing back to the grid.
 //
 // What the format is (read from Skybrush's own docs and code, 2026-11-27):
 // - A .skyc file is a ZIP archive containing a single `show.json` at its
@@ -30,26 +31,38 @@
 //   The varuint is unsigned LEB128: 7 bits per byte, LSB first, MSB set
 //   when another byte follows (the .skyb overview's example: 513 =
 //   0x81 0x04).
+// - Show segment ids are lowercase: 'takeoff' | 'show' | 'landing'
+//   (skybrush.js packages/show-format/src/types.ts, ShowSegmentId).
+//   `meta.segments` maps each to [start, end) in seconds.
 //
-// What this export is — and is not:
-// - It exports the formation as the net show content: every drone holds
-//   its formation position (a vertical plane facing the audience) for
-//   the hold time. Two keypoints per drone, same position, t=0 and
-//   t=holdSeconds, so the shape is held for the whole show.
-// - It has NO takeoff, NO return-to-home, NO landing. A complete flyable
-//   show needs those phases, which Skybrush Live's show adaptation adds
-//   around the net show, or which the sequencer (Phase 3 part 2) will
-//   generate. The `meta.segments` field says so: only the "Show" segment
-//   is annotated, [0, holdSeconds].
-// - The mapping is canvas 2D -> a vertical plane in the sky: the canvas
-//   is viewed from the front, so canvas x (left->right) maps to Skybrush
-//   -y (the audience's right is -y, since +y is left), canvas y
-//   (top->bottom) maps to Skybrush -z (up is +z), and the formation sits
-//   at x = 0. Centred on the show altitude:
-//     skyX = 0
-//     skyY = (W/2 - px) * scale
-//     skyZ = altitude + (H/2 - py) * scale
-//   The plane faces the audience, who stand at -x looking towards +x.
+// Why there is a takeoff and a landing (not just the held shape):
+// - Skybrush Live 2.9.0+ validates a show on load: it measures the
+//   minimum distance between the FIRST points of the trajectories
+//   ("takeoff positions") and between the LAST points ("landing
+//   positions"), and errors when any pair is too close. The check is
+//   on the trajectory's first/last points, not on `home`, and it
+//   measures separation in the ground plane — a vertical-plane
+//   formation collapses to a line there (the hearts' closest 2D pair
+//   is 0.016m, 34 pairs under the 0.4m outdoor threshold), so a
+//   hold-only trajectory can never pass it. The trajectory therefore
+//   starts and ends on a ground takeoff grid, and `home` is the
+//   drone's grid slot. The real Studio fixture shows the same shape:
+//   home on the ground (z=0), first trajectory point just above home.
+// - The takeoff and landing here are straight lines (30s each) from
+//   the grid to the formation and back. That is a minimal, flyable
+//   show, not a layered takeoff: run Skybrush Live's show adaptation
+//   for the layered takeoff on a real flight. The drones are dark
+//   during takeoff and landing and lit only for the held shape.
+//
+// The mapping is canvas 2D -> a vertical plane in the sky: the canvas
+// is viewed from the front, so canvas x (left->right) maps to Skybrush
+// -y (the audience's right is -y, since +y is left), canvas y
+// (top->bottom) maps to Skybrush -z (up is +z), and the formation sits
+// at x = 0. Centred on the show altitude:
+//   skyX = 0
+//   skyY = (W/2 - px) * scale
+//   skyZ = altitude + (H/2 - py) * scale
+// The plane faces the audience, who stand at -x looking towards +x.
 //
 // The scale (meters per canvas pixel) is derived from the drone spacing,
 // not set directly: scale = spacing / medianNN, where medianNN is the
@@ -65,6 +78,13 @@
 // back, so the user can see how big the picture is and how close the
 // closest pair ends up.
 //
+// The takeoff grid uses the same spacing as the formation (so the grid
+// is safely spaced in 2D by construction) and is centred under the
+// formation at (0, 0, 0). Each formation drone is paired to a grid slot
+// by sorting both by y (then by the other axis) and pairing in order,
+// so nearby formation drones take off from nearby grid slots and the
+// straight-line takeoff paths cross as little as possible.
+//
 // This module is pure (no DOM, no window) except for the ZIP writer,
 // which only needs Uint8Array. It is loaded as a classic script after
 // geometry.js; the caller passes geometry's separatePoints in.
@@ -75,6 +95,16 @@ var WhenWhereSkyc = (function () {
   /** Canvas width/height the formations are drawn in (from workbench.js). */
   var CANVAS_W = 900;
   var CANVAS_H = 732;
+
+  /**
+   * Takeoff and landing durations, in seconds. Straight lines from the
+   * ground grid to the formation and back; 30s is comfortable for the
+   * ~40m climb at the default altitude and still sane at 100m. These
+   * are fixed (not a UI setting) — Skybrush Live's show adaptation is
+   * the place to refine them into a layered takeoff for a real flight.
+   */
+  var TAKEOFF_SECONDS = 30;
+  var LANDING_SECONDS = 30;
 
   /**
    * One sRGB channel (0-255) -> linear-light 0-255, rounded. The .skyc
@@ -129,15 +159,60 @@ var WhenWhereSkyc = (function () {
    * @returns {Uint8Array}
    */
   function encodeLightProgram(rgb, holdSeconds) {
-    var frames = Math.max(1, Math.round(holdSeconds * 50));
-    var bytes = [0x04];
-    bytes.push(srgbToLinearByte(rgb[0]));
-    bytes.push(srgbToLinearByte(rgb[1]));
-    bytes.push(srgbToLinearByte(rgb[2]));
-    var wait = encodeVaruint(frames);
-    for (var i = 0; i < wait.length; i++) bytes.push(wait[i]);
+    return encodeLightProgramSegments([{ rgb: rgb, seconds: holdSeconds }]);
+  }
+
+  /**
+   * A light program of several colour segments in sequence: one
+   * SET_COLOR (0x04, linear RGB) + wait per segment, then END (0x00).
+   * Used for the takeoff/hold/landing shape: dark during takeoff and
+   * landing, the formation colour only while the shape is held.
+   * @param {{ rgb: number[], seconds: number }[]} segments - each
+   *   segment's sRGB colour and how long it is held, in seconds.
+   * @returns {Uint8Array}
+   */
+  function encodeLightProgramSegments(segments) {
+    var bytes = [];
+    for (var s = 0; s < segments.length; s++) {
+      var seg = segments[s];
+      var frames = Math.max(1, Math.round(seg.seconds * 50));
+      bytes.push(0x04);
+      bytes.push(srgbToLinearByte(seg.rgb[0]));
+      bytes.push(srgbToLinearByte(seg.rgb[1]));
+      bytes.push(srgbToLinearByte(seg.rgb[2]));
+      var wait = encodeVaruint(frames);
+      for (var i = 0; i < wait.length; i++) bytes.push(wait[i]);
+    }
     bytes.push(0x00);
     return new Uint8Array(bytes);
+  }
+
+  /**
+   * A regular takeoff grid on the ground (z=0), centred at (0, 0),
+   * `spacing` apart — the same spacing as the formation, so the grid
+   * is safely spaced in 2D by construction (Skybrush Live checks the
+   * first/last trajectory points' ground-plane separation against a
+   * 0.4m outdoor threshold; a 3m grid clears it by an order of
+   * magnitude). Near-square: cols = ceil(sqrt(n)), rows = ceil(n/cols).
+   * @param {number} count - number of grid slots.
+   * @param {number} spacing - grid spacing in meters.
+   * @returns {number[][]} [x, y, 0] slots, row-major (y, then x).
+   */
+  function takeoffGrid(count, spacing) {
+    var cols = Math.ceil(Math.sqrt(count));
+    var rows = Math.ceil(count / cols);
+    var slots = [];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        if (slots.length >= count) break;
+        slots.push([
+          round3((c - (cols - 1) / 2) * spacing),
+          round3((r - (rows - 1) / 2) * spacing),
+          0,
+        ]);
+      }
+    }
+    return slots;
   }
 
   /**
@@ -271,7 +346,8 @@ var WhenWhereSkyc = (function () {
   }
 
   /**
-   * Build the show.json for one held formation.
+   * Build the show.json for one formation: a takeoff from a ground grid,
+   * the held shape, and a landing back to the grid.
    *
    * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
    *   The formation: its name and its canvas points (c = the drone's
@@ -279,11 +355,12 @@ var WhenWhereSkyc = (function () {
    * @param {{ spacing: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
    *   spacing = the nominal drone spacing in meters (the median
-   *   nearest-neighbour distance maps to this); altitude = the show
-   *   altitude in meters (the formation is centred on it); holdSeconds =
-   *   how long the shape is held; separatePoints = geometry's
-   *   min-gap enforcement, used to push near-duplicate points apart.
-   * @returns {{ show: object, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number } }}
+   *   nearest-neighbour distance maps to this, and the takeoff grid uses
+   *   the same spacing); altitude = the show altitude in meters (the
+   *   formation is centred on it); holdSeconds = how long the shape is
+   *   held; separatePoints = geometry's min-gap enforcement, used to
+   *   push near-duplicate points apart.
+   * @returns {{ show: object, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number } }}
    */
   function buildShow(design, options) {
     var pts = design.points.map(function (p) {
@@ -300,12 +377,45 @@ var WhenWhereSkyc = (function () {
     var after = nearestNeighbourStats(pts);
     var W = CANVAS_W;
     var H = CANVAS_H;
+    // Formation positions in the sky (the vertical plane).
+    var formation = pts.map(function (p) {
+      return [
+        0,
+        round3((W / 2 - p.x) * scale),
+        round3(options.altitude + (H / 2 - p.y) * scale),
+      ];
+    });
+    // Takeoff grid on the ground, same spacing as the formation.
+    var grid = takeoffGrid(pts.length, options.spacing);
+    var gridCols = Math.ceil(Math.sqrt(pts.length));
+    var gridRows = Math.ceil(pts.length / gridCols);
+    // Pair each formation drone to a grid slot: sort both by y, then
+    // by the other axis, and pair in order, so nearby formation drones
+    // take off from nearby grid slots and the straight-line takeoff
+    // paths cross as little as possible. `slotOf[i]` is the grid slot
+    // for formation drone i.
+    var formOrder = formation.map(function (_p, i) { return i; }).sort(function (a, b) {
+      return (formation[a][1] - formation[b][1]) || (formation[a][2] - formation[b][2]);
+    });
+    var gridOrder = grid.map(function (_s, i) { return i; }).sort(function (a, b) {
+      return (grid[a][1] - grid[b][1]) || (grid[a][0] - grid[b][0]);
+    });
+    var slotOf = [];
+    for (var k = 0; k < formOrder.length; k++) slotOf[formOrder[k]] = grid[gridOrder[k]];
+    var takeoff = TAKEOFF_SECONDS;
+    var land = LANDING_SECONDS;
+    var total = takeoff + options.holdSeconds + land;
     var drones = pts.map(function (p, i) {
-      var skyY = round3((W / 2 - p.x) * scale);
-      var skyZ = round3(options.altitude + (H / 2 - p.y) * scale);
-      var pos = [0, skyY, skyZ];
+      var pos = formation[i];
+      var slot = slotOf[i];
       var rgb = hexToRgb(p.c);
-      var lights = encodeLightProgram(rgb, options.holdSeconds);
+      // Dark during takeoff and landing, the formation colour only
+      // while the shape is held.
+      var lights = encodeLightProgramSegments([
+        { rgb: [0, 0, 0], seconds: takeoff },
+        { rgb: rgb, seconds: options.holdSeconds },
+        { rgb: [0, 0, 0], seconds: land },
+      ]);
       var name = 'drone-' + String(i + 1).padStart(String(pts.length).length, '0');
       return {
         settings: {
@@ -313,13 +423,16 @@ var WhenWhereSkyc = (function () {
           trajectory: {
             version: 1,
             takeoffTime: 0,
+            landingTime: total,
             points: [
-              [0, pos, []],
-              [options.holdSeconds, pos, []],
+              [0, slot, []],
+              [takeoff, pos, []],
+              [takeoff + options.holdSeconds, pos, []],
+              [total, slot, []],
             ],
           },
           lights: { version: 1, data: base64(lights) },
-          home: pos,
+          home: slot,
         },
       };
     });
@@ -327,8 +440,12 @@ var WhenWhereSkyc = (function () {
       version: 1,
       environment: { type: 'outdoor' },
       meta: {
-        title: options.title || ('When&Where — ' + design.name + ' (static)'),
-        segments: { Show: [0, options.holdSeconds] },
+        title: options.title || ('When&Where — ' + design.name),
+        segments: {
+          takeoff: [0, takeoff],
+          show: [takeoff, takeoff + options.holdSeconds],
+          landing: [takeoff + options.holdSeconds, total],
+        },
       },
       settings: {
         validation: { minDistance: round3((stats.median / 2) * scale) },
@@ -344,17 +461,21 @@ var WhenWhereSkyc = (function () {
         minSpacing: round3(after.min * scale),
         medianSpacing: round3(after.median * scale),
         drones: pts.length,
+        totalSeconds: total,
+        gridCols: gridCols,
+        gridRows: gridRows,
       },
     };
   }
 
   /**
-   * Build the .skyc file (a ZIP holding show.json) for one held
-   * formation, ready to download.
+   * Build the .skyc file (a ZIP holding show.json) for one formation:
+   * takeoff from a ground grid, the held shape, and a landing back to
+   * the grid, ready to download.
    * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
    * @param {{ spacing: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
-   * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number } }}
+   * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number } }}
    */
   function exportSkyc(design, options) {
     var built = buildShow(design, options);
@@ -371,6 +492,8 @@ var WhenWhereSkyc = (function () {
     hexToRgb: hexToRgb,
     encodeVaruint: encodeVaruint,
     encodeLightProgram: encodeLightProgram,
+    encodeLightProgramSegments: encodeLightProgramSegments,
+    takeoffGrid: takeoffGrid,
     base64: base64,
     crc32: crc32,
     buildZip: buildZip,
