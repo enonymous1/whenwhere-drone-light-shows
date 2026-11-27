@@ -204,6 +204,60 @@ async function main() {
     })()`);
     check('design summary has formation + drones + palette', typeof summary === 'string'
       && summary.includes('Formation:') && summary.includes('Drones:') && summary.includes('Palette:'));
+    // Skybrush export: the section exists, the stats line populates on
+    // load, and the builder returns a show Skybrush's own validator
+    // accepts (version 1, outdoor, one trajectory + one light program
+    // per drone, no two drones sharing a position). Click back to the
+    // hearts first so the counts below are the known 80.
+    await evaluate(`document.querySelector('[data-shape="heart"]').click();`);
+    const exportUi = await evaluate(`(function () {
+      return JSON.stringify({
+        btn: !!document.getElementById('exportSkycBtn'),
+        spacing: !!document.getElementById('spacingRange'),
+        altitude: !!document.getElementById('altitudeRange'),
+        hold: !!document.getElementById('holdRange'),
+        stats: document.getElementById('exportStats').textContent,
+        note: document.getElementById('exportNote').textContent,
+      });
+    })()`);
+    const exportUiObj = JSON.parse(exportUi);
+    check('export UI present (button + 3 sliders + stats + note)', exportUiObj.btn && exportUiObj.spacing && exportUiObj.altitude && exportUiObj.hold);
+    check('export stats populate on load (80 drones, 3m spacing)', typeof exportUiObj.stats === 'string'
+      && exportUiObj.stats.startsWith('80 drones') && exportUiObj.stats.includes('typical spacing 3m'));
+    check('export note says no takeoff / RTH / landing', typeof exportUiObj.note === 'string'
+      && exportUiObj.note.includes('no takeoff') && exportUiObj.note.includes('no landing'));
+    const show = await evaluate(`(function () {
+      var wb = window.WHENWHERE.workbench;
+      var show = WhenWhereSkyc.buildShow(
+        { name: wb.currentName, points: wb.points },
+        { spacing: 3, altitude: 40, holdSeconds: 30, separatePoints: window.WHENWHERE.geometry.separatePoints });
+      var pts = show.show.swarm.drones.map(function (d) { return d.settings.trajectory.points[0][1].join(','); });
+      return JSON.stringify({
+        version: show.show.version,
+        env: show.show.environment.type,
+        drones: show.show.swarm.drones.length,
+        trajVersion: show.show.swarm.drones[0].settings.trajectory.version,
+        lightsVersion: show.show.swarm.drones[0].settings.lights.version,
+        uniquePositions: new Set(pts).size,
+        minSpacing: show.stats.minSpacing,
+        medianSpacing: show.stats.medianSpacing,
+      });
+    })()`);
+    const showObj = JSON.parse(show);
+    check('exported show: version 1, outdoor, 80 drones', showObj.version === 1 && showObj.env === 'outdoor' && showObj.drones === 80);
+    check('exported show: trajectory + lights version 1', showObj.trajVersion === 1 && showObj.lightsVersion === 1);
+    check('exported show: no two drones share a position', showObj.uniquePositions === 80);
+    check('exported show: min spacing >= 1.5m, median 3m', showObj.minSpacing >= 1.5 && showObj.medianSpacing === 3);
+    // Moving the spacing slider re-derives the stats (narrower spacing
+    // = narrower picture, same drone count).
+    const narrower = await evaluate(`(function () {
+      var range = document.getElementById('spacingRange');
+      range.value = '2';
+      range.dispatchEvent(new Event('input'));
+      return document.getElementById('exportStats').textContent;
+    })()`);
+    check('spacing slider re-derives stats (2m, same 80 drones, narrower)', typeof narrower === 'string'
+      && narrower.startsWith('80 drones') && narrower.includes('typical spacing 2m'));
     const errors = await evaluate(`window.__errors`);
     check('no JS errors', Array.isArray(errors) && errors.length === 0);
     if (Array.isArray(errors) && errors.length) console.log('JS errors:', errors);
@@ -224,7 +278,7 @@ async function main() {
     console.error(`\n${failures.length} failure(s):\n- ${failures.join('\n- ')}`);
     process.exit(1);
   }
-  console.log('\nWorkbench smoke tests passed: 5 formations + words + multi-slide + example pill + font picker + palette picker + design summary + no JS errors.');
+  console.log('\nWorkbench smoke tests passed: 5 formations + words + multi-slide + example pill + font picker + palette picker + design summary + Skybrush export (UI + show structure + spacing slider) + no JS errors.');
 }
 
 main();

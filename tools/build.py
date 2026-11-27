@@ -165,12 +165,12 @@ def _validate_workbench():
     """Fail the build if the workbench page is broken.
 
     The workbench (workbench/index.html) is a second page in the same
-    repo: it loads the shared config + geometry from the repo root and
-    its own workbench.js. Same rules as the main page — config before
-    geometry before workbench.js, no inline executable script (there
-    is no CSP on the workbench, but the rule keeps the scripts
-    checkable), the page carries noindex (it is unlisted), and
-    workbench.js passes node --check.
+    repo: it loads the shared config + geometry + skyc exporter from
+    the repo root and its own workbench.js. Same rules as the main
+    page — config before geometry before skyc.js before workbench.js,
+    no inline executable script (there is no CSP on the workbench, but
+    the rule keeps the scripts checkable), the page carries noindex
+    (it is unlisted), and workbench.js + skyc.js pass node --check.
     """
     wb = BASE / "workbench" / "index.html"
     assert wb.is_file(), "workbench/index.html missing"
@@ -179,11 +179,14 @@ def _validate_workbench():
         "workbench/index.html must carry noindex (it is unlisted)"
     assert '<script src="../config.js">' in html, "workbench does not load ../config.js"
     assert '<script src="../geometry.js">' in html, "workbench does not load ../geometry.js"
+    assert '<script src="skyc.js">' in html, "workbench does not load skyc.js"
     assert '<script src="workbench.js">' in html, "workbench does not load workbench.js"
     assert html.index('<script src="../config.js">') < html.index('<script src="../geometry.js">'), \
         "workbench: config.js must load before geometry.js"
-    assert html.index('<script src="../geometry.js">') < html.index('<script src="workbench.js">'), \
-        "workbench: geometry.js must load before workbench.js"
+    assert html.index('<script src="../geometry.js">') < html.index('<script src="skyc.js">'), \
+        "workbench: geometry.js must load before skyc.js"
+    assert html.index('<script src="skyc.js">') < html.index('<script src="workbench.js">'), \
+        "workbench: skyc.js must load before workbench.js"
     assert '<link rel="stylesheet" href="style.css"' in html, "workbench does not link style.css"
     assert (BASE / "workbench" / "style.css").is_file(), "workbench/style.css missing"
     for m in re.finditer(r"<script\b[^>]*>", html):
@@ -192,12 +195,15 @@ def _validate_workbench():
             f"inline executable <script> in workbench — move it to workbench.js: {tag[:80]!r}"
     wbjs = BASE / "workbench" / "workbench.js"
     assert wbjs.is_file(), "workbench/workbench.js missing"
+    skycjs = BASE / "workbench" / "skyc.js"
+    assert skycjs.is_file(), "workbench/skyc.js missing"
     node = shutil.which("node")
     if not node:
         print("WARNING: node not found — skipping workbench JS syntax check (install node to enable it)")
         return
-    r = subprocess.run([node, "--check", str(wbjs)], capture_output=True, text=True)
-    assert r.returncode == 0, f"workbench.js failed node --check:\n{r.stderr}"
+    for js in (wbjs, skycjs):
+        r = subprocess.run([node, "--check", str(js)], capture_output=True, text=True)
+        assert r.returncode == 0, f"{js.name} failed node --check:\n{r.stderr}"
     print("workbench: node --check OK")
 
 

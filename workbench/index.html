@@ -102,6 +102,29 @@
       <p class="hint" id="copyNote">Copies a plain-text summary — paste it into
       the inquiry or a follow-up email.</p>
       <pre id="designSummary" class="design-summary" aria-live="polite"></pre>
+
+      <h2>Export to Skybrush (.skyc)</h2>
+      <p class="hint">Downloads the formation on screen as a Skybrush
+      show file — one held shape, ready to load in Skybrush Viewer or
+      Live. The drones are spaced by the setting below (the picture's
+      width follows from it); the shape is centred on the altitude.</p>
+      <div class="field">
+        <label for="spacingRange">Drone spacing <output id="spacingVal">3m</output></label>
+        <input id="spacingRange" type="range" min="1" max="5" step="0.5" value="3" />
+      </div>
+      <div class="field">
+        <label for="altitudeRange">Show altitude <output id="altitudeVal">40m</output></label>
+        <input id="altitudeRange" type="range" min="20" max="100" step="5" value="40" />
+      </div>
+      <div class="field">
+        <label for="holdRange">Hold time <output id="holdVal">30s</output></label>
+        <input id="holdRange" type="range" min="10" max="120" step="5" value="30" />
+      </div>
+      <p class="hint" id="exportStats" aria-live="polite"></p>
+      <button type="button" id="exportSkycBtn" class="btn">Export .skyc</button>
+      <p class="hint" id="exportNote">This exports the formation only — a
+      held shape, no takeoff, no return-to-home, no landing. Add those
+      in Skybrush Live's show adaptation, or in the sequencer.</p>
     </section>
 
     <section class="wb-stage" aria-label="Sky preview">
@@ -122,6 +145,7 @@
 </footer>
 <script src="../config.js"></script>
 <script src="../geometry.js"></script>
+<script src="skyc.js"></script>
 <script src="workbench.js"></script>
 </body>
 </html>

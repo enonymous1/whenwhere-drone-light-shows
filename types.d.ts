@@ -125,6 +125,7 @@ export interface WhenWhereNS {
   geometry: WhenWhereGeometry;
   tuning: Tuning;
   workbench?: WhenWhereWorkbench;
+  skyc?: WhenWhereSkycModule;
 }
 
 /** The workbench page's current design state (workbench/workbench.js). */
@@ -133,6 +134,53 @@ export interface WhenWhereWorkbench {
   readonly wordSlides: string[];
   readonly droneCount: number;
   readonly paletteOverride: string[] | null;
+  /** The formation on screen as design points (targets + colours). */
+  readonly points: Point[];
+}
+
+/** The numbers a .skyc export reports back (workbench/skyc.js). */
+export interface WhenWhereSkycStats {
+  readonly scale: number;
+  readonly width: number;
+  readonly height: number;
+  readonly minSpacing: number;
+  readonly medianSpacing: number;
+  readonly drones: number;
+}
+
+/** One formation, as the .skyc exporter takes it. */
+export interface WhenWhereSkycDesign {
+  readonly name: string;
+  readonly points: Point[];
+}
+
+/** The export settings (workbench/skyc.js). */
+export interface WhenWhereSkycOptions {
+  readonly spacing: number;
+  readonly altitude: number;
+  readonly holdSeconds: number;
+  readonly title?: string;
+  readonly separatePoints: (pts: Point[], minDist: number) => Point[];
+}
+
+/** The .skyc export module (workbench/skyc.js). */
+export interface WhenWhereSkycModule {
+  srgbToLinearByte(v: number): number;
+  hexToRgb(hex: string): number[];
+  encodeVaruint(n: number): number[];
+  encodeLightProgram(rgb: number[], holdSeconds: number): Uint8Array;
+  base64(bytes: Uint8Array): string;
+  crc32(bytes: Uint8Array): number;
+  buildZip(files: { name: string; data: Uint8Array }[]): Uint8Array<ArrayBuffer>;
+  nearestNeighbourStats(pts: Point[]): { min: number; median: number };
+  buildShow(
+    design: WhenWhereSkycDesign,
+    options: WhenWhereSkycOptions
+  ): { show: object; stats: WhenWhereSkycStats };
+  exportSkyc(
+    design: WhenWhereSkycDesign,
+    options: WhenWhereSkycOptions
+  ): { bytes: Uint8Array<ArrayBuffer>; filename: string; stats: WhenWhereSkycStats };
 }
 
 /**

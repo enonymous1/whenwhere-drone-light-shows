@@ -532,10 +532,14 @@ crossings.
   `geometry.js`, shared with the unlisted workbench at
   [`workbench/index.html`](workbench/index.html) — a design tool for
   customer meetings (formation picker, word style controls, palette
-  picker, "Copy this design" summary). It is unlisted on purpose:
+  picker, "Copy this design" summary). It also exports the formation
+  on screen as a Skybrush `.skyc` show file (one held shape; spacing,
+  altitude, and hold-time settings; the picture's width follows from
+  the spacing). The export is the net show only — no takeoff, no
+  return-to-home, no landing; those come from Skybrush Live's show
+  adaptation or the sequencer. It is unlisted on purpose:
   no link from the site, `<meta name="robots" content="noindex">`,
-  opened by bookmark or pasted link. The Skybrush export (canvas 2D
-  → real-world 3D + a `.skyc` writer + a sequencer) is the next
+  opened by bookmark or pasted link. The sequencer is the next
   phase; see the proposal in
   `~/workspace/your_files/whenwhere-formation-workbench-proposal.md`.
 
@@ -574,6 +578,7 @@ whenwhere-drone-light-shows/
 ├── workbench/
 │   ├── index.html              # Formation Workbench (unlisted, noindex) — design tool for customer meetings
 │   ├── workbench.js            # workbench renderer + controls (loads ../config.js + ../geometry.js)
+│   ├── skyc.js                 # Skybrush .skyc export: 2D→3D mapping, show.json builder, ledctrl encoder, ZIP writer
 │   └── style.css               # workbench styles (Night & Gold, system-aware; the canvas stays a dark sky)
 ├── assets/                     # photos (social-preview hero + 6 occasion cards, optimized JPEG)
 │   ├── hero.jpg                # og:image only — the hero is the starfield canvas (1248×832, 161 KB)
@@ -587,7 +592,7 @@ whenwhere-drone-light-shows/
 │   └── screenshots/            # hero (desktop + mobile), mobile studio, formation stills, assembly + finale GIFs (for this README)
 ├── tests/
 │   ├── smoke.mjs               # CDP smoke test: formation counts, labels, JS errors
-│   ├── workbench-smoke.mjs     # CDP smoke test for the workbench: formations, words, palette, design summary
+│   ├── workbench-smoke.mjs     # CDP smoke test for the workbench: formations, words, palette, design summary, Skybrush export
 │   ├── geometry.mjs            # CDP unit tests: pure geometry, 52 assertions
 │   └── capture-assembly.mjs    # CDP frame capture for the assembly GIF
 ├── CHANGELOG.md                # one line per shipped change, dated

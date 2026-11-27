@@ -80,6 +80,7 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     });
     startTime = performance.now();
     if (reduced) { drones.forEach(function (d) { d.x = d.tx; d.y = d.ty; }); draw(performance.now()); }
+    refreshExportStats();
   }
   /**
    * Cubic ease-out for the morph.
@@ -394,6 +395,74 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     }
   });
 
+  // ---- Export to Skybrush (.skyc) ----
+  var spacingRange = /** @type {HTMLInputElement} */ (document.getElementById('spacingRange'));
+  var altitudeRange = /** @type {HTMLInputElement} */ (document.getElementById('altitudeRange'));
+  var holdRange = /** @type {HTMLInputElement} */ (document.getElementById('holdRange'));
+  var exportStatsEl = document.getElementById('exportStats');
+  var exportNote = document.getElementById('exportNote');
+  /**
+   * The formation on screen as design points — each drone's target
+   * position and colour. This is what the exporter maps to the sky;
+   * the animated positions are not used.
+   * @returns {Point[]} the design points.
+   */
+  function currentDesignPoints() {
+    return drones.map(function (d) {
+      return { x: d.tx, y: d.ty, c: d.c };
+    });
+  }
+  /**
+   * Reads the export settings from the sliders.
+   * @returns {import('../types').WhenWhereSkycOptions}
+   */
+  function exportOptions() {
+    return {
+      spacing: Number(spacingRange.value),
+      altitude: Number(altitudeRange.value),
+      holdSeconds: Number(holdRange.value),
+      separatePoints: GEO.separatePoints,
+    };
+  }
+  /**
+   * Recomputes the derived export numbers (show width and height, the
+   * closest pair and the typical spacing) for the formation on screen
+   * and shows them under the settings. Runs on every formation change
+   * and every slider input, so the numbers always describe what is
+   * on the canvas now.
+   */
+  function refreshExportStats() {
+    var pts = currentDesignPoints();
+    if (!pts.length) { exportStatsEl.textContent = ''; return; }
+    var s = WhenWhereSkyc.buildShow({ name: currentName, points: pts }, exportOptions()).stats;
+    exportStatsEl.textContent = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm';
+  }
+  function bindExportRange(el, outId, fmt) {
+    var out = document.getElementById(outId);
+    el.addEventListener('input', function () {
+      out.textContent = fmt(Number(el.value));
+      refreshExportStats();
+    });
+  }
+  bindExportRange(spacingRange, 'spacingVal', function (v) { return v + 'm'; });
+  bindExportRange(altitudeRange, 'altitudeVal', function (v) { return v + 'm'; });
+  bindExportRange(holdRange, 'holdVal', function (v) { return v + 's'; });
+  document.getElementById('exportSkycBtn').addEventListener('click', function () {
+    var pts = currentDesignPoints();
+    if (!pts.length) return;
+    var out = WhenWhereSkyc.exportSkyc({ name: currentName, points: pts }, exportOptions());
+    var blob = new Blob([out.bytes], { type: 'application/octet-stream' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = out.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' drones, ' + out.stats.width + 'm wide at ' + Number(altitudeRange.value) + 'm, held ' + Number(holdRange.value) + 's. This exports the formation only — a held shape, no takeoff, no return-to-home, no landing.';
+  });
+
   // Exposed for tests: the pure geometry, without the DOM, plus the
   // workbench's current design state.
   window.WHENWHERE = window.WHENWHERE || /** @type {WhenWhereNS} */ ({});
@@ -403,7 +472,8 @@ if (!CFG || !CFG.FLEET || !CFG.PALETTES) {
     get currentName() { return currentName; },
     get wordSlides() { return wordSlides.slice(); },
     get droneCount() { return drones.length; },
-    get paletteOverride() { return paletteOverride; }
+    get paletteOverride() { return paletteOverride; },
+    get points() { return currentDesignPoints(); }
   };
 
   // On load: hearts, like the drone page.

@@ -4,6 +4,45 @@ All notable changes to the WhenWhere drone light shows page, one line
 per shipped change. To release a new version, bump the version comment
 at the top of `index.html` and add a section below.
 
+## Skybrush export (Phase 3, static) — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The Formation Workbench gains an "Export to Skybrush
+  (.skyc)" section: it downloads the formation on screen as a Skybrush
+  show file — one held shape, ready to load in Skybrush Viewer or
+  Live. New file `workbench/skyc.js` (`WhenWhereSkyc`): a minimal
+  stored-ZIP writer (no library), the `show.json` builder, and a
+  constant-colour ledctrl encoder. Three settings: drone spacing
+  (1–5m, default 3m), show altitude (20–100m, default 40m), hold time
+  (10–120s, default 30s). The scale is spacing-first and
+  median-derived — `scale = spacing / median nearest-neighbour
+  distance` — so the picture's width follows from the spacing (the
+  hearts are ~206m wide at 3m; the rings' minimum neighbour distance
+  is 0px, so a minimum-derived scale would be broken). Points are run
+  through geometry's `separatePoints` on a copy so no two exported
+  drones are closer than half the nominal spacing. Mapping: the
+  formation is a vertical plane facing the audience (skyX = 0),
+  `skyY = (450 - px) * scale`, `skyZ = altitude + (366 - py) * scale`,
+  so the canvas centre sits at the altitude. Each drone holds one
+  position for the hold time (two keypoints, same position, no control
+  points), `home` is the formation position, `meta.segments.Show`
+  is `[0, hold]`, `settings.validation.minDistance` is the enforced
+  floor, and the light program is one `SET_COLOR` in linear RGB (the
+  palette hex is converted from sRGB) held for the whole show.
+  The export is the net show only — **no takeoff, no return-to-home,
+  no landing**; those come from Skybrush Live's show adaptation or
+  the sequencer (Phase 3, part 2). Verified end to end: the exported
+  hearts `.skyc` passes Skybrush's own `validateShowSpecification`
+  (replicated from skybrush.js `packages/show-format/src/validation.ts`
+  — the package is not published on npm), the 3D bounding box matches
+  the canvas bounding box through the mapping to within 0.05m, the
+  light program decodes to `SET_COLOR` + 1500 frames + `END`, and no
+  two drones share a position (min 3D distance 2.02m at 3m spacing).
+  The workbench smoke test now also checks the export UI, the
+  built-show structure, and the spacing slider. The live-demo check
+  (loading the `.skyc` in a source-built Skybrush Live/Viewer) is
+  still a his-side step. Also updated the Phase 2 changelog entry
+  below, which said the export was "still Phase 3, not built".
+
 ## Formation Workbench — 2026-11-27 (no version bump)
 
 - 2026-11-27 — Phase 2 of the workbench plan: the Formation Workbench
@@ -30,8 +69,8 @@ at the top of `index.html` and add a section below.
   summary + no JS errors) passes, and a live render shows HAPPY in
   the glass-blues palette. Also fixed in passing: a duplicated
   "Exposed for tests" comment line in studio.js left by the
-  geometry.js extraction. The Skybrush export is still Phase 3, not
-  built.
+  geometry.js extraction. The Skybrush export is Phase 3, built
+  2026-11-27 — see the entry above.
 
 ## geometry.js — 2026-11-27 (no version bump)
 
