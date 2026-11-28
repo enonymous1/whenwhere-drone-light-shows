@@ -594,3 +594,21 @@ at the top of `index.html` and add a section below.
   soft-geofence bubble was deliberately not added as a formation
   check — it governs free-flight separation, and the formation's
   planned spacing (closest pair 2.024 m at 3 m) is not free flight.
+
+## Demo venue presets — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The venue map gained a "Demo locations —
+  Charlottesville" dropdown, so a demo venue can be picked in one
+  tap instead of typing an address. Five open sites from the
+  locations review, ordered by how much clear ground the map shows
+  around the pin: Foxfield Race Course (38.098066, -78.551238 —
+  wide open turf, best for 100–200 drones), Darden Towe Park
+  (38.042465, -78.450159 — rectangular athletic fields), Pen Park
+  (38.051924, -78.452977 — golf-course turf, houses nearby),
+  McIntire Park (38.045373, -78.474949 — city-park field, backdrop
+  only), Azalea Park (38.011026, -78.516776 — small and tight,
+  I-64 nearby). Picking one centres the map (zoom 16) and moves the
+  pin there; the pin stays free to drag or click elsewhere, and the
+  dropdown resets when it is moved by hand. Spotsylvania stays the
+  map's default when no venue is saved — it is home ground for real
+  venue picking, and the Charlottesville sites are demo presets.

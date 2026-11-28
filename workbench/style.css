@@ -122,6 +122,9 @@ a{color:var(--gold)}
 .venue-modal-close{border:0;background:transparent;color:var(--muted);font-size:1.6rem;line-height:1;cursor:pointer;padding:2px 8px}
 .venue-modal-close:hover{color:var(--ink)}
 .venue-map{height:380px;border:1px solid var(--line);border-radius:10px;margin:12px 0 8px;background:#0a0e1a;z-index:0}
+.venue-demo-row{display:flex;gap:8px;align-items:center;margin:8px 0 0}
+.venue-demo-row label{flex:none;font-weight:600;white-space:nowrap}
+.venue-demo-row select{flex:1;min-width:0}
 .venue-map .leaflet-container{font-family:inherit}
 .venue-modal-coords{font-variant-numeric:tabular-nums;font-weight:600;margin:4px 0 12px}
 .venue-modal-actions{display:flex;gap:10px;flex-wrap:wrap}

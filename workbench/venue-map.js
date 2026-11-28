@@ -30,6 +30,7 @@
   var closeBtn = document.getElementById('venueModalClose');
   var latEl = /** @type {HTMLInputElement} */ (document.getElementById('venueLat'));
   var lonEl = /** @type {HTMLInputElement} */ (document.getElementById('venueLon'));
+  var demoSelect = /** @type {HTMLSelectElement} */ (document.getElementById('venueDemoSite'));
 
   // Spotsylvania, VA — home ground, used when no venue is set yet.
   var DEFAULT_LAT = 38.2019;
@@ -59,6 +60,10 @@
 
   function note(msg) { noteEl.textContent = msg; }
 
+  // The demo-location dropdown resets when the pin is moved by hand,
+  // so it never claims a spot the pin has left.
+  function resetDemoSelect() { if (demoSelect) demoSelect.value = ''; }
+
   function openModal() {
     if (typeof L === 'undefined') {
       note('The map did not load (Leaflet is missing) — type the latitude and longitude directly.');
@@ -87,8 +92,9 @@
       marker.on('dragend', function () {
         var ll = marker.getLatLng();
         showCoords(ll.lat, ll.lng);
+        resetDemoSelect();
       });
-      map.on('click', function (e) { setPin(e.latlng.lat, e.latlng.lng); });
+      map.on('click', function (e) { setPin(e.latlng.lat, e.latlng.lng); resetDemoSelect(); });
       showCoords(start.lat, start.lon);
     } else {
       map.invalidateSize();
@@ -140,6 +146,22 @@
   addressEl.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); findAndOpen(); }
   });
+  // Demo locations: a preset list of open Charlottesville sites (from
+  // the locations review) that jump the map and the pin straight there,
+  // so a demo venue can be picked without typing an address or
+  // geocoding. The pin is still free to drag or click elsewhere.
+  if (demoSelect) {
+    demoSelect.addEventListener('change', function () {
+      var v = demoSelect.value;
+      if (!v || !map) return;
+      var parts = v.split(',');
+      var lat = Number(parts[0]), lon = Number(parts[1]);
+      if (!isFinite(lat) || !isFinite(lon)) return;
+      map.setView([lat, lon], 16);
+      setPin(lat, lon);
+      note('Demo location: ' + demoSelect.options[demoSelect.selectedIndex].text + ' — drag the pin (or click the map) to place the takeoff grid exactly.');
+    });
+  }
   useBtn.addEventListener('click', function () {
     var pin = currentPin();
     if (!pin) { closeModal(); return; }

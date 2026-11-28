@@ -195,7 +195,18 @@
       <h3 id="venueModalTitle">Pick the venue on the map</h3>
       <button type="button" id="venueModalClose" class="venue-modal-close" aria-label="Close the map">×</button>
     </div>
-    <p class="hint" id="venueAddressNote">Search an address, then click the map (or drag the pin) to place the takeoff grid exactly.</p>
+    <p class="hint" id="venueAddressNote">Search an address, pick a demo location, or click the map (or drag the pin) to place the takeoff grid exactly.</p>
+    <div class="venue-demo-row">
+      <label for="venueDemoSite">Demo locations — Charlottesville</label>
+      <select id="venueDemoSite">
+        <option value="">Pick a demo location…</option>
+        <option value="38.098066,-78.551238">Foxfield Race Course — wide open turf (best for 100–200 drones)</option>
+        <option value="38.042465,-78.450159">Darden Towe Park — rectangular athletic fields</option>
+        <option value="38.051924,-78.452977">Pen Park — golf-course turf, houses nearby</option>
+        <option value="38.045373,-78.474949">McIntire Park — city-park field (backdrop only)</option>
+        <option value="38.011026,-78.516776">Azalea Park — small and tight, I-64 nearby</option>
+      </select>
+    </div>
     <div id="venueMap" class="venue-map" aria-label="Map to pick the venue"></div>
     <p class="venue-modal-coords" id="venueMapCoords" aria-live="polite"></p>
     <div class="venue-modal-actions">
