@@ -315,6 +315,22 @@
           document.getElementById('inquire').scrollIntoView({ behavior: 'smooth' });
           dream.focus();
         });
+        // "View in 3D" saves the formation on screen for
+        // preview-3d.html (the reference show: 3m spacing, 40m centre
+        // altitude, 30s hold — the same settings the compliance line
+        // quotes), then opens it. The options are JSON-serialisable;
+        // the preview page re-attaches separatePoints.
+        document.getElementById('view3dBtn').addEventListener('click', function () {
+          var pts = drones.map(function (d) { return { x: d.tx, y: d.ty, c: d.c }; });
+          if (!pts.length) return;
+          try {
+            localStorage.setItem('wwPreview3D', JSON.stringify({
+              design: { name: currentName, points: pts },
+              options: { spacing: 3, takeoffSpacing: 3, altitude: 40, holdSeconds: 30 },
+            }));
+          } catch (e) { /* storage blocked — the preview falls back to its demo */ }
+          window.open('preview-3d.html', '_blank');
+        });
         // Exposed for tests: the pure geometry, without the DOM.
         window.WHENWHERE = window.WHENWHERE || /** @type {WhenWhereNS} */ ({});
         window.WHENWHERE.geometry = { resample: GEO.resample, resampleRuns: GEO.resampleRuns, heartPair: GEO.heartPair, thinUniform: GEO.thinUniform, wordPoints: GEO.wordPoints, skeletonize: GEO.skeletonize, finalePts: GEO.finalePts, allocateCounts: GEO.allocateCounts, separatePoints: GEO.separatePoints, glyphSkeleton: GEO.glyphSkeleton, splitSlides: GEO.splitSlides };

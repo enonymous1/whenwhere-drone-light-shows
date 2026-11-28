@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3D Preview — When&Where Drone Light Shows</title>
+  <meta name="description" content="A 3D preview of a When&Where drone light show — the formation as glowing drones in a night sky, with a timeline you can scrub." />
+  <meta name="robots" content="noindex" />
+  <meta name="color-scheme" content="light dark" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .preview-wrap{max-width:1200px;margin:0 auto;padding:24px 20px 48px}
+    .preview-wrap h1{font-size:1.6rem;margin:0 0 4px}
+    .preview-wrap .sub{color:var(--muted);margin:0 0 16px}
+    #scene{position:relative;width:100%;height:min(68vh,640px);border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#05070f}
+    #scene canvas{display:block;width:100%;height:100%;touch-action:none}
+    .transport{display:flex;align-items:center;gap:12px;margin:14px 0 6px;flex-wrap:wrap}
+    .transport input[type="range"]{flex:1;min-width:160px;accent-color:var(--gold-bright)}
+    .transport .time{font-variant-numeric:tabular-nums;white-space:nowrap}
+    .transport .views{display:flex;gap:8px}
+    .transport .views button{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem;padding:8px 14px;border-radius:999px;cursor:pointer}
+    .transport .views button:hover{border-color:var(--gold-bright)}
+    .transport .views button[aria-pressed="true"]{background:var(--gold-bright);color:#191203;border-color:var(--gold-bright)}
+    .preview-note{color:var(--muted);font-size:.95rem;margin:8px 0 0}
+    .preview-note label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+    .preview-links{margin-top:20px;display:flex;gap:18px;flex-wrap:wrap}
+    .preview-links a{color:var(--gold)}
+    #scene .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#a9b2d8;background:#05070f}
+  </style>
+</head>
+<body>
+  <main class="preview-wrap">
+    <h1 id="previewTitle">3D Preview</h1>
+    <p class="sub" id="previewStats"></p>
+    <div id="scene"><div class="loading" id="sceneLoading">Loading the night sky…</div></div>
+    <div class="transport" role="group" aria-label="Show playback">
+      <button type="button" id="playBtn" class="btn">Pause</button>
+      <input id="timeRange" type="range" min="0" max="90" step="0.1" value="0" aria-label="Show time" />
+      <span class="time" id="timeLabel">0:00 / 1:30</span>
+      <span class="views" role="group" aria-label="Camera view">
+        <button type="button" data-view="audience" aria-pressed="true">Audience</button>
+        <button type="button" data-view="top" aria-pressed="false">Top</button>
+        <button type="button" data-view="side" aria-pressed="false">Side</button>
+      </span>
+    </div>
+    <p class="preview-note"><label><input type="checkbox" id="dimToggle" checked /> Show the drones dim during takeoff and landing</label> — their show lights are off then, so they fly dark in reality. The dim dots are just so you can follow them up; they light up in full colour when the picture forms.</p>
+    <p class="preview-links"><a href="workbench/index.html">Back to the Formation Workbench</a><a href="index.html">Back to the drone light shows page</a></p>
+  </main>
+  <script src="config.js"></script>
+  <script src="rules.js"></script>
+  <script src="geometry.js"></script>
+  <script src="workbench/skyc.js"></script>
+  <script type="module" src="preview-3d.js"></script>
+</body>
+</html>

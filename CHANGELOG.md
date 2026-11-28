@@ -32,6 +32,33 @@ at the top of `index.html` and add a section below.
   makes the studio initialise just slow enough that the click landed
   before the shape handlers attached.
 
+## 3D preview (Three.js) — 2026-11-27 (no version bump)
+
+- 2026-11-27 — A customer-facing 3D preview of the show:
+  `preview-3d.html` renders the formation as glowing drones in a
+  night sky (stars, a dark ground grid for scale), built with the
+  same `WhenWhereSkyc.buildShow` the `.skyc` export uses, so the 3D
+  picture is the same show that flies. Three.js r170 is vendored
+  locally (`vendor/three/three.module.min.js`, MIT) — no CDN, no
+  import map, so the Content Security Policy (`script-src 'self'`)
+  is untouched; the glow is a radial-gradient sprite per drone
+  (additive blending), not post-processing, so no addons are needed.
+  Controls: play/pause + a scrub timeline (loops), an orbit camera
+  (drag to orbit, wheel/pinch to zoom, Audience / Top / Side
+  presets), and a toggle for the dim takeoff dots — the drones' show
+  lights are off during takeoff and landing, so they are shown dim
+  (a stand-in so the climb can be followed) and light up in full
+  colour when the picture forms; unchecking the box flies them dark,
+  as they really do. The camera fits the formation's actual bounding
+  box, not the design canvas, so the picture fills the frame. Opened
+  from the workbench ("Preview in 3D") and from the studio ("View
+  this formation in 3D"), which save the formation + settings to
+  localStorage for the preview page; opening it directly shows the
+  hearts demo. Verified by screenshot at t=15 (dim climb) and t=45
+  (hearts lit), in light and dark themes, with no JS errors. Smoke
+  checks cover both buttons (they save the formation + settings and
+  open the preview page).
+
 ## CSV + Google Earth exports — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The workbench now exports the formation two more ways

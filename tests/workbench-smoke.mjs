@@ -458,6 +458,19 @@ async function main() {
     const kmzBtnObj = JSON.parse(kmzBtn);
     check('Google Earth button is disabled until the venue latitude/longitude are set', kmzBtnObj.before === true && kmzBtnObj.after === false);
     check('venue is saved in localStorage', typeof kmzBtnObj.saved === 'string' && kmzBtnObj.saved.indexOf('38') !== -1 && kmzBtnObj.saved.indexOf('-77') !== -1);
+    // The 3D preview button saves the formation on screen for the
+    // preview page (window.open is stubbed so no tab opens).
+    const previewBtn = await evaluate(`(function () {
+      var opened = null;
+      window.open = function (url) { opened = url; return null; };
+      document.getElementById('preview3dBtn').click();
+      var saved = localStorage.getItem('wwPreview3D');
+      var parsed = null;
+      try { parsed = JSON.parse(saved); } catch (e) { /* not JSON */ }
+      return JSON.stringify({ btn: !!document.getElementById('preview3dBtn'), opened: opened, name: parsed && parsed.design && parsed.design.name, points: parsed && parsed.design && parsed.design.points && parsed.design.points.length, spacing: parsed && parsed.options && parsed.options.spacing, altitude: parsed && parsed.options && parsed.options.altitude });
+    })()`);
+    const previewBtnObj = JSON.parse(previewBtn);
+    check('3D preview button saves the formation + export settings for the preview page', previewBtnObj.btn === true && previewBtnObj.opened === '../preview-3d.html' && previewBtnObj.name === 'Interlocking hearts' && previewBtnObj.points === 80 && previewBtnObj.spacing === 3 && previewBtnObj.altitude === 40);
     // Moving the spacing slider re-derives the stats (narrower spacing
     // = narrower picture, same drone count).
     const narrower = await evaluate(`(function () {

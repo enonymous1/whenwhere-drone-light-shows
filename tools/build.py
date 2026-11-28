@@ -225,6 +225,54 @@ def _validate_workbench():
     print("workbench: node --check OK")
 
 
+def _validate_preview():
+    """Fail the build if the 3D preview page is broken.
+
+    The preview (preview-3d.html) is a third page in the same repo: it
+    loads the shared config + rules + geometry + skyc exporter from the
+    repo root and its own preview-3d.js (an ES module, which imports
+    the vendored Three.js core). Same rules as the other pages —
+    config before rules before geometry before skyc.js before
+    preview-3d.js, no inline executable script (the Content Security
+    Policy allows script-src 'self' only), the page carries noindex
+    (it is a tool, not a landing page), the vendored Three.js exists,
+    and preview-3d.js passes node --check.
+    """
+    pv = BASE / "preview-3d.html"
+    assert pv.is_file(), "preview-3d.html missing"
+    html = pv.read_text(encoding="utf-8")
+    assert '<meta name="robots" content="noindex"' in html, \
+        "preview-3d.html must carry noindex (it is a tool, not a landing page)"
+    assert '<script src="config.js">' in html, "preview does not load config.js"
+    assert '<script src="rules.js">' in html, "preview does not load rules.js"
+    assert '<script src="geometry.js">' in html, "preview does not load geometry.js"
+    assert '<script src="workbench/skyc.js">' in html, "preview does not load workbench/skyc.js"
+    assert '<script type="module" src="preview-3d.js">' in html, "preview does not load preview-3d.js"
+    assert html.index('<script src="config.js">') < html.index('<script src="rules.js">'), \
+        "preview: config.js must load before rules.js"
+    assert html.index('<script src="rules.js">') < html.index('<script src="geometry.js">'), \
+        "preview: rules.js must load before geometry.js"
+    assert html.index('<script src="geometry.js">') < html.index('<script src="workbench/skyc.js">'), \
+        "preview: geometry.js must load before skyc.js"
+    assert html.index('<script src="workbench/skyc.js">') < html.index('<script type="module" src="preview-3d.js">'), \
+        "preview: skyc.js must load before preview-3d.js"
+    for m in re.finditer(r"<script\b[^>]*>", html):
+        tag = m.group(0)
+        assert "src=" in tag, \
+            f"inline executable <script> in preview — move it to preview-3d.js: {tag[:80]!r}"
+    three = BASE / "vendor" / "three" / "three.module.min.js"
+    assert three.is_file(), "vendor/three/three.module.min.js missing (Three.js core, vendored)"
+    pvjs = BASE / "preview-3d.js"
+    assert pvjs.is_file(), "preview-3d.js missing"
+    node = shutil.which("node")
+    if not node:
+        print("WARNING: node not found — skipping preview JS syntax check (install node to enable it)")
+        return
+    r = subprocess.run([node, "--check", str(pvjs)], capture_output=True, text=True)
+    assert r.returncode == 0, f"{pvjs.name} failed node --check:\n{r.stderr}"
+    print("preview: node --check OK")
+
+
 def build(write=True):
     """Optimize images, sync tag dimensions, validate.
 
@@ -235,6 +283,7 @@ def build(write=True):
     html, changed = optimize_images(html, write=write)
     _validate_built_html(html)
     _validate_workbench()
+    _validate_preview()
     return html, changed
 
 

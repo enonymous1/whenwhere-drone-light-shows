@@ -553,7 +553,13 @@ crossings.
   B every second, the universal exchange format) and as a Google Earth
   .kmz (one flight path per drone, anchored to the venue's latitude
   and longitude and the show's orientation, which are saved in the
-  browser). The studio preview
+  browser). Either page can also open the formation in the 3D preview
+  (`preview-3d.html`, Three.js vendored locally, no CDN): the show as
+  glowing drones in a night sky, with a play/scrub timeline, orbit
+  camera (Audience / Top / Side), and the drones shown dim during
+  takeoff and landing so the climb can be followed — their show
+  lights are off then, and they light up in full colour when the
+  picture forms. The studio preview
   shows the same rules as a compliance line under the canvas: the
   formation as a real show at 3m spacing and 40m centre altitude, with
   its highest drone and closest pair, and whether it sits inside the

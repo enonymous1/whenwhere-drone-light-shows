@@ -159,6 +159,23 @@ export interface WhenWhereNS {
   tuning: Tuning;
   workbench?: WhenWhereWorkbench;
   skyc?: WhenWhereSkycModule;
+  preview3d?: WhenWherePreview3d;
+}
+
+/** The 3D preview page's live state (preview-3d.js). */
+export interface WhenWherePreview3d {
+  /** The show time in seconds. */
+  readonly time: number;
+  /** Whether the show is playing. */
+  readonly playing: boolean;
+  /** The number of drones in the show. */
+  readonly drones: number;
+  /** The show's total length in seconds. */
+  readonly totalSeconds: number;
+  setTime(v: number): void;
+  setPlaying(p: boolean): void;
+  /** A drone's Three.js position [-y, z, x] at time t (seconds). */
+  sampleDrone(i: number, t: number): number[];
 }
 
 /** The workbench page's current design state (workbench/workbench.js). */

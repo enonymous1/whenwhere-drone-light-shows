@@ -569,6 +569,19 @@ if (!RULES) {
     downloadBytes(out.bytes, out.filename);
     exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' flight paths at ' + venue.latitude + ', ' + venue.longitude + ', front facing ' + venue.orientationDegrees + '° from North. Open it in Google Earth to check clearances and sightlines.';
   });
+  // 3D preview: saves the formation on screen for preview-3d.html
+  // (same design + export settings as the .skyc), then opens it.
+  // The options are JSON-serialisable — the function-valued
+  // separatePoints is dropped by stringify and re-attached by the
+  // preview page.
+  document.getElementById('preview3dBtn').addEventListener('click', function () {
+    var pts = currentDesignPoints();
+    if (!pts.length) return;
+    try {
+      localStorage.setItem('wwPreview3D', JSON.stringify({ design: { name: currentName, points: pts }, options: exportOptions() }));
+    } catch (e) { /* storage blocked — the preview falls back to its demo */ }
+    window.open('../preview-3d.html', '_blank');
+  });
 
   // Exposed for tests: the pure geometry, without the DOM, plus the
   // workbench's current design state.
