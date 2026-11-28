@@ -41,6 +41,11 @@ var DIM = 0.12;
 var COUNT_MIN = 40;
 var COUNT_MAX = 240;
 var COUNT_STEP = 10;
+// The altitude slider's bounds, matching the workbench's show
+// altitude slider (20–100 m, step 5, default 40).
+var ALT_MIN = 20;
+var ALT_MAX = 100;
+var ALT_STEP = 5;
 // The shapes the count slider can rebuild, by their saved key.
 var SHAPE_KEYS = ['heart', 'rings', 'glass', 'star', 'finale'];
 
@@ -105,6 +110,10 @@ function makeGlowTexture() {
 function main() {
   var GEO = WhenWhereGeometry.create(900, 732, WHENWHERE_CONFIG.PALETTES);
   var loaded = loadDesign(GEO);
+  // The export settings as loaded, made mutable: the altitude slider
+  // changes currentOptions.altitude and rebuilds, and the count
+  // slider keeps whatever altitude is in force (and vice versa).
+  var currentOptions = Object.assign({}, loaded.options);
   var SHAPE_FNS = {
     heart: GEO.heartPair, rings: GEO.ringsPts, glass: GEO.glassPts,
     star: GEO.starPts, finale: GEO.finalePts,
@@ -293,7 +302,7 @@ function main() {
   // ---- Camera: orbit around the formation centre. ----
   // The formation is centred on the show altitude, so the target is
   // the middle of the picture, not the ground.
-  var target = new THREE.Vector3(0, loaded.options.altitude, 0);
+  var target = new THREE.Vector3(0, currentOptions.altitude, 0);
   var orbit = { theta: 0, phi: 1.55, radius: 100 };
   var goal = null;
 
@@ -321,14 +330,27 @@ function main() {
   var countRow = document.getElementById('countRow');
   var countRange = document.getElementById('countRange');
   var countValue = document.getElementById('countValue');
-  var countWarning = document.getElementById('countWarning');
-  function updateCountWarning() {
-    if (stats && stats.minHeight < 0) {
-      countWarning.textContent = '⚠ The bottom drones sit below ground at this count — lower the count, or raise the centre altitude back in the workbench.';
-      countWarning.hidden = false;
-    } else {
-      countWarning.hidden = true;
+  var altRange = document.getElementById('altRange');
+  var altValue = document.getElementById('altValue');
+  var previewWarning = document.getElementById('previewWarning');
+  // The warning line under the sliders: the bottom drones below
+  // ground, or the highest drone above the FAA ceiling (from the
+  // rules file, 120 m unless a venue waiver raises it). The fix it
+  // names depends on what can change — shapes can drop the count,
+  // words can only move the altitude.
+  function updateWarning() {
+    if (!stats) return;
+    var ceiling = (typeof WHENWHERE_RULES_EFFECTIVE !== 'undefined' && WHENWHERE_RULES_EFFECTIVE.maxAltitudeMeters) || 120;
+    var canCount = !!(shape && SHAPE_FNS[shape]);
+    var msgs = [];
+    if (stats.minHeight < 0) {
+      msgs.push('⚠ The bottom drones sit below ground — raise the centre altitude' + (canCount ? ', or lower the drone count' : '') + '.');
     }
+    if (stats.maxHeight > ceiling) {
+      msgs.push('⚠ The highest drone is above the ' + ceiling + ' m FAA ceiling — lower the centre altitude' + (canCount ? ', or lower the drone count' : '') + '.');
+    }
+    previewWarning.textContent = msgs.join(' ');
+    previewWarning.hidden = msgs.length === 0;
   }
 
   // ---- buildShowState: (re)build everything the show defines. ----
@@ -339,12 +361,12 @@ function main() {
   // changes, so the flight keeps its place.
   function buildShowState(design) {
     currentDesign = design;
-    var built = WhenWhereSkyc.buildShow(design, loaded.options);
+    var built = WhenWhereSkyc.buildShow(design, currentOptions);
     show = built.show;
     stats = built.stats;
     total = stats.totalSeconds;
     holdStart = 30;
-    holdEnd = 30 + loaded.options.holdSeconds;
+    holdEnd = 30 + currentOptions.holdSeconds;
     drones = show.swarm.drones;
     n = drones.length;
 
@@ -390,7 +412,7 @@ function main() {
     // are visible when the measurements are on. The vertical span runs
     // from the ground to the top dimension line; the width also covers
     // the buffer circle.
-    var altTop = loaded.options.altitude;
+    var altTop = currentOptions.altitude;
     bufferRadius = bboxW / 2 + stats.maxHeight * bufferRate;
     var fitH = (maxBY + MMARGIN) - 0;
     var fitW = Math.max(bboxW + 2 * MMARGIN, 2 * bufferRadius);
@@ -471,12 +493,12 @@ function main() {
     measureLabels.push({ el: makeLabel('red', 'Safety buffer — keep clear · ' + Math.round(bufferRadius) + ' m radius'), anchor: new THREE.Vector3(-bufferRadius, gy, 0) });
 
     // Re-fit the camera on the new show, centred on the picture: a
-    // count change is a new show, so the view starts from the
-    // audience fit again (any pan or zoom is reset with it).
-    target.set(0, loaded.options.altitude, 0);
+    // count or altitude change is a new show, so the view starts from
+    // the audience fit again (any pan or zoom is reset with it).
+    target.set(0, currentOptions.altitude, 0);
     orbit.radius = fitRadius;
     goal = null;
-    updateCountWarning();
+    updateWarning();
   }
 
   // First build: the show as loaded (or the hearts demo).
@@ -535,7 +557,7 @@ function main() {
   }
   // Back to the audience view, centred on the picture.
   function resetView() {
-    target.set(0, loaded.options.altitude, 0);
+    target.set(0, currentOptions.altitude, 0);
     goal = { theta: 0, phi: 1.55, radius: fitRadius };
     document.querySelectorAll('.views button').forEach(function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-view') === 'audience' ? 'true' : 'false');
@@ -770,6 +792,29 @@ function main() {
     });
   }
 
+  // ---- Centre altitude slider: move the picture up or down. ----
+  // The formation points are untouched — only the centre altitude
+  // changes, so this works for words as well as shapes. The readout
+  // updates at once while dragging; the rebuild is debounced, as
+  // with the count slider. The count (if any) is kept.
+  function setAltitude(alt) {
+    alt = Math.max(ALT_MIN, Math.min(ALT_MAX, alt));
+    alt = Math.round(alt / ALT_STEP) * ALT_STEP;
+    altRange.value = String(alt);
+    altValue.textContent = alt + ' m';
+    currentOptions.altitude = alt;
+    buildShowState(currentDesign);
+  }
+  altRange.value = String(currentOptions.altitude);
+  altValue.textContent = currentOptions.altitude + ' m';
+  var altTimer = null;
+  altRange.addEventListener('input', function () {
+    var alt = Number(altRange.value);
+    altValue.textContent = alt + ' m';
+    if (altTimer) clearTimeout(altTimer);
+    altTimer = setTimeout(function () { setAltitude(alt); }, 150);
+  });
+
   // Exposed for tests: the show, the current time, and the camera.
   window.WHENWHERE = window.WHENWHERE || {};
   window.WHENWHERE.preview3d = {
@@ -785,10 +830,11 @@ function main() {
     get cameraLabel() { return camLabelEl.textContent; },
     get bufferRadius() { return Math.round(bufferRadius); },
     get shape() { return shape; },
-    get countWarning() { return countWarning.hidden ? '' : countWarning.textContent; },
+    get warning() { return previewWarning.hidden ? '' : previewWarning.textContent; },
     setTime: function (v) { t = v; timeRange.value = String(v); updateTimeLabel(); },
     setPlaying: setPlaying,
     setCount: setCount,
+    setAltitude: setAltitude,
     sampleDrone: sampleDrone,
     panBy: panBy,
     zoomBy: zoomBy,

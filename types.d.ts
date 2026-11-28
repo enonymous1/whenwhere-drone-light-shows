@@ -198,12 +198,14 @@ export interface WhenWherePreview3d {
   readonly bufferRadius: number;
   /** The formation's shape key ('heart' | 'rings' | 'glass' | 'star' | 'finale'), or null for words and old saves. */
   readonly shape: string | null;
-  /** The underground warning text, or '' when the formation clears the ground. */
-  readonly countWarning: string;
+  /** The warning text (bottom below ground, or top above the FAA ceiling), or '' when the show clears both. */
+  readonly warning: string;
   setTime(v: number): void;
   setPlaying(p: boolean): void;
   /** Rebuild the show at a different drone count (40–240, snapped to 10). No-op for words. */
   setCount(n: number): void;
+  /** Rebuild the show at a different centre altitude (20–100 m, snapped to 5). Works for words too. */
+  setAltitude(m: number): void;
   /** A drone's Three.js position [-y, z, x] at time t (seconds). */
   sampleDrone(i: number, t: number): number[];
   /** Move the picture on screen by (dx, dy) pixels (right / down). */

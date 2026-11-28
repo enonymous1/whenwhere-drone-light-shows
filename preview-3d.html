@@ -22,11 +22,12 @@
     .transport .views button{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem;padding:8px 14px;border-radius:999px;cursor:pointer}
     .transport .views button:hover{border-color:var(--gold-bright)}
     .transport .views button[aria-pressed="true"]{background:var(--gold-bright);color:#191203;border-color:var(--gold-bright)}
-    .count-row{display:flex;align-items:center;gap:12px;margin:14px 0 6px;flex-wrap:wrap}
-    .count-row[hidden]{display:none}
-    .count-row input[type="range"]{flex:1;min-width:160px;accent-color:var(--gold-bright)}
-    .count-row .count-value{font-variant-numeric:tabular-nums;white-space:nowrap}
-    .count-row .count-warning{color:#ff8f8f;font-size:.9rem}
+    .slider-row{display:flex;align-items:center;gap:12px;margin:14px 0 6px;flex-wrap:wrap}
+    .slider-row[hidden]{display:none}
+    .slider-row input[type="range"]{flex:1;min-width:160px;accent-color:var(--gold-bright)}
+    .slider-row .slider-value{font-variant-numeric:tabular-nums;white-space:nowrap}
+    .preview-warning{color:#ff8f8f;font-size:.9rem;margin:6px 0}
+    .preview-warning[hidden]{display:none}
     .preview-note{color:var(--muted);font-size:.95rem;margin:8px 0 0}
     .preview-note label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
     .preview-links{margin-top:20px;display:flex;gap:18px;flex-wrap:wrap}
@@ -92,12 +93,17 @@
         <button type="button" data-view="side" aria-pressed="false">Side</button>
       </span>
     </div>
-    <div class="count-row" id="countRow" hidden>
+    <div class="slider-row" id="countRow" hidden>
       <label for="countRange">Drones</label>
       <input id="countRange" type="range" min="40" max="240" step="10" value="80" aria-label="Drone count" />
-      <span class="count-value" id="countValue">80</span>
-      <span class="count-warning" id="countWarning" hidden></span>
+      <span class="slider-value" id="countValue">80</span>
     </div>
+    <div class="slider-row" id="altRow">
+      <label for="altRange">Centre altitude</label>
+      <input id="altRange" type="range" min="20" max="100" step="5" value="40" aria-label="Centre altitude" />
+      <span class="slider-value" id="altValue">40 m</span>
+    </div>
+    <p class="preview-warning" id="previewWarning" hidden></p>
     <p class="preview-note"><label><input type="checkbox" id="dimToggle" checked /> Show the drones dim during takeoff and landing</label> — their show lights are off then, so they fly dark in reality. The dim dots are just so you can follow them up; they light up in full colour when the picture forms.</p>
     <p class="preview-note"><label><input type="checkbox" id="measureToggle" checked /> Show measurements</label> — dashed lines in the sky: how wide and tall the picture is, how high its centre sits and how far above the ground it spans, and the takeoff grid's footprint on the ground, so you can see how large the show starts and how large it grows to. A line runs out from the grid towards the audience with a mark every 50 m, and a white marker under the camera gives its distance from the grid. A red circle marks the safety buffer — the clear ground around the show that must stay free of people — sized from the picture's width and its highest altitude.</p>
     <p class="preview-note">Drag the sky to look around — drag down for the view from the ground, where the audience stands. Right-drag (or hold Shift and drag) to move the view; scroll or pinch to zoom. The arrow buttons and arrow keys move the camera — up raises it, so the picture shifts down. + and − zoom, 0 resets it. The buttons at the bottom right of the sky do the same.</p>

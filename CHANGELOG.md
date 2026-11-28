@@ -682,3 +682,24 @@ at the top of `index.html` and add a section below.
   regenerated points are recoloured from the loaded design's colours
   in first-appearance order, so a palette override survives the drag;
   hearts colour themselves (heartPair sets p.c) and are left alone.
+
+## Centre altitude slider in the 3D preview — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The 3D preview gained a centre altitude slider under
+  the drone count slider (20–100 m, step 5, matching the workbench's
+  show altitude slider; it opens at the altitude the show was saved
+  with). The formation points are untouched — only the centre moves —
+  so it works for words as well as shapes, and the count (if any) is
+  kept when the altitude changes, and vice versa. The export settings
+  are now a mutable currentOptions the sliders share, and
+  buildShowState reads it. The warning moved out of the count row
+  into a line of its own under the sliders, so words see it too, and
+  now covers both failure modes: the bottom below ground ("raise the
+  centre altitude, or lower the drone count") and the top above the
+  FAA ceiling from the rules file ("lower the centre altitude, or
+  lower the drone count"). For words the fix names altitude only.
+  Verified: hearts at 20 m go underground (−7.5 m) and at 100 m
+  break the ceiling (124.9 m); the 200-drone star clears the ground
+  at 60 m (12–108 m) and keeps its count; the word "I" at 100 m tops
+  at 122.5 m and warns with the altitude-only text. The count slider
+  re-verified unchanged after the refactor.
