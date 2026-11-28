@@ -264,6 +264,11 @@ async function main() {
     const exportUi = await evaluate(`(function () {
       return JSON.stringify({
         btn: !!document.getElementById('exportSkycBtn'),
+        csvBtn: !!document.getElementById('exportCsvBtn'),
+        kmzBtn: !!document.getElementById('exportKmzBtn'),
+        venueLat: !!document.getElementById('venueLat'),
+        venueLon: !!document.getElementById('venueLon'),
+        venueOrient: !!document.getElementById('venueOrient'),
         spacing: !!document.getElementById('spacingRange'),
         takeoffSpacing: !!document.getElementById('takeoffSpacingRange'),
         altitude: !!document.getElementById('altitudeRange'),
@@ -273,7 +278,7 @@ async function main() {
       });
     })()`);
     const exportUiObj = JSON.parse(exportUi);
-    check('export UI present (button + 4 sliders + stats + note)', exportUiObj.btn && exportUiObj.spacing && exportUiObj.takeoffSpacing && exportUiObj.altitude && exportUiObj.hold);
+    check('export UI present (3 buttons + 4 sliders + venue fields + stats + note)', exportUiObj.btn && exportUiObj.csvBtn && exportUiObj.kmzBtn && exportUiObj.venueLat && exportUiObj.venueLon && exportUiObj.venueOrient && exportUiObj.spacing && exportUiObj.takeoffSpacing && exportUiObj.altitude && exportUiObj.hold);
     check('export stats populate on load (80 drones, 3m spacing, 90s total, height range, grid)', typeof exportUiObj.stats === 'string'
       && exportUiObj.stats.startsWith('80 drones') && exportUiObj.stats.includes('typical spacing 3m') && exportUiObj.stats.includes('90s total')
       && exportUiObj.stats.includes('above ground') && exportUiObj.stats.includes('takeoff grid'));
@@ -351,6 +356,108 @@ async function main() {
     check('exported show: height range 12.5-64.9m above ground (matches Live max AHL)', Math.abs(showObj.minHeight - 12.5) < 0.1 && Math.abs(showObj.maxHeight - 64.9) < 0.1);
     check('exported show: home is the ground takeoff slot, first point is the last', showObj.homeIsFirst === true && showObj.firstIsLast === true && showObj.firstOnGround === true);
     check('exported show: min spacing >= 1.5m, median 3m', showObj.minSpacing >= 1.5 && showObj.medianSpacing === 3);
+    // CSV export: one file per drone, 1s samples, lights off until in
+    // position. The zip is stored (no compression), so the test parses
+    // the local file headers directly.
+    const csv = await evaluate(`(function () {
+      var wb = window.WHENWHERE.workbench;
+      var out = window.WhenWhereSkyc.exportCsv({ name: wb.currentName, points: wb.points },
+        { spacing: 3, takeoffSpacing: 3, altitude: 40, holdSeconds: 30, separatePoints: window.WHENWHERE.geometry.separatePoints });
+      var files = parseStoredZip(out.bytes);
+      var names = Object.keys(files).sort();
+      var first = files[names[0]] || '';
+      var rows = first.split('\\n').filter(function (l) { return l.length; });
+      return JSON.stringify({ filename: out.filename, count: names.length, firstName: names[0] || '', header: rows[0] || '', rowCount: rows.length - 1, row0: rows[1] || '', row30: rows[31] || '', row90: rows[91] || '' });
+      function parseStoredZip(bytes) {
+        var out = {};
+        var i = 0;
+        while (i + 30 <= bytes.length) {
+          if (bytes[i] !== 0x50 || bytes[i + 1] !== 0x4b || bytes[i + 2] !== 0x03 || bytes[i + 3] !== 0x04) break;
+          var nameLen = bytes[i + 26] | (bytes[i + 27] << 8);
+          var extraLen = bytes[i + 28] | (bytes[i + 29] << 8);
+          var size = bytes[i + 18] | (bytes[i + 19] << 8) | (bytes[i + 20] << 16) | (bytes[i + 21] << 24);
+          var nameStart = i + 30;
+          var dataStart = nameStart + nameLen + extraLen;
+          var name = '';
+          for (var n = 0; n < nameLen; n++) name += String.fromCharCode(bytes[nameStart + n]);
+          var data = '';
+          for (var d = 0; d < size; d++) data += String.fromCharCode(bytes[dataStart + d]);
+          out[name] = data;
+          i = dataStart + size;
+        }
+        return out;
+      }
+    })()`);
+    const csvObj = JSON.parse(csv);
+    check('CSV export: filename is a -csv.zip, 80 files (one per drone), first is drone-01.csv', csvObj.filename.endsWith('-csv.zip') && csvObj.count === 80 && csvObj.firstName === 'drone-01.csv');
+    check('CSV export: header is Time_msec,x_m,y_m,z_m,R,G,B and 91 rows (0-90s)', csvObj.header === 'Time_msec,x_m,y_m,z_m,R,G,B' && csvObj.rowCount === 91);
+    check('CSV export: t=0 is on the ground (z=0) with lights off (0,0,0)', csvObj.row0.startsWith('0,') && csvObj.row0.split(',')[3] === '0' && csvObj.row0.endsWith(',0,0,0'));
+    check('CSV export: t=30s is in the air with lights on (not 0,0,0)', (function () { var p = csvObj.row30.split(','); return p[0] === '30000' && Number(p[3]) > 0 && !(p[4] === '0' && p[5] === '0' && p[6] === '0'); })());
+    check('CSV export: t=90s is back on the ground with lights off', csvObj.row90.startsWith('90000,') && csvObj.row90.split(',')[3] === '0' && csvObj.row90.endsWith(',0,0,0'));
+    // Google Earth export: one LineString per drone, anchored to the
+    // venue, altitudes relative to ground.
+    const kmz = await evaluate(`(function () {
+      var wb = window.WHENWHERE.workbench;
+      var out = window.WhenWhereSkyc.exportKmz({ name: wb.currentName, points: wb.points },
+        { spacing: 3, takeoffSpacing: 3, altitude: 40, holdSeconds: 30, separatePoints: window.WHENWHERE.geometry.separatePoints },
+        { latitude: 38.0, longitude: -77.0, orientationDegrees: 0 });
+      var files = parseStoredZip(out.bytes);
+      var kml = files['doc.kml'] || '';
+      var placemarks = (kml.match(/<Placemark>/g) || []).length;
+      var firstCoords = (kml.match(/<coordinates>([^<]+)<\\/coordinates>/) || [])[1] || '';
+      var first = firstCoords.split(' ')[0].split(',');
+      var second = firstCoords.split(' ')[1].split(',');
+      return JSON.stringify({ filename: out.filename, count: Object.keys(files).length, placemarks: placemarks, firstLon: Number(first[0]), firstLat: Number(first[1]), firstAlt: Number(first[2]), secondAlt: Number(second[2]), hasKml: kml.indexOf('</kml>') !== -1 });
+      function parseStoredZip(bytes) {
+        var out = {};
+        var i = 0;
+        while (i + 30 <= bytes.length) {
+          if (bytes[i] !== 0x50 || bytes[i + 1] !== 0x4b || bytes[i + 2] !== 0x03 || bytes[i + 3] !== 0x04) break;
+          var nameLen = bytes[i + 26] | (bytes[i + 27] << 8);
+          var extraLen = bytes[i + 28] | (bytes[i + 29] << 8);
+          var size = bytes[i + 18] | (bytes[i + 19] << 8) | (bytes[i + 20] << 16) | (bytes[i + 21] << 24);
+          var nameStart = i + 30;
+          var dataStart = nameStart + nameLen + extraLen;
+          var name = '';
+          for (var n = 0; n < nameLen; n++) name += String.fromCharCode(bytes[nameStart + n]);
+          var data = '';
+          for (var d = 0; d < size; d++) data += String.fromCharCode(bytes[dataStart + d]);
+          out[name] = data;
+          i = dataStart + size;
+        }
+        return out;
+      }
+    })()`);
+    const kmzObj = JSON.parse(kmz);
+    check('KMZ export: filename is a .kmz holding doc.kml, 80 Placemarks', kmzObj.filename.endsWith('.kmz') && kmzObj.count === 1 && kmzObj.placemarks === 80 && kmzObj.hasKml === true);
+    check('KMZ export: first path starts at the venue (lon -77, lat 38, alt 0)', Math.abs(kmzObj.firstLon - (-77)) < 0.001 && Math.abs(kmzObj.firstLat - 38) < 0.001 && kmzObj.firstAlt === 0);
+    check('KMZ export: second point is the formation, in the air', kmzObj.secondAlt > 10);
+    const kmzErr = await evaluate(`(function () {
+      var wb = window.WHENWHERE.workbench;
+      try {
+        window.WhenWhereSkyc.exportKmz({ name: wb.currentName, points: wb.points },
+          { spacing: 3, takeoffSpacing: 3, altitude: 40, holdSeconds: 30, separatePoints: window.WHENWHERE.geometry.separatePoints },
+          { latitude: NaN, longitude: -77.0 });
+        return 'no error';
+      } catch (e) { return String(e.message); }
+    })()`);
+    check('KMZ export: throws a clear error without a valid venue', typeof kmzErr === 'string' && kmzErr.indexOf('venue.latitude') !== -1);
+    // The Google Earth button is disabled until the venue is set, and
+    // the venue is saved in this browser.
+    const kmzBtn = await evaluate(`(function () {
+      var btn = document.getElementById('exportKmzBtn');
+      var before = btn.disabled;
+      document.getElementById('venueLat').value = '38.0';
+      document.getElementById('venueLat').dispatchEvent(new Event('input'));
+      document.getElementById('venueLon').value = '-77.0';
+      document.getElementById('venueLon').dispatchEvent(new Event('input'));
+      var after = btn.disabled;
+      var saved = localStorage.getItem('wwWorkbenchVenue');
+      return JSON.stringify({ before: before, after: after, saved: saved });
+    })()`);
+    const kmzBtnObj = JSON.parse(kmzBtn);
+    check('Google Earth button is disabled until the venue latitude/longitude are set', kmzBtnObj.before === true && kmzBtnObj.after === false);
+    check('venue is saved in localStorage', typeof kmzBtnObj.saved === 'string' && kmzBtnObj.saved.indexOf('38') !== -1 && kmzBtnObj.saved.indexOf('-77') !== -1);
     // Moving the spacing slider re-derives the stats (narrower spacing
     // = narrower picture, same drone count).
     const narrower = await evaluate(`(function () {

@@ -543,6 +543,170 @@ var WhenWhereSkyc = (function () {
     return { bytes: bytes, filename: 'whenwhere-' + slug + '.skyc', stats: built.stats };
   }
 
+  /**
+   * Build the per-drone CSV exchange files for one formation, zipped:
+   * one CSV per drone, Time_msec,x_m,y_m,z_m,R,G,B, sampled every
+   * second from takeoff to landing. The trajectory is piecewise
+   * linear, so a 1s sample captures it exactly, and the light program
+   * only changes at whole-second segment boundaries. Colours are the
+   * sRGB values as drawn (black during takeoff/landing, the formation
+   * colour while held) — the linear-RGB conversion is only for the
+   * .skyc ledctrl bytecode, not for exchange files.
+   * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
+   * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
+   *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
+   * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number, minHeight: number, maxHeight: number, gridSpacing: number, gridWidth: number, gridDepth: number } }}
+   */
+  function exportCsv(design, options) {
+    var built = buildShow(design, options);
+    var total = built.stats.totalSeconds;
+    var holdStart = TAKEOFF_SECONDS;
+    var holdEnd = TAKEOFF_SECONDS + options.holdSeconds;
+    var files = built.show.swarm.drones.map(function (drone, i) {
+      var traj = drone.settings.trajectory.points;
+      var rgb = hexToRgb((design.points[i] && design.points[i].c) || '#ffffff');
+      var lines = ['Time_msec,x_m,y_m,z_m,R,G,B'];
+      for (var t = 0; t <= total; t++) {
+        var pos = sampleTrajectory(traj, t);
+        var color = (t >= holdStart && t < holdEnd) ? rgb : [0, 0, 0];
+        lines.push((t * 1000) + ',' + round3(pos[0]) + ',' + round3(pos[1]) + ',' + round3(pos[2]) + ',' + color[0] + ',' + color[1] + ',' + color[2]);
+      }
+      return { name: drone.settings.name + '.csv', data: new TextEncoder().encode(lines.join('\n') + '\n') };
+    });
+    var bytes = buildZip(files);
+    var slug = design.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return { bytes: bytes, filename: 'whenwhere-' + slug + '-csv.zip', stats: built.stats };
+  }
+
+  /**
+   * Linearly interpolate a trajectory's waypoints ([time, [x, y, z],
+   * controlPoints]) at time t (seconds). The show's trajectories are
+   * straight lines between waypoints, so this is exact.
+   * @param {[number, number[], number[]][]} points - the trajectory points.
+   * @param {number} t - time in seconds.
+   * @returns {number[]} the [x, y, z] position at t.
+   */
+  function sampleTrajectory(points, t) {
+    for (var k = 0; k < points.length - 1; k++) {
+      var t0 = points[k][0];
+      var t1 = points[k + 1][0];
+      if (t <= t1) {
+        var a = points[k][1];
+        var b = points[k + 1][1];
+        var f = t1 === t0 ? 0 : (t - t0) / (t1 - t0);
+        return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+      }
+    }
+    return points[points.length - 1][1];
+  }
+
+  /**
+   * Build the Google Earth (.kmz) file for one formation: a ZIP holding
+   * doc.kml, one LineString Placemark per drone (takeoff slot, up to
+   * the formation, back to the slot), anchored to the venue's GPS
+   * position. Altitudes are relativeToGround, so no home elevation is
+   * needed. The local frame is Skybrush's front-left-up, and the
+   * orientation is the X axis (front) vs North, clockwise positive —
+   * the same convention as the .skyc. A flat-Earth conversion is used
+   * (111,320 m per degree of latitude); for a show the size of a field
+   * the error is centimetres.
+   * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
+   * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
+   *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
+   * @param {{ latitude: number, longitude: number, orientationDegrees?: number }} venue
+   *   The venue's home position (decimal degrees) and the show's
+   *   orientation (degrees, X axis vs North, clockwise; 0 = front
+   *   faces North).
+   * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number, minHeight: number, maxHeight: number, gridSpacing: number, gridWidth: number, gridDepth: number } }}
+   */
+  function exportKmz(design, options, venue) {
+    var lat0 = venue && venue.latitude;
+    var lon0 = venue && venue.longitude;
+    if (typeof lat0 !== 'number' || !isFinite(lat0) || lat0 < -90 || lat0 > 90) {
+      throw new Error('exportKmz: venue.latitude must be a number between -90 and 90');
+    }
+    if (typeof lon0 !== 'number' || !isFinite(lon0) || lon0 < -180 || lon0 > 180) {
+      throw new Error('exportKmz: venue.longitude must be a number between -180 and 180');
+    }
+    var theta = (((venue.orientationDegrees || 0)) * Math.PI) / 180;
+    var built = buildShow(design, options);
+    var lines = [];
+    lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+    lines.push('<kml xmlns="http://www.opengis.net/kml/2.2">');
+    lines.push('  <Document>');
+    lines.push('    <name>' + xmlEscape('When&Where — ' + design.name) + '</name>');
+    lines.push('    <description>' + xmlEscape('Drone light show flight paths — ' + built.stats.drones + ' drones, ' + built.stats.totalSeconds + 's total. Altitudes are metres above ground.') + '</description>');
+    built.show.swarm.drones.forEach(function (drone, i) {
+      var rgb = hexToRgb((design.points[i] && design.points[i].c) || '#ffffff');
+      var name = drone.settings.name;
+      lines.push('    <Style id="' + name + '"><LineStyle><color>' + hexToKmlColor(rgb) + '</color><width>2</width></LineStyle></Style>');
+    });
+    built.show.swarm.drones.forEach(function (drone) {
+      var traj = drone.settings.trajectory.points;
+      var coords = [];
+      var last = null;
+      traj.forEach(function (pt) {
+        var p = pt[1];
+        if (last && last[0] === p[0] && last[1] === p[1] && last[2] === p[2]) return;
+        last = p;
+        var ll = localToLonLat(p, lat0, lon0, theta);
+        coords.push(ll[0].toFixed(6) + ',' + ll[1].toFixed(6) + ',' + ll[2].toFixed(3));
+      });
+      lines.push('    <Placemark>');
+      lines.push('      <name>' + xmlEscape(drone.settings.name) + '</name>');
+      lines.push('      <styleUrl>#' + drone.settings.name + '</styleUrl>');
+      lines.push('      <LineString>');
+      lines.push('        <altitudeMode>relativeToGround</altitudeMode>');
+      lines.push('        <coordinates>' + coords.join(' ') + '</coordinates>');
+      lines.push('      </LineString>');
+      lines.push('    </Placemark>');
+    });
+    lines.push('  </Document>');
+    lines.push('</kml>');
+    var bytes = buildZip([
+      { name: 'doc.kml', data: new TextEncoder().encode(lines.join('\n') + '\n') },
+    ]);
+    var slug = design.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return { bytes: bytes, filename: 'whenwhere-' + slug + '.kmz', stats: built.stats };
+  }
+
+  /**
+   * Convert a local Skybrush point [x (front), y (left), z (up)] in
+   * metres to [longitude, latitude, altitude], given the venue's home
+   * position and the show's orientation (X axis vs North, clockwise).
+   * @param {number[]} p - the local [x, y, z] in metres.
+   * @param {number} lat0 - home latitude, decimal degrees.
+   * @param {number} lon0 - home longitude, decimal degrees.
+   * @param {number} theta - orientation in radians.
+   * @returns {number[]} [longitude, latitude, altitude].
+   */
+  function localToLonLat(p, lat0, lon0, theta) {
+    var east = p[0] * Math.sin(theta) - p[1] * Math.cos(theta);
+    var north = p[0] * Math.cos(theta) + p[1] * Math.sin(theta);
+    var lat = lat0 + north / 111320;
+    var lon = lon0 + east / (111320 * Math.cos((lat0 * Math.PI) / 180));
+    return [lon, lat, p[2]];
+  }
+
+  /**
+   * A hex colour (#RRGGBB, sRGB) as a KML colour (AABBGGRR, opaque).
+   * @param {number[]} rgb - the [R, G, B] 0-255 values.
+   * @returns {string} the KML colour string.
+   */
+  function hexToKmlColor(rgb) {
+    function h(v) { return ('0' + v.toString(16)).slice(-2); }
+    return 'ff' + h(rgb[2]) + h(rgb[1]) + h(rgb[0]);
+  }
+
+  /**
+   * Escape text for an XML element.
+   * @param {string} s - the text.
+   * @returns {string} the escaped text.
+   */
+  function xmlEscape(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   return {
     srgbToLinearByte: srgbToLinearByte,
     hexToRgb: hexToRgb,
@@ -556,5 +720,9 @@ var WhenWhereSkyc = (function () {
     nearestNeighbourStats: nearestNeighbourStats,
     buildShow: buildShow,
     exportSkyc: exportSkyc,
+    sampleTrajectory: sampleTrajectory,
+    exportCsv: exportCsv,
+    exportKmz: exportKmz,
+    localToLonLat: localToLonLat,
   };
 })();

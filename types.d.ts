@@ -210,6 +210,16 @@ export interface WhenWhereSkycOptions {
   readonly separatePoints: (pts: Point[], minDist: number) => Point[];
 }
 
+/** A venue for the Google Earth export (workbench/skyc.js). */
+export interface WhenWhereKmzVenue {
+  /** Home latitude, decimal degrees (-90 to 90). */
+  latitude: number;
+  /** Home longitude, decimal degrees (-180 to 180). */
+  longitude: number;
+  /** Show orientation in degrees, X axis (front) vs North, clockwise; 0 = front faces North. */
+  orientationDegrees?: number;
+}
+
 /** The .skyc export module (workbench/skyc.js). */
 export interface WhenWhereSkycModule {
   srgbToLinearByte(v: number): number;
@@ -232,6 +242,17 @@ export interface WhenWhereSkycModule {
     design: WhenWhereSkycDesign,
     options: WhenWhereSkycOptions
   ): { bytes: Uint8Array<ArrayBuffer>; filename: string; stats: WhenWhereSkycStats };
+  sampleTrajectory(points: [number, number[], number[]][], t: number): number[];
+  exportCsv(
+    design: WhenWhereSkycDesign,
+    options: WhenWhereSkycOptions
+  ): { bytes: Uint8Array<ArrayBuffer>; filename: string; stats: WhenWhereSkycStats };
+  exportKmz(
+    design: WhenWhereSkycDesign,
+    options: WhenWhereSkycOptions,
+    venue: WhenWhereKmzVenue
+  ): { bytes: Uint8Array<ArrayBuffer>; filename: string; stats: WhenWhereSkycStats };
+  localToLonLat(p: number[], lat0: number, lon0: number, theta: number): number[];
 }
 
 /**

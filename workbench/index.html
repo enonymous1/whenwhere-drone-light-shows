@@ -119,15 +119,21 @@
       time to secure additional units.</p>
     </section>
 
-    <section class="wb-export" aria-label="Export to Skybrush">
-      <h2>Export to Skybrush (.skyc)</h2>
-      <p class="hint">Downloads the formation on screen as a Skybrush
-      show file — a takeoff from a ground grid, the held shape, and a
-      landing back to the grid — ready to load in Skybrush Viewer or
-      Live. The drones are spaced by the setting below (the picture's
-      width follows from it); the takeoff grid has its own spacing,
-      below, so the ground crew is not forced to match the picture's
-      spread. The shape is centred on the altitude.</p>
+    <section class="wb-export" aria-label="Exports">
+      <h2>Exports</h2>
+      <p class="hint">Downloads the formation on screen in the format
+      you need. <b>.skyc</b> is the Skybrush show file — a takeoff from
+      a ground grid, the held shape, and a landing back to the grid —
+      ready to load in Skybrush Viewer or Live. <b>CSV (.zip)</b> is one
+      file per drone (Time, x, y, z, R, G, B, every second), the
+      universal exchange format almost every tool can import.
+      <b>Google Earth (.kmz)</b> draws each drone's flight path on real
+      terrain at the venue, for clearance and sightline checks — it
+      needs the venue's latitude and longitude below. The drones are
+      spaced by the setting below (the picture's width follows from
+      it); the takeoff grid has its own spacing, below, so the ground
+      crew is not forced to match the picture's spread. The shape is
+      centred on the altitude.</p>
       <div class="field">
         <label for="spacingRange"><span class="tip" tabindex="0" data-tip="Distance between neighbouring drones in the air. A wider spacing makes the whole picture larger.">Drone spacing</span> <output id="spacingVal">3m</output></label>
         <input id="spacingRange" type="range" min="1" max="5" step="0.5" value="3" />
@@ -144,8 +150,22 @@
         <label for="holdRange"><span class="tip" tabindex="0" data-tip="How long the finished shape is held in the air, in seconds. The full show is 30s up, this hold, then 30s down.">Hold time</span> <output id="holdVal">30s</output></label>
         <input id="holdRange" type="range" min="10" max="120" step="5" value="30" />
       </div>
+      <div class="field">
+        <label for="venueLat"><span class="tip" tabindex="0" data-tip="The venue's home position, in decimal degrees — where the takeoff grid sits. Google Earth needs it to place the flight paths on real terrain. Saved in this browser, so you only type it once per venue.">Venue latitude</span></label>
+        <input id="venueLat" type="number" min="-90" max="90" step="0.000001" placeholder="e.g. 38.123456" />
+      </div>
+      <div class="field">
+        <label for="venueLon"><span class="tip" tabindex="0" data-tip="The venue's home position, in decimal degrees (negative is west). Google Earth needs it to place the flight paths on real terrain. Saved in this browser, so you only type it once per venue.">Venue longitude</span></label>
+        <input id="venueLon" type="number" min="-180" max="180" step="0.000001" placeholder="e.g. -77.123456" />
+      </div>
+      <div class="field">
+        <label for="venueOrient"><span class="tip" tabindex="0" data-tip="Which way the show's front faces, in degrees clockwise from North. 0 means the picture's front faces North; 90 means it faces East. The .skyc uses the same convention.">Orientation (° from North)</span> <output id="venueOrientVal">0°</output></label>
+        <input id="venueOrient" type="range" min="0" max="359" step="1" value="0" />
+      </div>
       <p class="hint" id="exportStats" aria-live="polite"></p>
       <button type="button" id="exportSkycBtn" class="btn">Export .skyc</button>
+      <button type="button" id="exportCsvBtn" class="btn">Export CSV (.zip)</button>
+      <button type="button" id="exportKmzBtn" class="btn">Export Google Earth (.kmz)</button>
       <p class="hint" id="exportNote">The drones take off from a ground
       grid (its own spacing — see Takeoff spacing above), fly straight
       up to the held shape, then land back on the grid. Takeoff and

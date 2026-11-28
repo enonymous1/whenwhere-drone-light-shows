@@ -32,6 +32,31 @@ at the top of `index.html` and add a section below.
   makes the studio initialise just slow enough that the click landed
   before the shape handlers attached.
 
+## CSV + Google Earth exports — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The workbench now exports the formation two more ways
+  besides `.skyc`. **CSV (.zip):** one file per drone
+  (`drone-01.csv` … `drone-80.csv`), `Time_msec,x_m,y_m,z_m,R,G,B`
+  sampled every second from takeoff to landing — the universal
+  exchange format almost every tool can import. Colours are the sRGB
+  values as drawn (black during takeoff/landing, the formation colour
+  while held); the linear-RGB conversion is only for the `.skyc`
+  ledctrl bytecode. **Google Earth (.kmz):** a ZIP holding `doc.kml`,
+  one LineString Placemark per drone (takeoff slot, up to the
+  formation, back to the slot), anchored to the venue's latitude and
+  longitude with altitudes relative to ground, coloured by the
+  formation colour — for venue clearance and sightline checks in real
+  terrain. The venue fields (latitude, longitude, orientation in
+  degrees clockwise from North, same convention as the `.skyc`) sit in
+  the export section and are saved in the browser, so they only have
+  to be typed once per venue; the `.kmz` button stays disabled until
+  the latitude and longitude are both valid, and `exportKmz` throws a
+  clear error without them. The export section is now headed
+  "Exports". Smoke checks cover both files (CSV header, 91 rows,
+  lights off at t=0 and t=90, on at t=30; KML Placemark count,
+  venue-anchored coordinates, formation height) plus the button
+  enable/disable and the localStorage save.
+
 ## Skybrush export: takeoff/landing + workbench layout — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The first live-demo check caught a real export bug:

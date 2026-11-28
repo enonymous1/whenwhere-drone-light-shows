@@ -420,6 +420,53 @@ if (!RULES) {
   var holdRange = /** @type {HTMLInputElement} */ (document.getElementById('holdRange'));
   var exportStatsEl = document.getElementById('exportStats');
   var exportNote = document.getElementById('exportNote');
+  // ---- Venue (Google Earth) ----
+  // The venue's home position, for the .kmz export. Saved in this
+  // browser so it only has to be typed once per venue.
+  var VENUE_KEY = 'wwWorkbenchVenue';
+  var venueLat = /** @type {HTMLInputElement} */ (document.getElementById('venueLat'));
+  var venueLon = /** @type {HTMLInputElement} */ (document.getElementById('venueLon'));
+  var venueOrient = /** @type {HTMLInputElement} */ (document.getElementById('venueOrient'));
+  var venueOrientVal = document.getElementById('venueOrientVal');
+  var exportKmzBtn = /** @type {HTMLButtonElement} */ (document.getElementById('exportKmzBtn'));
+  try {
+    var savedVenue = JSON.parse(localStorage.getItem(VENUE_KEY) || 'null');
+    if (savedVenue) {
+      if (typeof savedVenue.latitude === 'number') venueLat.value = String(savedVenue.latitude);
+      if (typeof savedVenue.longitude === 'number') venueLon.value = String(savedVenue.longitude);
+      if (typeof savedVenue.orientationDegrees === 'number') venueOrient.value = String(savedVenue.orientationDegrees);
+    }
+  } catch (e) { /* a corrupt saved venue just means empty fields */ }
+  venueOrientVal.textContent = venueOrient.value + '°';
+  /**
+   * The venue as the .kmz exporter takes it, or null when the
+   * latitude/longitude are not both valid numbers.
+   * @returns {{ latitude: number, longitude: number, orientationDegrees: number } | null} the venue.
+   */
+  function currentVenue() {
+    var lat = Number(venueLat.value);
+    var lon = Number(venueLon.value);
+    if (!venueLat.value || !venueLon.value || !isFinite(lat) || !isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+    return { latitude: lat, longitude: lon, orientationDegrees: Number(venueOrient.value) || 0 };
+  }
+  function saveVenue() {
+    try {
+      var v = currentVenue();
+      if (v) localStorage.setItem(VENUE_KEY, JSON.stringify(v));
+      else localStorage.removeItem(VENUE_KEY);
+    } catch (e) { /* storage full or blocked — the fields still work */ }
+  }
+  function refreshKmzButton() {
+    exportKmzBtn.disabled = !currentVenue();
+  }
+  [venueLat, venueLon].forEach(function (el) {
+    el.addEventListener('input', function () { saveVenue(); refreshKmzButton(); });
+  });
+  venueOrient.addEventListener('input', function () {
+    venueOrientVal.textContent = venueOrient.value + '°';
+    saveVenue();
+  });
+  refreshKmzButton();
   /**
    * The formation on screen as design points — each drone's target
    * position and colour. This is what the exporter maps to the sky;
@@ -480,20 +527,47 @@ if (!RULES) {
   bindExportRange(takeoffSpacingRange, 'takeoffSpacingVal', function (v) { return v + 'm'; });
   bindExportRange(altitudeRange, 'altitudeVal', function (v) { return v + 'm'; });
   bindExportRange(holdRange, 'holdVal', function (v) { return v + 's'; });
-  document.getElementById('exportSkycBtn').addEventListener('click', function () {
-    var pts = currentDesignPoints();
-    if (!pts.length) return;
-    var out = WhenWhereSkyc.exportSkyc({ name: currentName, points: pts }, exportOptions());
-    var blob = new Blob([out.bytes], { type: 'application/octet-stream' });
+  /**
+   * Downloads a byte array as a file.
+   * @param {Uint8Array<ArrayBuffer>} bytes - the file bytes.
+   * @param {string} filename - the download filename.
+   */
+  function downloadBytes(bytes, filename) {
+    var blob = new Blob([bytes], { type: 'application/octet-stream' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = out.filename;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  document.getElementById('exportSkycBtn').addEventListener('click', function () {
+    var pts = currentDesignPoints();
+    if (!pts.length) return;
+    var out = WhenWhereSkyc.exportSkyc({ name: currentName, points: pts }, exportOptions());
+    downloadBytes(out.bytes, out.filename);
     exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' drones, ' + out.stats.width + 'm wide at ' + Number(altitudeRange.value) + 'm, ' + out.stats.totalSeconds + 's total (30s takeoff from a ' + out.stats.gridCols + '×' + out.stats.gridRows + ' ground grid, ' + out.stats.gridWidth + 'm × ' + out.stats.gridDepth + 'm, ' + Number(holdRange.value) + 's hold, 30s landing).';
+  });
+  document.getElementById('exportCsvBtn').addEventListener('click', function () {
+    var pts = currentDesignPoints();
+    if (!pts.length) return;
+    var out = WhenWhereSkyc.exportCsv({ name: currentName, points: pts }, exportOptions());
+    downloadBytes(out.bytes, out.filename);
+    exportNote.textContent = 'Exported ' + out.filename + ' — one CSV per drone (' + out.stats.drones + ' files), Time,x,y,z,R,G,B every second, ' + out.stats.totalSeconds + 's total.';
+  });
+  document.getElementById('exportKmzBtn').addEventListener('click', function () {
+    var pts = currentDesignPoints();
+    if (!pts.length) return;
+    var venue = currentVenue();
+    if (!venue) {
+      exportNote.textContent = 'Enter the venue latitude and longitude above to export to Google Earth.';
+      return;
+    }
+    var out = WhenWhereSkyc.exportKmz({ name: currentName, points: pts }, exportOptions(), venue);
+    downloadBytes(out.bytes, out.filename);
+    exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' flight paths at ' + venue.latitude + ', ' + venue.longitude + ', front facing ' + venue.orientationDegrees + '° from North. Open it in Google Earth to check clearances and sightlines.';
   });
 
   // Exposed for tests: the pure geometry, without the DOM, plus the

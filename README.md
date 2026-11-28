@@ -548,7 +548,12 @@ crossings.
   warnings, and the export all move together. The export declares its
   safety thresholds in the file — the ceiling in force, the minimum
   distance between drones, and a navigation floor at the lowest drone
-  so the ground grid isn't flagged as too close. The studio preview
+  so the ground grid isn't flagged as too close. The same formation
+  also exports as a zipped set of per-drone CSVs (Time, x, y, z, R, G,
+  B every second, the universal exchange format) and as a Google Earth
+  .kmz (one flight path per drone, anchored to the venue's latitude
+  and longitude and the show's orientation, which are saved in the
+  browser). The studio preview
   shows the same rules as a compliance line under the canvas: the
   formation as a real show at 3m spacing and 40m centre altitude, with
   its highest drone and closest pair, and whether it sits inside the
