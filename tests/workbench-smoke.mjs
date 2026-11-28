@@ -245,22 +245,27 @@ async function main() {
     })()`);
     const hiddenAgainObj = JSON.parse(hiddenAgain);
     check('word style + timing hide again on a shape', hiddenAgainObj.wordStyle === true && hiddenAgainObj.timing === true);
-    // The export sits in the right column under the preview; the left
-    // controls column holds the design inputs only.
+    // The top band holds the formation picker above the full-width
+    // stage; the export sits in the grid's right column, below the
+    // stage, and the left controls column holds the design inputs only.
     const layout = await evaluate(`(function () {
-      var side = document.querySelector('.wb-side');
+      var top = document.querySelector('.wb-top');
+      var grid = document.querySelector('.wb-grid');
       var controls = document.querySelector('.wb-controls');
       var stage = document.querySelector('.wb-stage');
       return JSON.stringify({
-        exportInSide: !!(side && side.querySelector('#exportSkycBtn')),
+        formationInTop: !!(top && top.querySelector('.shape-row')),
+        topAboveStage: !!(top && stage && (top.compareDocumentPosition(stage) & 4) !== 0),
+        stageAboveGrid: !!(stage && grid && (stage.compareDocumentPosition(grid) & 4) !== 0),
+        exportInGrid: !!(grid && grid.querySelector('#exportSkycBtn')),
         exportNotInControls: !(controls && controls.querySelector('#exportSkycBtn')),
-        stageInSide: !!(side && side.contains(stage)),
         stageNotSticky: stage ? getComputedStyle(stage).position !== 'sticky' : false,
       });
     })()`);
     const layoutObj = JSON.parse(layout);
-    check('export is in the right column under the preview', layoutObj.exportInSide === true && layoutObj.exportNotInControls === true);
-    check('stage is in the right column and scrolls normally (not sticky — the sticky stage covered the export settings)', layoutObj.stageInSide === true && layoutObj.stageNotSticky === true);
+    check('formation picker is in the top band above the stage', layoutObj.formationInTop === true && layoutObj.topAboveStage === true);
+    check('stage is full-width above the grid and scrolls normally (not sticky — the sticky stage covered the export settings)', layoutObj.stageAboveGrid === true && layoutObj.stageNotSticky === true);
+    check('export is in the grid under the preview', layoutObj.exportInGrid === true && layoutObj.exportNotInControls === true);
     const exportUi = await evaluate(`(function () {
       return JSON.stringify({
         btn: !!document.getElementById('exportSkycBtn'),

@@ -731,3 +731,21 @@ at the top of `index.html` and add a section below.
   (single column) the 3D button sits between the hints and the
   inquiry button, above the canvas. No JS change — studio.js binds
   by id.
+
+## Workbench layout — top band + full-width stage — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The workbench is restructured around the viewport:
+  a top band holds "Design the show" and its intro on the left
+  (~400px) with the six formation pills in two rows on the right;
+  the stage is full width below the band; your words, palette and
+  copy-design sit in the left column under the stage and Exports in
+  the right column. Measured at 1440px wide the canvas grows from
+  852x693 to 1238x1007, the band is 121px tall, the pills are in two
+  rows, and the page is 2456px tall (was 2021px) — the exports sit
+  further down, and the word box is below the viewport, so you
+  scroll up to watch words change. The `.wb-side` wrapper is gone;
+  the repo smoke test's layout check now asserts the new structure
+  (picker in the band above the stage, stage full-width above the
+  grid, export in the grid). On narrow screens the band stacks
+  (title, then pills, then the stage). No JS change — everything
+  binds by id.

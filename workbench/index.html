@@ -23,12 +23,13 @@
   </div>
 </header>
 <main class="wb-main">
-  <div class="wb-grid">
-    <section class="wb-controls" aria-label="Design controls">
+  <section class="wb-top" aria-label="Design the show">
+    <div class="wb-top-intro">
       <h1>Design the show</h1>
       <p class="wb-lede">Pick a formation, try your words, tune it with the
       customer — then copy the design to carry into the inquiry.</p>
-
+    </div>
+    <div class="wb-top-formation">
       <h2>Formation</h2>
       <div class="shape-row" role="group" aria-label="Formations">
         <button type="button" class="shape-btn active" data-shape="heart">Interlocking hearts <span class="count"><span data-fleet="heart">80</span> drones</span></button>
@@ -38,7 +39,19 @@
         <button type="button" class="shape-btn" data-shape="finale">Grand finale <span class="count"><span data-fleet="finale">180</span> drones</span></button>
         <button type="button" class="shape-btn" id="wordBtn" data-shape="word">Your words</button>
       </div>
-
+    </div>
+  </section>
+  <section class="wb-stage" aria-label="Sky preview">
+    <div class="stage">
+      <canvas id="sky" width="900" height="732"></canvas>
+      <p class="caption"><span id="shapeName">Interlocking hearts</span> · <span id="droneCount">80 drones — fits our 100-drone opening fleet</span></p>
+    </div>
+    <p class="wb-stage-note">A preview at the real fleet size — the drones
+    you see are the drones that fly. A larger show needs extra lead
+    time to secure additional units.</p>
+  </section>
+  <div class="wb-grid">
+    <section class="wb-controls" aria-label="Design controls">
       <h2>Your words</h2>
       <div class="custom-word">
         <label class="visually-hidden" for="customWord">Your words in the sky</label>
@@ -109,16 +122,6 @@
       <pre id="designSummary" class="design-summary" aria-live="polite"></pre>
     </section>
 
-    <div class="wb-side">
-    <section class="wb-stage" aria-label="Sky preview">
-      <div class="stage">
-        <canvas id="sky" width="900" height="732"></canvas>
-        <p class="caption"><span id="shapeName">Interlocking hearts</span> · <span id="droneCount">80 drones — fits our 100-drone opening fleet</span></p>
-      </div>
-      <p class="wb-stage-note">A preview at the real fleet size — the drones
-      you see are the drones that fly. A larger show needs extra lead
-      time to secure additional units.</p>
-    </section>
 
     <section class="wb-export" aria-label="Exports">
       <h2>Exports</h2>
@@ -181,7 +184,6 @@
       landing are 30s each, straight lines — run Skybrush Live's show
       adaptation for a layered takeoff on a real flight.</p>
     </section>
-    </div>
   </div>
 </main>
 <footer class="wb-foot">

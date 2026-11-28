@@ -41,7 +41,7 @@ a{color:var(--gold)}
 /* ---------- layout ---------- */
 .wb-main{max-width:1280px;margin:0 auto;padding:28px 20px 40px}
 .wb-grid{display:grid;grid-template-columns:360px 1fr;gap:26px;align-items:start}
-.wb-controls h1{font-size:1.7rem;margin-bottom:8px}
+.wb-controls,.wb-export{min-width:0}
 .wb-lede{color:var(--muted);margin:0 0 20px;font-size:1rem}
 .wb-controls h2,.wb-export h2{font-size:1.05rem;margin:24px 0 10px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
 .wb-controls h2:first-of-type{margin-top:0}
@@ -64,6 +64,17 @@ a{color:var(--gold)}
   font-size:.88rem;font-weight:400;line-height:1.5;
   box-shadow:0 6px 20px rgba(0,0,0,.28);z-index:20
 }
+
+/* ---------- top band ---------- */
+/* The title + formation picker sit above the viewport, so the stage
+   gets the full width. The intro takes ~400px on the left; the six
+   formation pills wrap to two rows on the right. */
+.wb-top{display:flex;gap:26px;align-items:flex-start;margin-bottom:26px}
+.wb-top-intro{flex:0 0 400px;min-width:0}
+.wb-top h1{font-size:1.7rem;margin-bottom:8px}
+.wb-top .wb-lede{margin-bottom:0}
+.wb-top-formation{flex:1;min-width:0}
+.wb-top h2{font-size:1.05rem;margin:0 0 10px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase}
 
 /* ---------- formation buttons ---------- */
 .shape-row{display:flex;flex-wrap:wrap;gap:8px}
@@ -90,15 +101,14 @@ a{color:var(--gold)}
 .design-summary:empty{display:none}
 
 /* ---------- stage ---------- */
-/* The right column: the preview on top, the export below it in normal
-   flow. The stage used to be position: sticky, so the preview stayed
-   visible while the export settings were adjusted — but the stage is
-   taller than most viewports, so the export scrolled underneath it
-   and the settings' labels mixed with the stage's note (the note has
-   no background, so the two texts overlapped). The stage now scrolls
-   away like everything else. */
-.wb-side{min-width:0}
-.wb-export{margin-top:28px}
+/* Full width, between the top band and the controls/export grid. The
+   stage used to be position: sticky in the right column, so the
+   preview stayed visible while the export settings were adjusted —
+   but the stage is taller than most viewports, so the export scrolled
+   underneath it and the settings' labels mixed with the stage's note
+   (the note has no background, so the two texts overlapped). The
+   stage now scrolls away like everything else. */
+.wb-stage{margin-bottom:26px}
 .stage{background:#03040d;border:1px solid #232c58;border-radius:var(--radius);overflow:hidden}
 .stage canvas{display:block;width:100%;height:auto}
 .caption{margin:0;padding:12px 16px;color:#eef1ff;font-size:.98rem;border-top:1px solid #232c58}
@@ -137,6 +147,8 @@ a{color:var(--gold)}
 /* ---------- narrow screens ---------- */
 @media (max-width: 960px){
   .wb-grid{grid-template-columns:1fr}
+  .wb-top{flex-direction:column;gap:14px}
+  .wb-top-intro{flex:none}
   .wb-head-in{gap:10px}
   .wb-note{display:none}
 }
