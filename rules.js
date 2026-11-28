@@ -28,6 +28,7 @@ var WHENWHERE_RULES = {
   // FAA Part 107 baseline (US). 400 ft above ground level is
   // 121.92m; 120m is the round number the industry uses, and the
   // ceiling Skybrush Live enforces through settings.validation.
+  // Source: 14 CFR 107.51 — https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-107/subpart-B/section-107.51
   maxAltitudeMeters: 120,
 
   // Takeoff grid spacing floor, in metres. Must stay clear of
@@ -35,6 +36,8 @@ var WHENWHERE_RULES = {
   // takeoff positions), so the floor sits 0.1m above the outdoor
   // threshold. The workbench's Takeoff spacing slider cannot go
   // below this.
+  // Source: Skybrush Live 2.9.0 takeoff/landing validation —
+  // https://github.com/skybrush-io/live/commit/b9a7cedd9e9bf7d15319ec25abd86aab57ccb3b0
   minTakeoffSpacingMeters: 0.5,
 
   // Launch-pad pitch norm, in metres: swarm light-show drones are
@@ -44,6 +47,9 @@ var WHENWHERE_RULES = {
   // above is Skybrush Live's load check, while this is the safe
   // operating pitch. The workbench warns when the takeoff spacing
   // is below it.
+  // Source: industry practice, not a regulation — a drone-show guide
+  // puts typical ground spacing at 1.5–2 m:
+  // https://dronenestle.com/how-to-do-a-drone-light-show/
   minLaunchPitchMeters: 2,
 
   // Safety-buffer expansion, in metres of extra clear ground per
@@ -51,7 +57,9 @@ var WHENWHERE_RULES = {
   // restricted / free-fall area by at least 10 m for every 100 ft
   // (30.48 m) of altitude, so 10 / 30.48 ≈ 0.328. The 3D preview
   // draws the buffer circle from this: the formation's half-width
-  // plus the highest drone's altitude × this rate.
+  // plus the highest drone's altitude × this rate. The exact buffer
+  // is set per operation in the waiver's special provisions.
+  // Source: FAA Part 107 waivers — https://www.faa.gov/uas/commercial_operators/part_107_waivers
   bufferMetersPerAltitudeMeters: 10 / 30.48,
 
   // Minimum distance between drones in flight, in metres. A show

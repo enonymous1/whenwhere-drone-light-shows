@@ -612,3 +612,24 @@ at the top of `index.html` and add a section below.
   dropdown resets when it is moved by hand. Spotsylvania stays the
   map's default when no venue is saved — it is home ground for real
   venue picking, and the Charlottesville sites are demo presets.
+
+## Sources section — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The 3D preview gained a "Where these numbers come
+  from" section under the controls, so nobody has to take the
+  measurements on trust. Six items, each linked: the 120 m ceiling
+  to FAA Part 107 §107.51 (400 ft AGL) and the FAA waivers page;
+  night shows and swarms to §107.29 and §107.35; the safety buffer
+  (10 m wider per 100 ft of altitude) to the FAA waiver framework,
+  with the note that the exact buffer is set per operation in the
+  waiver's special provisions; the 2 m launch-pad pitch to a
+  drone-show guide (typical ground spacing 1.5–2 m), labelled
+  plainly as industry practice, not a regulation; the 0.4 m outdoor
+  takeoff/landing check to the Skybrush Live commit that added it
+  and the 2.9.0 release notes; and the measurements themselves,
+  labelled as read off the show file this preview loaded, not from
+  a regulation. The same links are now in the `rules.js` comments
+  next to the numbers they source. All links verified live before
+  shipping: the FAA waivers page, the eCFR section URLs, the
+  Skybrush commit (which shows the 0.2 m indoor / 0.4 m outdoor
+  thresholds in code), and the guide.

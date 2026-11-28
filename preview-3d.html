@@ -47,6 +47,14 @@
     .measure-label.orange{border-color:#ff9f43;color:#ffd2a8}
     .measure-label.white{border-color:#fff;color:#fff}
     .measure-label.red{border-color:#ff5a5a;color:#ffb3b3}
+    .preview-sources{margin-top:28px;border-top:1px solid var(--line);padding-top:16px}
+    .preview-sources h2{font-size:1.15rem;margin:0 0 8px}
+    .preview-sources p{color:var(--muted);font-size:.95rem;margin:0 0 10px}
+    .preview-sources ul{margin:0;padding-left:20px;color:var(--muted);font-size:.95rem}
+    .preview-sources li{margin:6px 0}
+    .preview-sources li strong{color:var(--ink)}
+    .preview-sources a{color:var(--gold)}
+    .preview-sources code{font-size:.9em}
   </style>
 </head>
 <body>
@@ -82,6 +90,18 @@
     <p class="preview-note"><label><input type="checkbox" id="dimToggle" checked /> Show the drones dim during takeoff and landing</label> — their show lights are off then, so they fly dark in reality. The dim dots are just so you can follow them up; they light up in full colour when the picture forms.</p>
     <p class="preview-note"><label><input type="checkbox" id="measureToggle" checked /> Show measurements</label> — dashed lines in the sky: how wide and tall the picture is, how high its centre sits and how far above the ground it spans, and the takeoff grid's footprint on the ground, so you can see how large the show starts and how large it grows to. A line runs out from the grid towards the audience with a mark every 50 m, and a white marker under the camera gives its distance from the grid. A red circle marks the safety buffer — the clear ground around the show that must stay free of people — sized from the picture's width and its highest altitude.</p>
     <p class="preview-note">Drag the sky to look around — drag down for the view from the ground, where the audience stands. Right-drag (or hold Shift and drag) to move the view; scroll or pinch to zoom. The arrow buttons and arrow keys move the camera — up raises it, so the picture shifts down. + and − zoom, 0 resets it. The buttons at the bottom right of the sky do the same.</p>
+    <section class="preview-sources" aria-labelledby="sourcesTitle">
+      <h2 id="sourcesTitle">Where these numbers come from</h2>
+      <p>Nothing here is made up. The measurements are read off the show file this preview loaded; the limits come from the FAA and from Skybrush, and the launch spacing is industry practice. The rules live in <code>rules.js</code> in the repo.</p>
+      <ul>
+        <li><strong>120 m ceiling</strong> — FAA Part 107, <a href="https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-107/subpart-B/section-107.51">§107.51</a>: a small drone may not fly more than 400 ft (121.92 m) above ground level; higher needs a waiver. See the <a href="https://www.faa.gov/uas/commercial_operators/part_107_waivers">FAA Part 107 waivers</a> page.</li>
+        <li><strong>Night shows and swarms need waivers</strong> — <a href="https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-107/subpart-B/section-107.29">§107.29</a> (night and civil twilight) and <a href="https://www.ecfr.gov/current/title-14/chapter-I/subchapter-F/part-107/subpart-B/section-107.35">§107.35</a> (one pilot flying more than one aircraft at a time). A drone light show needs both waived, plus §107.51 if it flies over 400 ft.</li>
+        <li><strong>Safety buffer — 10 m wider for every 100 ft of altitude</strong> — FAA waiver framework: a waiver's special provisions widen the restricted / free-fall area as the show climbs. The exact buffer is set per operation in the waiver, so this preview uses 10 m per 100 ft as its baseline. See the <a href="https://www.faa.gov/uas/commercial_operators/part_107_waivers">FAA Part 107 waivers</a> page.</li>
+        <li><strong>Launch-pad pitch — 2 m</strong> — industry practice, not a regulation: swarm drones are spaced apart on the ground so one drone's rotor wash doesn't buffet its neighbour on simultaneous liftoff. A drone-show guide puts the typical ground spacing at 1.5–2 m. <a href="https://dronenestle.com/how-to-do-a-drone-light-show/">Drone light show guide</a>.</li>
+        <li><strong>Takeoff / landing check — 0.4 m outdoors</strong> — Skybrush Live 2.9.0+ validates the minimum distance between takeoff positions (and between landing positions) when a show loads, and refuses a show under 0.4 m outdoors (0.2 m indoors). <a href="https://github.com/skybrush-io/live/commit/b9a7cedd9e9bf7d15319ec25abd86aab57ccb3b0">Skybrush Live commit</a> · <a href="https://www.skybrush.io/blog/2025-04-11-skybrush-live-2.9.0/">Skybrush Live 2.9.0 release notes</a>.</li>
+        <li><strong>The measurements themselves</strong> — the picture's width and height, its centre altitude and how far above the ground it spans, the takeoff grid, the sightline distances and the camera's distance: all measured from the show file this preview loaded — the actual formation, takeoff grid, and camera position — not from a regulation.</li>
+      </ul>
+    </section>
     <p class="preview-links"><a href="workbench/index.html">Back to the Formation Workbench</a><a href="index.html">Back to the drone light shows page</a></p>
   </main>
   <script src="config.js"></script>
