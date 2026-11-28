@@ -717,3 +717,17 @@ at the top of `index.html` and add a section below.
   margins) so the line stays in frame on short, wide formations.
   The measure note names it, and the measurement-label order in the
   types is updated (width, height, altitude, top, grid, sightline).
+
+## Studio button move — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The "View this formation in 3D" button moved out of
+  the stage footer into the shape list, directly above "Use this
+  design in my inquiry". Measured at 1440px wide the list was 664px
+  against the stage's 789px (125px apart); after the move the list
+  is 707px against 732px (25px apart), and the two buttons form a
+  matched full-width pair with the list's standard 10px gap — the
+  inquiry button's old 14px top margin was dropped. The stage
+  footer keeps the formation line and the rules line. On mobile
+  (single column) the 3D button sits between the hints and the
+  inquiry button, above the canvas. No JS change — studio.js binds
+  by id.

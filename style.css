@@ -175,7 +175,6 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between;
 .check input{width:18px;height:18px;margin-top:2px;accent-color:var(--gold-bright);flex:none}
 .contact-line{color:var(--night-muted);font-size:.95rem;margin-top:20px}
 .contact-line a{color:var(--gold-bright)}
-#useDesignBtn{margin-top:14px}
 /* ---------- responsive ---------- */
 @media (max-width: 960px){
   .cards,.tiers{grid-template-columns:1fr 1fr}
