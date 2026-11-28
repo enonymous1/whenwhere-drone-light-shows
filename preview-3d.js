@@ -297,12 +297,25 @@ function main() {
   }, { passive: false });
 
   // On-screen controls (the pad at the bottom right of the sky).
-  // Holding a button keeps moving: the flags are read every frame,
-  // so the motion is smooth, and a tap still moves a step.
+  // A press moves one step at once, so a tap moves a visible amount;
+  // holding keeps moving (the flags are read every frame). Without
+  // the step, a tap only applied a few frames of the per-second rate
+  // and looked like nothing happened.
   var held = { zoomIn: false, zoomOut: false, up: false, down: false, left: false, right: false };
+  function stepHeld(key) {
+    if (key === 'zoomIn') zoomBy(0.85);
+    else if (key === 'zoomOut') zoomBy(1.18);
+    else {
+      var step = container.clientHeight * 0.08; // 8% of the view
+      if (key === 'up') panBy(0, -step);
+      else if (key === 'down') panBy(0, step);
+      else if (key === 'left') panBy(-step, 0);
+      else if (key === 'right') panBy(step, 0);
+    }
+  }
   function bindHold(el, key) {
     if (!el) return;
-    el.addEventListener('pointerdown', function (e) { e.preventDefault(); held[key] = true; });
+    el.addEventListener('pointerdown', function (e) { e.preventDefault(); held[key] = true; stepHeld(key); });
   }
   bindHold(document.getElementById('zoomInBtn'), 'zoomIn');
   bindHold(document.getElementById('zoomOutBtn'), 'zoomOut');
