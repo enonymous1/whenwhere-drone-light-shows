@@ -566,8 +566,14 @@ crossings.
   lights are off then, and they light up in full colour when the
   picture forms. The view is fully steerable: drag to orbit,
   right-drag (or Shift-drag) to move it, scroll or pinch to zoom, or
-  use the on-screen pad (arrow keys move it, + / − zoom, 0 resets)
-  at the bottom right of the sky. The studio preview
+  use the on-screen pad (the arrow buttons and arrow keys move the
+  camera — up raises it, so the picture shifts down; + / − zoom,
+  0 resets) at the bottom right of the sky. A "Show measurements"
+  box draws dashed dimension lines in the sky — how wide and tall
+  the picture is, how high its centre sits and how far above the
+  ground it spans, and the takeoff grid's footprint on the ground —
+  so the show's size on the ground, where it starts, and in the sky,
+  where it grows to, can both be read off the picture. The studio preview
   shows the same rules as a compliance line under the canvas: the
   formation as a real show at 3m spacing and 40m centre altitude, with
   its highest drone and closest pair, and whether it sits inside the

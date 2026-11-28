@@ -98,10 +98,29 @@ function main() {
     return WhenWhereSkyc.hexToRgb((p && p.c) || '#ffffff');
   });
 
+  // The formation's actual bounding box, from the trajectory points
+  // at the hold (Skybrush [x, y, z] -> Three.js [-y, z, x]). This is
+  // the picture as it flies — NOT the design canvas (stats.width /
+  // stats.height), which is the full area the design could occupy.
+  // The hearts, for instance, are 70.2m wide on a 205.9m canvas.
+  var minBX = Infinity, maxBX = -Infinity, minBY = Infinity, maxBY = -Infinity;
+  for (var b = 0; b < n; b++) {
+    var fp = trajs[b][1][1]; // Skybrush [x (front), y (left), z (up)] at the hold
+    var bx = -fp[1];
+    var by = fp[2];
+    if (bx < minBX) minBX = bx;
+    if (bx > maxBX) maxBX = bx;
+    if (by < minBY) minBY = by;
+    if (by > maxBY) maxBY = by;
+  }
+  var bboxW = Math.max(maxBX - minBX, 1);
+  var bboxH = Math.max(maxBY - minBY, 1);
+  function round1(v) { return Math.round(v * 10) / 10; }
+
   var titleEl = document.getElementById('previewTitle');
   var statsEl = document.getElementById('previewStats');
   titleEl.textContent = '3D Preview — ' + loaded.design.name;
-  statsEl.textContent = stats.drones + ' drones · ' + stats.width + 'm wide · ' + stats.minHeight + '–' + stats.maxHeight + 'm above ground · ' + fmtTime(total) + ' total'
+  statsEl.textContent = stats.drones + ' drones · ' + round1(bboxW) + 'm wide · ' + round1(bboxH) + 'm tall · ' + stats.minHeight + '–' + stats.maxHeight + 'm above ground · ' + fmtTime(total) + ' total'
     + (loaded.fromSaved ? '' : ' · demo formation — open it from the workbench or the studio to preview your design');
 
   var container = document.getElementById('scene');
@@ -174,21 +193,101 @@ function main() {
   // the hold), not the design canvas — the hearts span far less than
   // the full canvas, and fitting the canvas leaves them small.
   var target = new THREE.Vector3(0, loaded.options.altitude, 0);
-  var minBX = Infinity, maxBX = -Infinity, minBY = Infinity, maxBY = -Infinity;
-  for (var b = 0; b < n; b++) {
-    var fp = trajs[b][1][1]; // Skybrush [x (front), y (left), z (up)] at the hold
-    var bx = -fp[1];
-    var by = fp[2];
-    if (bx < minBX) minBX = bx;
-    if (bx > maxBX) maxBX = bx;
-    if (by < minBY) minBY = by;
-    if (by > maxBY) maxBY = by;
-  }
-  var bboxW = Math.max(maxBX - minBX, 1);
-  var bboxH = Math.max(maxBY - minBY, 1);
   var halfFovTan = Math.tan((camera.fov * Math.PI / 180) / 2);
   var aspect = container.clientWidth / container.clientHeight;
-  var fitRadius = Math.max(bboxH / (2 * halfFovTan), bboxW / (2 * halfFovTan * aspect)) * 1.2;
+  var MMARGIN = 10; // how far the dimension lines sit off the picture
+  // Fit the formation plus the measurement lines around it (and the
+  // ground below, so the takeoff grid is in frame), so the dimensions
+  // are visible when the measurements are on. The vertical span runs
+  // from the ground to the top dimension line.
+  var fitH = (maxBY + MMARGIN) - 0;
+  var fitW = bboxW + 2 * MMARGIN;
+  var fitRadius = Math.max(fitH / (2 * halfFovTan), fitW / (2 * halfFovTan * aspect)) * 1.15;
+
+  // ---- Measurements: dashed dimension lines + labels. ----
+  // Width across the top, height down the left, the centre altitude
+  // from the ground, and the takeoff grid's footprint on the ground
+  // — so the show's size on the ground (where it starts) and in the
+  // sky (where it grows to) can both be read off the picture. Each
+  // line is a colour of its own, and the labels are HTML (crisp
+  // text) projected from the same anchors every frame.
+  var measureGroup = new THREE.Group();
+  scene.add(measureGroup);
+  function dashedLine(points, color) {
+    var g = new THREE.BufferGeometry().setFromPoints(points);
+    var m = new THREE.LineDashedMaterial({ color: color, dashSize: 3, gapSize: 2, transparent: true, opacity: 0.9 });
+    var l = new THREE.Line(g, m);
+    l.computeLineDistances();
+    return l;
+  }
+  function tick(cx, cy, cz, horizontal, color) {
+    var h = 2.5;
+    var pts = horizontal
+      ? [new THREE.Vector3(cx - h, cy, cz), new THREE.Vector3(cx + h, cy, cz)]
+      : [new THREE.Vector3(cx, cy - h, cz), new THREE.Vector3(cx, cy + h, cz)];
+    return dashedLine(pts, color);
+  }
+  var centreY = (minBY + maxBY) / 2;
+  var altTop = loaded.options.altitude;
+  // Width: across the top of the picture, gold.
+  var widthY = maxBY + MMARGIN;
+  measureGroup.add(dashedLine([new THREE.Vector3(minBX, widthY, 0), new THREE.Vector3(maxBX, widthY, 0)], 0xffc94d));
+  measureGroup.add(tick(minBX, widthY, 0, false, 0xffc94d));
+  measureGroup.add(tick(maxBX, widthY, 0, false, 0xffc94d));
+  // Height: down the left side, cyan.
+  var heightX = minBX - MMARGIN;
+  measureGroup.add(dashedLine([new THREE.Vector3(heightX, minBY, 0), new THREE.Vector3(heightX, maxBY, 0)], 0x8fd8ff));
+  measureGroup.add(tick(heightX, minBY, 0, true, 0x8fd8ff));
+  measureGroup.add(tick(heightX, maxBY, 0, true, 0x8fd8ff));
+  // Centre altitude: ground to the picture's centre, green, at the right.
+  var altX = maxBX + MMARGIN;
+  measureGroup.add(dashedLine([new THREE.Vector3(altX, 0, 0), new THREE.Vector3(altX, altTop, 0)], 0x7dffcb));
+  measureGroup.add(tick(altX, 0, 0, true, 0x7dffcb));
+  measureGroup.add(tick(altX, altTop, 0, true, 0x7dffcb));
+  // Takeoff grid: the footprint on the ground, white/grey.
+  var gw = (stats.gridWidth || 0) / 2, gd = (stats.gridDepth || 0) / 2;
+  var gy = 0.15; // just above the ground, so it is not z-fighting
+  if (gw > 0 && gd > 0) {
+    measureGroup.add(dashedLine([
+      new THREE.Vector3(-gw, gy, -gd), new THREE.Vector3(gw, gy, -gd),
+      new THREE.Vector3(gw, gy, gd), new THREE.Vector3(-gw, gy, gd),
+      new THREE.Vector3(-gw, gy, -gd),
+    ], 0xd5d9ea));
+  }
+  var measureLabelsEl = document.getElementById('measureLabels');
+  function makeLabel(cls, text) {
+    var d = document.createElement('div');
+    d.className = 'measure-label ' + cls;
+    d.textContent = text;
+    measureLabelsEl.appendChild(d);
+    return d;
+  }
+  var measureLabels = [
+    { el: makeLabel('gold', round1(bboxW) + ' m wide'), anchor: new THREE.Vector3((minBX + maxBX) / 2, widthY, 0) },
+    { el: makeLabel('cyan', round1(bboxH) + ' m tall'), anchor: new THREE.Vector3(heightX, centreY, 0) },
+    { el: makeLabel('green', altTop + ' m centre · ' + round1(minBY) + '–' + round1(maxBY) + ' m above ground'), anchor: new THREE.Vector3(altX, altTop / 2, 0) },
+  ];
+  if (gw > 0 && gd > 0) {
+    measureLabels.push({ el: makeLabel('grey', 'Takeoff grid ' + stats.gridWidth + ' m × ' + stats.gridDepth + ' m'), anchor: new THREE.Vector3(0, gy, -gd) });
+  }
+  var measureOn = true;
+  function setMeasurements(on) {
+    measureOn = on;
+    measureGroup.visible = on;
+    measureLabelsEl.style.display = on ? '' : 'none';
+  }
+  function updateMeasureLabels() {
+    if (!measureOn) return;
+    var w = container.clientWidth, h = container.clientHeight;
+    var v = new THREE.Vector3();
+    measureLabels.forEach(function (item) {
+      v.copy(item.anchor).project(camera);
+      var visible = v.z < 1; // in front of the camera
+      item.el.style.left = ((v.x * 0.5 + 0.5) * w) + 'px';
+      item.el.style.top = ((-v.y * 0.5 + 0.5) * h) + 'px';
+      item.el.style.display = visible ? '' : 'none';
+    });
+  }
   var orbit = { theta: 0, phi: 1.55, radius: fitRadius };
   var goal = null;
   function applyOrbit() {
@@ -301,16 +400,21 @@ function main() {
   // holding keeps moving (the flags are read every frame). Without
   // the step, a tap only applied a few frames of the per-second rate
   // and looked like nothing happened.
+  //
+  // The arrows move the CAMERA, so the picture shifts the opposite
+  // way — up raises the camera, so the picture moves down; right
+  // moves the camera right, so the picture moves left. That is the
+  // way a camera (and a map) behaves, and the way the arrows read.
   var held = { zoomIn: false, zoomOut: false, up: false, down: false, left: false, right: false };
   function stepHeld(key) {
     if (key === 'zoomIn') zoomBy(0.85);
     else if (key === 'zoomOut') zoomBy(1.18);
     else {
       var step = container.clientHeight * 0.08; // 8% of the view
-      if (key === 'up') panBy(0, -step);
-      else if (key === 'down') panBy(0, step);
-      else if (key === 'left') panBy(-step, 0);
-      else if (key === 'right') panBy(step, 0);
+      if (key === 'up') panBy(0, step);
+      else if (key === 'down') panBy(0, -step);
+      else if (key === 'left') panBy(step, 0);
+      else if (key === 'right') panBy(-step, 0);
     }
   }
   function bindHold(el, key) {
@@ -337,10 +441,10 @@ function main() {
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     var step = container.clientHeight * 0.08; // 8% of the view per press
     var handled = true;
-    if (e.key === 'ArrowUp') panBy(0, -step);
-    else if (e.key === 'ArrowDown') panBy(0, step);
-    else if (e.key === 'ArrowLeft') panBy(-step, 0);
-    else if (e.key === 'ArrowRight') panBy(step, 0);
+    if (e.key === 'ArrowUp') panBy(0, step);
+    else if (e.key === 'ArrowDown') panBy(0, -step);
+    else if (e.key === 'ArrowLeft') panBy(step, 0);
+    else if (e.key === 'ArrowRight') panBy(-step, 0);
     else if (e.key === '+' || e.key === '=') zoomBy(0.85);
     else if (e.key === '-' || e.key === '_') zoomBy(1.18);
     else if (e.key === '0') resetView();
@@ -354,6 +458,9 @@ function main() {
   var timeLabel = document.getElementById('timeLabel');
   var playBtn = document.getElementById('playBtn');
   var dimToggle = document.getElementById('dimToggle');
+  var measureToggle = document.getElementById('measureToggle');
+  measureToggle.addEventListener('change', function () { setMeasurements(measureToggle.checked); });
+  setMeasurements(measureToggle.checked);
   var t = 0;
   var playing = true;
   var scrubbing = false;
@@ -423,10 +530,10 @@ function main() {
     if (held.zoomIn) zoomBy(Math.exp(-0.5 * dt));
     if (held.zoomOut) zoomBy(Math.exp(0.5 * dt));
     var panRate = container.clientHeight * 0.4; // px per second
-    if (held.up) panBy(0, -panRate * dt);
-    if (held.down) panBy(0, panRate * dt);
-    if (held.left) panBy(-panRate * dt, 0);
-    if (held.right) panBy(panRate * dt, 0);
+    if (held.up) panBy(0, panRate * dt);
+    if (held.down) panBy(0, -panRate * dt);
+    if (held.left) panBy(panRate * dt, 0);
+    if (held.right) panBy(-panRate * dt, 0);
     if (goal) {
       orbit.theta += (goal.theta - orbit.theta) * 0.12;
       orbit.phi += (goal.phi - orbit.phi) * 0.12;
@@ -435,6 +542,7 @@ function main() {
     }
     updateDrones(t);
     applyOrbit();
+    updateMeasureLabels();
     renderer.render(scene, camera);
   }
   updateTimeLabel();
@@ -450,12 +558,15 @@ function main() {
     get totalSeconds() { return total; },
     get target() { return [target.x, target.y, target.z]; },
     get radius() { return orbit.radius; },
+    get measurements() { return measureOn; },
+    get measureLabels() { return measureLabels.map(function (item) { return item.el.textContent; }); },
     setTime: function (v) { t = v; timeRange.value = String(v); updateTimeLabel(); },
     setPlaying: setPlaying,
     sampleDrone: sampleDrone,
     panBy: panBy,
     zoomBy: zoomBy,
     resetView: resetView,
+    setMeasurements: setMeasurements,
   };
 }
 

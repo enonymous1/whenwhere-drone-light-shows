@@ -38,6 +38,12 @@
     .scene-controls-pan .pan-reset{grid-column:2;grid-row:2;font-size:.95rem}
     .scene-controls-pan .pan-right{grid-column:3;grid-row:2}
     .scene-controls-pan .pan-down{grid-column:2;grid-row:3}
+    .measure-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
+    .measure-label{position:absolute;transform:translate(-50%,-50%);background:rgba(5,7,15,.8);color:#eef1ff;border:1px solid rgba(255,255,255,.28);border-radius:8px;padding:2px 8px;font-size:.8rem;white-space:nowrap}
+    .measure-label.gold{border-color:var(--gold-bright);color:#ffd97a}
+    .measure-label.cyan{border-color:#8fd8ff;color:#bfe9ff}
+    .measure-label.green{border-color:#7dffcb;color:#bff5dd}
+    .measure-label.grey{border-color:rgba(255,255,255,.45);color:#d5d9ea}
   </style>
 </head>
 <body>
@@ -45,6 +51,7 @@
     <h1 id="previewTitle">3D Preview</h1>
     <p class="sub" id="previewStats"></p>
     <div id="scene"><div class="loading" id="sceneLoading">Loading the night sky…</div>
+      <div id="measureLabels" class="measure-labels" aria-hidden="true"></div>
       <div class="scene-controls" aria-label="3D view controls">
         <div class="scene-controls-pan" role="group" aria-label="Move the view">
           <button type="button" class="pan-up" data-pan="up" aria-label="Move the view up">↑</button>
@@ -70,7 +77,8 @@
       </span>
     </div>
     <p class="preview-note"><label><input type="checkbox" id="dimToggle" checked /> Show the drones dim during takeoff and landing</label> — their show lights are off then, so they fly dark in reality. The dim dots are just so you can follow them up; they light up in full colour when the picture forms.</p>
-    <p class="preview-note">Drag the sky to look around — drag down for the view from the ground, where the audience stands. Right-drag (or hold Shift and drag) to move the view; scroll or pinch to zoom. Arrow keys move the view, + and − zoom, 0 resets it. The buttons at the bottom right of the sky do the same.</p>
+    <p class="preview-note"><label><input type="checkbox" id="measureToggle" checked /> Show measurements</label> — dashed lines in the sky: how wide and tall the picture is, how high its centre sits and how far above the ground it spans, and the takeoff grid's footprint on the ground, so you can see how large the show starts and how large it grows to.</p>
+    <p class="preview-note">Drag the sky to look around — drag down for the view from the ground, where the audience stands. Right-drag (or hold Shift and drag) to move the view; scroll or pinch to zoom. The arrow buttons and arrow keys move the camera — up raises it, so the picture shifts down. + and − zoom, 0 resets it. The buttons at the bottom right of the sky do the same.</p>
     <p class="preview-links"><a href="workbench/index.html">Back to the Formation Workbench</a><a href="index.html">Back to the drone light shows page</a></p>
   </main>
   <script src="config.js"></script>

@@ -32,6 +32,32 @@ at the top of `index.html` and add a section below.
   makes the studio initialise just slow enough that the click landed
   before the shape handlers attached.
 
+## 3D preview: arrows flipped + measurements — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The arrow buttons and arrow keys now move the
+  camera, so the picture shifts the opposite way: up raises the
+  camera and the picture moves down, right moves the camera right
+  and the picture moves left. That is the way a camera (and a map)
+  behaves, and the way the arrows read — the first version moved
+  the picture the way the arrow pointed, which felt backwards.
+  Verified: a tap on pan-up now moves the target up (40 → 50.3m),
+  a tap on pan-right moves it right (0 → 10.3m).
+- 2026-11-27 — Measurements in the 3D preview, on by default
+  behind a "Show measurements" box. Dashed dimension lines in the
+  sky, each a colour of its own, with labels: gold across the top
+  for the picture's width, cyan down the left for its height, green
+  up the right for the centre altitude and the span above the
+  ground, and a white outline of the takeoff grid's footprint on
+  the ground — so the show's size on the ground, where it starts,
+  and in the sky, where it grows to, can both be read off the
+  picture. The camera fit is widened to include the lines and the
+  ground, so they are all in frame. The labels are the picture as
+  it flies, from the trajectory's bounding box — the hearts are
+  70.2m wide and 52.4m tall, on a 205.9m design canvas — and the
+  stats line at the top of the preview now reports the same actual
+  size (it used to report the canvas). The workbench's stats line
+  still reports the canvas; the two are different things.
+
 ## 3D preview manual controls — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The 3D preview is fully steerable. Drag orbits as

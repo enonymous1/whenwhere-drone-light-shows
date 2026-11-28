@@ -176,6 +176,10 @@ export interface WhenWherePreview3d {
   readonly target: number[];
   /** The camera's distance from the target, in metres. */
   readonly radius: number;
+  /** Whether the measurement lines and labels are shown. */
+  readonly measurements: boolean;
+  /** The measurement label texts, in order: width, height, altitude, takeoff grid. */
+  readonly measureLabels: string[];
   setTime(v: number): void;
   setPlaying(p: boolean): void;
   /** A drone's Three.js position [-y, z, x] at time t (seconds). */
@@ -186,6 +190,8 @@ export interface WhenWherePreview3d {
   zoomBy(factor: number): void;
   /** Back to the audience view, centred on the picture. */
   resetView(): void;
+  /** Show or hide the measurement lines and labels. */
+  setMeasurements(on: boolean): void;
 }
 
 /** The workbench page's current design state (workbench/workbench.js). */
