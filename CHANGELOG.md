@@ -749,3 +749,13 @@ at the top of `index.html` and add a section below.
   grid, export in the grid). On narrow screens the band stacks
   (title, then pills, then the stage). No JS change — everything
   binds by id.
+
+## Sources section collapsible — 2026-11-28 (no version bump)
+
+- 2026-11-28 — "Where these numbers come from" on the 3D preview
+  is now a native <details> dropdown that starts collapsed: one
+  line ("Where these numbers come from", with a + marker) instead
+  of ~500px of citations. Clicking it opens the same 6 items and 8
+  links; no JS, keyboard accessible, and the heading keeps its id
+  so the sources check still finds it. Collapsed the section is
+  87px tall; open it is 499px.
