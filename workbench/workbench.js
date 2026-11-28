@@ -501,10 +501,12 @@ if (!RULES) {
   function refreshExportStats() {
     var pts = currentDesignPoints();
     if (!pts.length) { exportStatsEl.textContent = ''; return; }
-    var s = WhenWhereSkyc.buildShow({ name: currentName, points: pts }, exportOptions()).stats;
+    var opts = exportOptions();
+    var s = WhenWhereSkyc.buildShow({ name: currentName, points: pts }, opts).stats;
     var statsText = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · ' + s.minHeight + '–' + s.maxHeight + 'm above ground · ' + s.gridWidth + 'm × ' + s.gridDepth + 'm takeoff grid · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm · ' + s.totalSeconds + 's total (30s up · ' + Number(holdRange.value) + 's hold · 30s down)';
     if (s.maxHeight > RULES.maxAltitudeMeters) statsText += ' · ⚠ highest drone above the ' + RULES.maxAltitudeMeters + 'm ceiling';
     if (s.minSpacing < RULES.minDroneDistanceMeters) statsText += ' · ⚠ closest pair below the ' + RULES.minDroneDistanceMeters + 'm minimum';
+    if (opts.takeoffSpacing < RULES.minLaunchPitchMeters) statsText += ' · ⚠ takeoff spacing below the ' + RULES.minLaunchPitchMeters + 'm launch-pad norm (rotor downwash)';
     exportStatsEl.textContent = statsText;
   }
   function bindExportRange(el, outId, fmt) {
@@ -520,7 +522,7 @@ if (!RULES) {
   takeoffSpacingRange.min = String(RULES.minTakeoffSpacingMeters);
   if (Number(takeoffSpacingRange.value) < RULES.minTakeoffSpacingMeters) takeoffSpacingRange.value = String(RULES.minTakeoffSpacingMeters);
   var takeoffTip = document.querySelector('label[for="takeoffSpacingRange"] .tip');
-  if (takeoffTip) takeoffTip.setAttribute('data-tip', "Spacing between drones on the takeoff grid, on the ground. Independent of the in-air spacing — tighten it to shrink the takeoff zone without changing the picture. Minimum " + RULES.minTakeoffSpacingMeters + "m keeps the grid clear of Skybrush Live's 0.4m outdoor takeoff check.");
+  if (takeoffTip) takeoffTip.setAttribute('data-tip', "Spacing between drones on the takeoff grid, on the ground. Independent of the in-air spacing — tighten it to shrink the takeoff zone without changing the picture. Minimum " + RULES.minTakeoffSpacingMeters + "m keeps the grid clear of Skybrush Live's 0.4m outdoor takeoff check. Below " + RULES.minLaunchPitchMeters + "m the stats line warns — swarm pads are normally spaced 2–3m apart so rotor downwash doesn't buffet neighbours on liftoff.");
   var altitudeTip = document.querySelector('label[for="altitudeRange"] .tip');
   if (altitudeTip) altitudeTip.setAttribute('data-tip', "Height of the picture's centre above the ground. The shape is centred on this height, so the top reaches about half the picture's height above it and the bottom about half below. The stats line below shows the actual lowest and highest drone for this shape. Keep the highest drone under " + RULES.maxAltitudeMeters + "m — that's the ceiling in force" + (RULES.venueName ? " (" + RULES.venueName + ")" : " (FAA Part 107)") + ".");
   bindExportRange(spacingRange, 'spacingVal', function (v) { return v + 'm'; });

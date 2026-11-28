@@ -196,12 +196,20 @@ function main() {
   var halfFovTan = Math.tan((camera.fov * Math.PI / 180) / 2);
   var aspect = container.clientWidth / container.clientHeight;
   var MMARGIN = 10; // how far the dimension lines sit off the picture
+  // Safety-buffer radius: the formation's half-width plus the
+  // altitude-scaled buffer — FAA waiver structures widen the
+  // restricted / free-fall area by at least 10 m for every 100 ft
+  // of show altitude. The rules file owns the rate; fall back to
+  // 10/30.48 if it didn't load.
+  var bufferRate = (typeof WHENWHERE_RULES_EFFECTIVE !== 'undefined' && WHENWHERE_RULES_EFFECTIVE.bufferMetersPerAltitudeMeters) || (10 / 30.48);
+  var bufferRadius = bboxW / 2 + stats.maxHeight * bufferRate;
   // Fit the formation plus the measurement lines around it (and the
   // ground below, so the takeoff grid is in frame), so the dimensions
   // are visible when the measurements are on. The vertical span runs
-  // from the ground to the top dimension line.
+  // from the ground to the top dimension line; the width also covers
+  // the buffer circle.
   var fitH = (maxBY + MMARGIN) - 0;
-  var fitW = bboxW + 2 * MMARGIN;
+  var fitW = Math.max(bboxW + 2 * MMARGIN, 2 * bufferRadius);
   var fitRadius = Math.max(fitH / (2 * halfFovTan), fitW / (2 * halfFovTan * aspect)) * 1.15;
 
   // ---- Measurements: dashed dimension lines + labels. ----
@@ -254,6 +262,42 @@ function main() {
       new THREE.Vector3(-gw, gy, -gd),
     ], 0xd5d9ea));
   }
+  // Sightline: a straight line out from the takeoff grid towards the
+  // audience (and past them), so the viewing distance can be read
+  // off. Orange, dashed, with a tick and a label every 50 m,
+  // measured from the takeoff grid's centre. The audience stands at
+  // +z, so the line runs that way.
+  var SIGHT_LEN = 300, SIGHT_STEP = 50;
+  var sightColor = 0xff9f43;
+  if (gw > 0 && gd > 0) {
+    measureGroup.add(dashedLine([new THREE.Vector3(0, gy, gd), new THREE.Vector3(0, gy, SIGHT_LEN)], sightColor));
+    for (var sd = SIGHT_STEP; sd <= SIGHT_LEN; sd += SIGHT_STEP) {
+      measureGroup.add(tick(0, gy, sd, true, sightColor));
+    }
+  }
+  // Safety buffer: the clear ground around the show that must stay
+  // free of uninvolved people and obstacles. A red dashed circle on
+  // the ground, centred on the takeoff grid — the formation's
+  // half-width plus the altitude-scaled buffer (see bufferRadius).
+  // It runs through the sightline, so the viewing distance and the
+  // keep-clear zone can be read together.
+  var bufferPts = [];
+  var BUFFER_SEG = 96;
+  for (var bi = 0; bi <= BUFFER_SEG; bi++) {
+    var ba = (bi / BUFFER_SEG) * Math.PI * 2;
+    bufferPts.push(new THREE.Vector3(Math.cos(ba) * bufferRadius, gy, Math.sin(ba) * bufferRadius));
+  }
+  measureGroup.add(dashedLine(bufferPts, 0xff5a5a));
+  // Camera marker: a white stem on the ground directly below the
+  // camera, so where the viewer is standing can be read off the
+  // sightline. Its label (updated every frame) gives the camera's
+  // distance from the takeoff grid.
+  var camMarker = new THREE.Group();
+  camMarker.add(dashedLine([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 8, 0)], 0xffffff));
+  var camDot = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  camDot.position.set(0, 8, 0);
+  camMarker.add(camDot);
+  scene.add(camMarker);
   var measureLabelsEl = document.getElementById('measureLabels');
   function makeLabel(cls, text) {
     var d = document.createElement('div');
@@ -269,6 +313,26 @@ function main() {
   ];
   if (gw > 0 && gd > 0) {
     measureLabels.push({ el: makeLabel('grey', 'Takeoff grid ' + stats.gridWidth + ' m × ' + stats.gridDepth + ' m'), anchor: new THREE.Vector3(0, gy, -gd) });
+    for (var sd2 = SIGHT_STEP; sd2 <= SIGHT_LEN; sd2 += SIGHT_STEP) {
+      measureLabels.push({ el: makeLabel('orange', sd2 + ' m'), anchor: new THREE.Vector3(0, gy, sd2) });
+    }
+  }
+  measureLabels.push({ el: makeLabel('red', 'Safety buffer — keep clear · ' + Math.round(bufferRadius) + ' m radius'), anchor: new THREE.Vector3(-bufferRadius, gy, 0) });
+  // The camera's distance label: it follows the white stem below
+  // the camera, and its text is the camera's ground distance from
+  // the takeoff grid's centre, updated every frame.
+  var camLabelEl = makeLabel('white', '');
+  function updateCamMarker() {
+    var cx = camera.position.x, cz = camera.position.z;
+    camMarker.position.set(cx, 0, cz);
+    camMarker.visible = measureOn;
+    var dist = Math.round(Math.hypot(cx, cz));
+    camLabelEl.textContent = 'Camera · ' + dist + ' m from the takeoff grid';
+    var w = container.clientWidth, h = container.clientHeight;
+    var v = new THREE.Vector3(cx, 9, cz).project(camera);
+    camLabelEl.style.left = ((v.x * 0.5 + 0.5) * w) + 'px';
+    camLabelEl.style.top = ((-v.y * 0.5 + 0.5) * h) + 'px';
+    camLabelEl.style.display = (measureOn && v.z < 1) ? '' : 'none';
   }
   var measureOn = true;
   function setMeasurements(on) {
@@ -543,6 +607,7 @@ function main() {
     updateDrones(t);
     applyOrbit();
     updateMeasureLabels();
+    updateCamMarker();
     renderer.render(scene, camera);
   }
   updateTimeLabel();
@@ -560,6 +625,9 @@ function main() {
     get radius() { return orbit.radius; },
     get measurements() { return measureOn; },
     get measureLabels() { return measureLabels.map(function (item) { return item.el.textContent; }); },
+    get cameraDistance() { return Math.round(Math.hypot(camera.position.x, camera.position.z)); },
+    get cameraLabel() { return camLabelEl.textContent; },
+    get bufferRadius() { return Math.round(bufferRadius); },
     setTime: function (v) { t = v; timeRange.value = String(v); updateTimeLabel(); },
     setPlaying: setPlaying,
     sampleDrone: sampleDrone,

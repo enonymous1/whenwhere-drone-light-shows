@@ -566,3 +566,31 @@ at the top of `index.html` and add a section below.
 - 2026-11-18 — Clearer Inquiries headers, matching the form's labels.
 - 2026-11-18 — Documentation: form IIFE header comment, `setFormation` comment, JSDoc on the four geometry functions.
 - 2026-11-18 — Version + changelog: `<!-- v1.0.0 -->` comment, this file, `--check` and `--help` on the build script.
+
+## Sightline, camera distance and safety buffer — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The 3D preview's measurements gained a sightline and a
+  safety buffer. A straight orange dashed line runs out from the
+  takeoff grid towards the audience (and past them) with a tick and a
+  label every 50 m to 300 m, measured from the takeoff grid's centre,
+  so the viewing distance can be read off. A white marker stands on
+  the ground directly below the camera, and its label gives the
+  camera's ground distance from the takeoff grid live — 92 m at the
+  default audience view, growing as you zoom out — so you can judge
+  how far someone would be standing from the show. A red dashed
+  circle on the ground marks the safety buffer, the clear ground
+  around the show that must stay free of uninvolved people: its radius
+  is the picture's half-width plus the altitude-scaled buffer (FAA
+  waiver structures widen the restricted area by at least 10 m for
+  every 100 ft of altitude), 56 m for the hearts at 64.9 m. The fit
+  widened to include the circle, so the formation renders a touch
+  smaller. The rules file gained the two numbers behind this —
+  `minLaunchPitchMeters: 2` (swarm pads are normally spaced 2–3 m
+  apart so rotor downwash doesn't buffet neighbours) and
+  `bufferMetersPerAltitudeMeters: 10 / 30.48` — and the workbench's
+  stats line now warns when the takeoff spacing is below the 2 m
+  launch-pad norm, alongside the existing ceiling and closest-pair
+  warnings; the takeoff tooltip states the norm too. The 4 m in-air
+  soft-geofence bubble was deliberately not added as a formation
+  check — it governs free-flight separation, and the formation's
+  planned spacing (closest pair 2.024 m at 3 m) is not free flight.

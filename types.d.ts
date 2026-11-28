@@ -44,6 +44,10 @@ export interface WhenWhereVenue {
   minTakeoffSpacingMeters?: number;
   /** Minimum distance between drones in flight for this venue, in metres. */
   minDroneDistanceMeters?: number;
+  /** Launch-pad pitch norm for this venue, in metres. */
+  minLaunchPitchMeters?: number;
+  /** Safety-buffer expansion for this venue, in metres of extra clear ground per metre of altitude. */
+  bufferMetersPerAltitudeMeters?: number;
 }
 
 /** Flight rules (rules.js): the FAA Part 107 baseline, plus an optional venue override. */
@@ -54,6 +58,10 @@ export interface WhenWhereRules {
   minTakeoffSpacingMeters: number;
   /** Minimum distance between drones in flight, in metres. */
   minDroneDistanceMeters: number;
+  /** Launch-pad pitch norm, in metres: swarm drones are spaced 2–3 m apart so downwash doesn't buffet neighbours. */
+  minLaunchPitchMeters: number;
+  /** Safety-buffer expansion, in metres of extra clear ground per metre of show altitude (10 m per 100 ft ≈ 0.328). */
+  bufferMetersPerAltitudeMeters: number;
   /** Venue override, or null for the FAA baseline. */
   venue?: WhenWhereVenue | null;
 }
@@ -63,6 +71,8 @@ export interface WhenWhereRulesEffective {
   readonly maxAltitudeMeters: number;
   readonly minTakeoffSpacingMeters: number;
   readonly minDroneDistanceMeters: number;
+  readonly minLaunchPitchMeters: number;
+  readonly bufferMetersPerAltitudeMeters: number;
   /** The venue name, or null when the FAA baseline is in force. */
   readonly venueName: string | null;
 }
@@ -178,8 +188,14 @@ export interface WhenWherePreview3d {
   readonly radius: number;
   /** Whether the measurement lines and labels are shown. */
   readonly measurements: boolean;
-  /** The measurement label texts, in order: width, height, altitude, takeoff grid. */
+  /** The measurement label texts, in order: width, height, altitude, takeoff grid, then the sightline distances. */
   readonly measureLabels: string[];
+  /** The camera's ground distance from the takeoff grid's centre, in metres. */
+  readonly cameraDistance: number;
+  /** The camera marker's label text. */
+  readonly cameraLabel: string;
+  /** The safety-buffer circle's radius, in metres. */
+  readonly bufferRadius: number;
   setTime(v: number): void;
   setPlaying(p: boolean): void;
   /** A drone's Three.js position [-y, z, x] at time t (seconds). */

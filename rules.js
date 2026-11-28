@@ -37,6 +37,23 @@ var WHENWHERE_RULES = {
   // below this.
   minTakeoffSpacingMeters: 0.5,
 
+  // Launch-pad pitch norm, in metres: swarm light-show drones are
+  // spaced 2–3 m apart on the ground so rotor downwash during
+  // simultaneous spin-up/liftoff doesn't buffet neighbours. This is
+  // a warning threshold, not the slider floor — the slider floor
+  // above is Skybrush Live's load check, while this is the safe
+  // operating pitch. The workbench warns when the takeoff spacing
+  // is below it.
+  minLaunchPitchMeters: 2,
+
+  // Safety-buffer expansion, in metres of extra clear ground per
+  // metre of show altitude: FAA waiver structures widen the
+  // restricted / free-fall area by at least 10 m for every 100 ft
+  // (30.48 m) of altitude, so 10 / 30.48 ≈ 0.328. The 3D preview
+  // draws the buffer circle from this: the formation's half-width
+  // plus the highest drone's altitude × this rate.
+  bufferMetersPerAltitudeMeters: 10 / 30.48,
+
   // Minimum distance between drones in flight, in metres. A show
   // drone's arms are ~0.45m, so two drones need well over 0.9m
   // centre-to-centre before their props meet; 1.5m is the floor the
@@ -72,17 +89,23 @@ var WHENWHERE_RULES_EFFECTIVE = (function () {
   var maxAltitudeMeters = base.maxAltitudeMeters;
   var minTakeoffSpacingMeters = base.minTakeoffSpacingMeters;
   var minDroneDistanceMeters = base.minDroneDistanceMeters;
+  var minLaunchPitchMeters = base.minLaunchPitchMeters;
+  var bufferMetersPerAltitudeMeters = base.bufferMetersPerAltitudeMeters;
   var venueName = null;
   if (venue) {
     if (typeof venue.maxAltitudeMeters === 'number') maxAltitudeMeters = venue.maxAltitudeMeters;
     if (typeof venue.minTakeoffSpacingMeters === 'number') minTakeoffSpacingMeters = venue.minTakeoffSpacingMeters;
     if (typeof venue.minDroneDistanceMeters === 'number') minDroneDistanceMeters = venue.minDroneDistanceMeters;
+    if (typeof venue.minLaunchPitchMeters === 'number') minLaunchPitchMeters = venue.minLaunchPitchMeters;
+    if (typeof venue.bufferMetersPerAltitudeMeters === 'number') bufferMetersPerAltitudeMeters = venue.bufferMetersPerAltitudeMeters;
     venueName = typeof venue.name === 'string' ? venue.name : null;
   }
   return {
     maxAltitudeMeters: maxAltitudeMeters,
     minTakeoffSpacingMeters: minTakeoffSpacingMeters,
     minDroneDistanceMeters: minDroneDistanceMeters,
+    minLaunchPitchMeters: minLaunchPitchMeters,
+    bufferMetersPerAltitudeMeters: bufferMetersPerAltitudeMeters,
     venueName: venueName,
   };
 })();
