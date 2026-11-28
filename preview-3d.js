@@ -411,11 +411,12 @@ function main() {
     // ground below, so the takeoff grid is in frame), so the dimensions
     // are visible when the measurements are on. The vertical span runs
     // from the ground to the top dimension line; the width also covers
-    // the buffer circle.
+    // the buffer circle — and the top-height line, which sits one
+    // margin further right than the centre-altitude line.
     var altTop = currentOptions.altitude;
     bufferRadius = bboxW / 2 + stats.maxHeight * bufferRate;
     var fitH = (maxBY + MMARGIN) - 0;
-    var fitW = Math.max(bboxW + 2 * MMARGIN, 2 * bufferRadius);
+    var fitW = Math.max(bboxW + 3 * MMARGIN, 2 * bufferRadius);
     fitRadius = Math.max(fitH / (2 * halfFovTan), fitW / (2 * halfFovTan * aspect)) * 1.15;
 
     // Measurements, rebuilt for this count: width across the top of
@@ -441,6 +442,14 @@ function main() {
     measureGroup.add(dashedLine([new THREE.Vector3(altX, 0, 0), new THREE.Vector3(altX, altTop, 0)], 0x7dffcb));
     measureGroup.add(tick(altX, 0, 0, true, 0x7dffcb));
     measureGroup.add(tick(altX, altTop, 0, true, 0x7dffcb));
+    // Top height: ground to the highest drone, purple, one margin
+    // further right than the centre-altitude line, so the two
+    // ground-anchored measurements read side by side. This is the
+    // number the ceiling warning is about.
+    var topX = maxBX + 2 * MMARGIN;
+    measureGroup.add(dashedLine([new THREE.Vector3(topX, 0, 0), new THREE.Vector3(topX, maxBY, 0)], 0xd8a0ff));
+    measureGroup.add(tick(topX, 0, 0, true, 0xd8a0ff));
+    measureGroup.add(tick(topX, maxBY, 0, true, 0xd8a0ff));
     // Takeoff grid: the footprint on the ground, white/grey.
     var gw = (stats.gridWidth || 0) / 2, gd = (stats.gridDepth || 0) / 2;
     var gy = 0.15; // just above the ground, so it is not z-fighting
@@ -483,6 +492,7 @@ function main() {
       { el: makeLabel('gold', round1(bboxW) + ' m wide'), anchor: new THREE.Vector3((minBX + maxBX) / 2, widthY, 0) },
       { el: makeLabel('cyan', round1(bboxH) + ' m tall'), anchor: new THREE.Vector3(heightX, centreY, 0) },
       { el: makeLabel('green', altTop + ' m centre · ' + round1(minBY) + '–' + round1(maxBY) + ' m above ground'), anchor: new THREE.Vector3(altX, altTop / 2, 0) },
+      { el: makeLabel('purple', round1(maxBY) + ' m to the top drone'), anchor: new THREE.Vector3(topX, maxBY / 2, 0) },
     ];
     if (gw > 0 && gd > 0) {
       measureLabels.push({ el: makeLabel('grey', 'Takeoff grid ' + stats.gridWidth + ' m × ' + stats.gridDepth + ' m'), anchor: new THREE.Vector3(0, gy, -gd) });

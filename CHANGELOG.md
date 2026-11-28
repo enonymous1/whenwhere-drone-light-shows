@@ -703,3 +703,17 @@ at the top of `index.html` and add a section below.
   at 60 m (12–108 m) and keeps its count; the word "I" at 100 m tops
   at 122.5 m and warns with the altitude-only text. The count slider
   re-verified unchanged after the refactor.
+
+## Ground-to-top measurement in the 3D preview — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The 3D preview gained a ground-to-top measurement:
+  a purple dashed line on the right, one margin further out than the
+  green centre-altitude line, from the ground to the highest drone,
+  with end ticks and a label ("64.9 m to the top drone"). The cyan
+  line is the picture's own height and the green line stops at the
+  centre; this is the number the ceiling warning is about, and it
+  moves live with the count and altitude sliders like the other
+  lines. The camera fit now covers the extra margin (bboxW + 3
+  margins) so the line stays in frame on short, wide formations.
+  The measure note names it, and the measurement-label order in the
+  types is updated (width, height, altitude, top, grid, sightline).

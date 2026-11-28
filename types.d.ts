@@ -188,7 +188,7 @@ export interface WhenWherePreview3d {
   readonly radius: number;
   /** Whether the measurement lines and labels are shown. */
   readonly measurements: boolean;
-  /** The measurement label texts, in order: width, height, altitude, takeoff grid, then the sightline distances. */
+  /** The measurement label texts, in order: width, height, altitude, top height, takeoff grid, then the sightline distances. */
   readonly measureLabels: string[];
   /** The camera's ground distance from the takeoff grid's centre, in metres. */
   readonly cameraDistance: number;
