@@ -553,7 +553,12 @@ crossings.
   B every second, the universal exchange format) and as a Google Earth
   .kmz (one flight path per drone, anchored to the venue's latitude
   and longitude and the show's orientation, which are saved in the
-  browser). Either page can also open the formation in the 3D preview
+  browser). The venue can be typed, or picked on a map: a "Find on
+  map" button opens a modal with an address search (Nominatim) and an
+  interactive OpenStreetMap (Leaflet, vendored locally) — click the
+  map or drag the pin to place the takeoff grid, then "Use this
+  location" fills the latitude/longitude. Either page can also open
+  the formation in the 3D preview
   (`preview-3d.html`, Three.js vendored locally, no CDN): the show as
   glowing drones in a night sky, with a play/scrub timeline, orbit
   camera (Audience / Top / Side), and the drones shown dim during

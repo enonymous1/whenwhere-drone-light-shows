@@ -195,6 +195,9 @@ def _validate_workbench():
     assert '<script src="../geometry.js">' in html, "workbench does not load ../geometry.js"
     assert '<script src="skyc.js">' in html, "workbench does not load skyc.js"
     assert '<script src="workbench.js">' in html, "workbench does not load workbench.js"
+    assert '<script src="../vendor/leaflet/leaflet.js">' in html, "workbench does not load the vendored Leaflet"
+    assert '<script src="venue-map.js">' in html, "workbench does not load venue-map.js"
+    assert '<link rel="stylesheet" href="../vendor/leaflet/leaflet.css"' in html, "workbench does not link the vendored Leaflet CSS"
     assert html.index('<script src="../config.js">') < html.index('<script src="../rules.js">'), \
         "workbench: config.js must load before rules.js"
     assert html.index('<script src="../rules.js">') < html.index('<script src="../geometry.js">'), \
@@ -203,6 +206,10 @@ def _validate_workbench():
         "workbench: geometry.js must load before skyc.js"
     assert html.index('<script src="skyc.js">') < html.index('<script src="workbench.js">'), \
         "workbench: skyc.js must load before workbench.js"
+    assert html.index('<script src="workbench.js">') < html.index('<script src="../vendor/leaflet/leaflet.js">'), \
+        "workbench: workbench.js must load before leaflet.js"
+    assert html.index('<script src="../vendor/leaflet/leaflet.js">') < html.index('<script src="venue-map.js">'), \
+        "workbench: leaflet.js must load before venue-map.js"
     assert '<link rel="stylesheet" href="style.css"' in html, "workbench does not link style.css"
     assert (BASE / "workbench" / "style.css").is_file(), "workbench/style.css missing"
     for m in re.finditer(r"<script\b[^>]*>", html):
@@ -213,13 +220,19 @@ def _validate_workbench():
     assert wbjs.is_file(), "workbench/workbench.js missing"
     skycjs = BASE / "workbench" / "skyc.js"
     assert skycjs.is_file(), "workbench/skyc.js missing"
+    venuejs = BASE / "workbench" / "venue-map.js"
+    assert venuejs.is_file(), "workbench/venue-map.js missing"
+    leafletjs = BASE / "vendor" / "leaflet" / "leaflet.js"
+    assert leafletjs.is_file(), "vendor/leaflet/leaflet.js missing (Leaflet, vendored)"
+    leafletcss = BASE / "vendor" / "leaflet" / "leaflet.css"
+    assert leafletcss.is_file(), "vendor/leaflet/leaflet.css missing (Leaflet CSS, vendored)"
     node = shutil.which("node")
     if not node:
         print("WARNING: node not found — skipping workbench JS syntax check (install node to enable it)")
         return
     rulesjs = BASE / "rules.js"
     assert rulesjs.is_file(), "rules.js missing"
-    for js in (wbjs, skycjs, rulesjs):
+    for js in (wbjs, skycjs, rulesjs, venuejs, leafletjs):
         r = subprocess.run([node, "--check", str(js)], capture_output=True, text=True)
         assert r.returncode == 0, f"{js.name} failed node --check:\n{r.stderr}"
     print("workbench: node --check OK")

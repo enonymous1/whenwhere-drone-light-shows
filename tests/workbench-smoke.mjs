@@ -255,12 +255,12 @@ async function main() {
         exportInSide: !!(side && side.querySelector('#exportSkycBtn')),
         exportNotInControls: !(controls && controls.querySelector('#exportSkycBtn')),
         stageInSide: !!(side && side.contains(stage)),
-        stageSticky: stage ? getComputedStyle(stage).position === 'sticky' : false,
+        stageNotSticky: stage ? getComputedStyle(stage).position !== 'sticky' : false,
       });
     })()`);
     const layoutObj = JSON.parse(layout);
     check('export is in the right column under the preview', layoutObj.exportInSide === true && layoutObj.exportNotInControls === true);
-    check('stage is in the right column and stays sticky', layoutObj.stageInSide === true && layoutObj.stageSticky === true);
+    check('stage is in the right column and scrolls normally (not sticky — the sticky stage covered the export settings)', layoutObj.stageInSide === true && layoutObj.stageNotSticky === true);
     const exportUi = await evaluate(`(function () {
       return JSON.stringify({
         btn: !!document.getElementById('exportSkycBtn'),
@@ -471,6 +471,40 @@ async function main() {
     })()`);
     const previewBtnObj = JSON.parse(previewBtn);
     check('3D preview button saves the formation + export settings for the preview page', previewBtnObj.btn === true && previewBtnObj.opened === '../preview-3d.html' && previewBtnObj.name === 'Interlocking hearts' && previewBtnObj.points === 80 && previewBtnObj.spacing === 3 && previewBtnObj.altitude === 40);
+    // The venue map: "Find on map" (no address) opens the modal on
+    // the Spotsylvania default, and "Use this location" writes the
+    // latitude/longitude into the venue fields and enables the
+    // Google Earth export. No address is typed, so no geocoding
+    // (network) is needed for this check. The KMZ check above leaves
+    // the venue at (38, -77), so clear the fields first — otherwise
+    // the map opens on that venue instead of the default. The waits
+    // use the harness's sleep — the evaluate helper cannot await a
+    // Promise (CDP returns the Promise object, not its value).
+    await evaluate(`(function () {
+      document.getElementById('venueLat').value = '';
+      document.getElementById('venueLon').value = '';
+      localStorage.removeItem('wwWorkbenchVenue');
+      document.getElementById('venueAddress').value = '';
+      document.getElementById('venueMapBtn').click();
+      return 'ok';
+    })()`);
+    await sleep(1200);
+    const venueMapOpen = await evaluate(`JSON.stringify({
+      open: !document.getElementById('venueModal').hidden,
+      leaflet: typeof L !== 'undefined' && document.querySelectorAll('#venueMap .leaflet-pane').length > 0,
+      coords: document.getElementById('venueMapCoords').textContent,
+    })`);
+    const venueMapOpenObj = JSON.parse(venueMapOpen);
+    await evaluate(`document.getElementById('venueMapUse').click(); 'ok'`);
+    await sleep(300);
+    const venueMapUsed = await evaluate(`JSON.stringify({
+      lat: document.getElementById('venueLat').value,
+      lon: document.getElementById('venueLon').value,
+      kmzDisabled: document.getElementById('exportKmzBtn').disabled,
+      modalHidden: document.getElementById('venueModal').hidden,
+    })`);
+    const venueMapUsedObj = JSON.parse(venueMapUsed);
+    check('venue map opens, Leaflet loads, and Use this location fills the venue + enables Google Earth', venueMapOpenObj.open === true && venueMapOpenObj.leaflet === true && venueMapOpenObj.coords.indexOf('38.201900') !== -1 && venueMapUsedObj.lat === '38.201900' && venueMapUsedObj.lon === '-77.584600' && venueMapUsedObj.kmzDisabled === false && venueMapUsedObj.modalHidden === true);
     // Moving the spacing slider re-derives the stats (narrower spacing
     // = narrower picture, same drone count).
     const narrower = await evaluate(`(function () {

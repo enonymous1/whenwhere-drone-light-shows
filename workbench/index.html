@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Marcellus&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="../vendor/leaflet/leaflet.css" />
 </head>
 <body>
 <header class="wb-head">
@@ -162,6 +163,13 @@
         <label for="venueOrient"><span class="tip" tabindex="0" data-tip="Which way the show's front faces, in degrees clockwise from North. 0 means the picture's front faces North; 90 means it faces East. The .skyc uses the same convention.">Orientation (° from North)</span> <output id="venueOrientVal">0°</output></label>
         <input id="venueOrient" type="range" min="0" max="359" step="1" value="0" />
       </div>
+      <div class="field">
+        <label for="venueAddress"><span class="tip" tabindex="0" data-tip="The venue's street address, town, or name — used to find it on the map. It is not stored; only the latitude and longitude you pick are saved.">Venue address</span></label>
+        <div class="venue-address-row">
+          <input id="venueAddress" type="text" placeholder="e.g. 123 Main St, Fredericksburg, VA" autocomplete="off" />
+          <button type="button" id="venueMapBtn" class="btn">Find on map</button>
+        </div>
+      </div>
       <p class="hint" id="exportStats" aria-live="polite"></p>
       <button type="button" id="exportSkycBtn" class="btn">Export .skyc</button>
       <button type="button" id="exportCsvBtn" class="btn">Export CSV (.zip)</button>
@@ -181,10 +189,28 @@
   100-drone opening fleet. <a href="../index.html">Back to the drone
   light shows page</a>.</p>
 </footer>
+<div class="venue-modal" id="venueModal" hidden role="dialog" aria-modal="true" aria-labelledby="venueModalTitle">
+  <div class="venue-modal-box">
+    <div class="venue-modal-head">
+      <h3 id="venueModalTitle">Pick the venue on the map</h3>
+      <button type="button" id="venueModalClose" class="venue-modal-close" aria-label="Close the map">×</button>
+    </div>
+    <p class="hint" id="venueAddressNote">Search an address, then click the map (or drag the pin) to place the takeoff grid exactly.</p>
+    <div id="venueMap" class="venue-map" aria-label="Map to pick the venue"></div>
+    <p class="venue-modal-coords" id="venueMapCoords" aria-live="polite"></p>
+    <div class="venue-modal-actions">
+      <button type="button" id="venueMapUse" class="btn">Use this location</button>
+      <button type="button" id="venueMapCancel" class="btn line-btn">Cancel</button>
+    </div>
+    <p class="hint">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors. Address search by <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim</a>.</p>
+  </div>
+</div>
 <script src="../config.js"></script>
 <script src="../rules.js"></script>
 <script src="../geometry.js"></script>
 <script src="skyc.js"></script>
 <script src="workbench.js"></script>
+<script src="../vendor/leaflet/leaflet.js"></script>
+<script src="venue-map.js"></script>
 </body>
 </html>

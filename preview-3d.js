@@ -189,7 +189,7 @@ function main() {
   var halfFovTan = Math.tan((camera.fov * Math.PI / 180) / 2);
   var aspect = container.clientWidth / container.clientHeight;
   var fitRadius = Math.max(bboxH / (2 * halfFovTan), bboxW / (2 * halfFovTan * aspect)) * 1.2;
-  var orbit = { theta: 0, phi: 1.42, radius: fitRadius };
+  var orbit = { theta: 0, phi: 1.55, radius: fitRadius };
   var goal = null;
   function applyOrbit() {
     var sp = Math.sin(orbit.phi);
@@ -198,12 +198,16 @@ function main() {
       target.y + orbit.radius * Math.cos(orbit.phi),
       target.z + orbit.radius * sp * Math.cos(orbit.theta)
     );
+    // Never let the camera sink under the ground: at a low angle and
+    // a long radius the orbit math would put it below y = 0, so
+    // clamp it to eye height and let it look up at the picture.
+    if (camera.position.y < 2) camera.position.y = 2;
     camera.lookAt(target);
   }
   function setView(name) {
     if (name === 'top') goal = { theta: 0, phi: 0.18, radius: fitRadius * 1.25 };
-    else if (name === 'side') goal = { theta: Math.PI / 2, phi: 1.42, radius: fitRadius };
-    else goal = { theta: 0, phi: 1.42, radius: fitRadius };
+    else if (name === 'side') goal = { theta: Math.PI / 2, phi: 1.55, radius: fitRadius };
+    else goal = { theta: 0, phi: 1.55, radius: fitRadius };
     document.querySelectorAll('.views button').forEach(function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-view') === name ? 'true' : 'false');
     });
@@ -231,7 +235,10 @@ function main() {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) {
       orbit.theta -= (e.clientX - prev.x) * 0.005;
-      orbit.phi = Math.max(0.08, Math.min(1.65, orbit.phi - (e.clientY - prev.y) * 0.005));
+      // The low end (1.85) is below the picture's centre, so the view
+      // can be dragged down to the ground — the camera is clamped to
+      // eye height in applyOrbit, so it looks up instead of sinking.
+      orbit.phi = Math.max(0.08, Math.min(1.85, orbit.phi - (e.clientY - prev.y) * 0.005));
     } else if (pointers.size === 2) {
       var pts = Array.from(pointers.values());
       var d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);

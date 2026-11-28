@@ -90,12 +90,14 @@ a{color:var(--gold)}
 .design-summary:empty{display:none}
 
 /* ---------- stage ---------- */
-/* The right column: the sticky preview on top, the export below it in
-   normal flow. align-self: stretch makes the column fill the grid row
-   (the left controls are usually taller), so the sticky stage can
-   follow the whole scroll instead of stopping at the export. */
-.wb-side{min-width:0;align-self:stretch}
-.wb-stage{position:sticky;top:20px}
+/* The right column: the preview on top, the export below it in normal
+   flow. The stage used to be position: sticky, so the preview stayed
+   visible while the export settings were adjusted — but the stage is
+   taller than most viewports, so the export scrolled underneath it
+   and the settings' labels mixed with the stage's note (the note has
+   no background, so the two texts overlapped). The stage now scrolls
+   away like everything else. */
+.wb-side{min-width:0}
 .wb-export{margin-top:28px}
 .stage{background:#03040d;border:1px solid #232c58;border-radius:var(--radius);overflow:hidden}
 .stage canvas{display:block;width:100%;height:auto}
@@ -103,13 +105,35 @@ a{color:var(--gold)}
 .caption #shapeName{font-family:"Marcellus",serif;font-size:1.05rem}
 .wb-stage-note{color:var(--muted);font-size:.92rem;margin:12px 4px 0}
 
+/* ---------- venue map ---------- */
+/* The address row sits beside the venue latitude/longitude: an
+   address in, a map out. */
+.venue-address-row{display:flex;gap:8px}
+.venue-address-row input{flex:1;min-width:0}
+.venue-address-row .btn{flex:none;padding:10px 18px}
+/* The map modal: a full-screen overlay with the map inside. The map
+   itself is Leaflet (vendored); the pin is a CSS dot, so no marker
+   image files are needed. */
+.venue-modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(3,4,13,.72);padding:20px}
+.venue-modal[hidden]{display:none}
+.venue-modal-box{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;max-width:720px;width:100%;max-height:calc(100vh - 40px);overflow:auto;padding:20px 22px}
+.venue-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.venue-modal-head h3{margin:0;font-size:1.15rem}
+.venue-modal-close{border:0;background:transparent;color:var(--muted);font-size:1.6rem;line-height:1;cursor:pointer;padding:2px 8px}
+.venue-modal-close:hover{color:var(--ink)}
+.venue-map{height:380px;border:1px solid var(--line);border-radius:10px;margin:12px 0 8px;background:#0a0e1a;z-index:0}
+.venue-map .leaflet-container{font-family:inherit}
+.venue-modal-coords{font-variant-numeric:tabular-nums;font-weight:600;margin:4px 0 12px}
+.venue-modal-actions{display:flex;gap:10px;flex-wrap:wrap}
+.venue-pin{width:22px;height:22px;border-radius:50% 50% 50% 0;background:var(--gold-bright);border:2px solid #191203;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.45);cursor:grab}
+.venue-pin:active{cursor:grabbing}
+
 /* ---------- footer ---------- */
 .wb-foot{border-top:1px solid var(--line);padding:20px;color:var(--muted);font-size:.92rem;text-align:center}
 
 /* ---------- narrow screens ---------- */
 @media (max-width: 960px){
   .wb-grid{grid-template-columns:1fr}
-  .wb-stage{position:static}
   .wb-head-in{gap:10px}
   .wb-note{display:none}
 }

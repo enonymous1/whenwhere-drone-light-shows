@@ -32,6 +32,37 @@ at the top of `index.html` and add a section below.
   makes the studio initialise just slow enough that the click landed
   before the shape handlers attached.
 
+## Workbench layout fix + venue map + lower 3D audience view — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The workbench's sticky stage is gone. It was taller
+  than most viewports, so as the export settings scrolled the stage
+  stayed stuck and the settings' labels mixed with the stage's note
+  (the note has no background, so the two texts overlapped — the
+  "Drone spacing" label under "A preview at the real fleet size").
+  The stage now scrolls away like everything else; the export
+  section is fully visible. The smoke test's layout check now
+  asserts the stage is not sticky.
+- 2026-11-27 — A venue map in the workbench. A "Venue address"
+  field and "Find on map" button open a modal with an address
+  search (Nominatim, OpenStreetMap's free geocoder, no key) and an
+  interactive OpenStreetMap (Leaflet 1.9.4, vendored locally in
+  `vendor/leaflet/`, no CDN). Click the map or drag the gold pin to
+  place the takeoff grid; "Use this location" writes the latitude
+  and longitude into the venue fields (dispatching input events, so
+  they save and the Google Earth export enables exactly as if they
+  were typed). The map opens on the saved venue, or on Spotsylvania,
+  VA when none is set. Verified end to end: the modal opens, tiles
+  load, a real map click moves the pin, "Fredericksburg, VA"
+  geocodes to 38.300116, -77.457147, and "Use this location" fills
+  the fields. A smoke check covers the modal + Leaflet + "Use this
+  location" without needing the geocoder.
+- 2026-11-27 — The 3D preview's Audience view sits lower (nearly
+  level with the picture's centre instead of above it), and the
+  orbit can now be dragged down to the ground — the camera is
+  clamped to eye height, so it looks up at the picture instead of
+  sinking under the ground. A hint under the transport says to drag
+  the sky to look around.
+
 ## 3D preview (Three.js) — 2026-11-27 (no version bump)
 
 - 2026-11-27 — A customer-facing 3D preview of the show:
