@@ -242,10 +242,13 @@ async function main() {
       }
     }
     // The "View in 3D" button saves the formation on screen for the
-    // preview page (window.open is stubbed so no tab opens).
+    // preview page (window.open is stubbed so no tab opens). The word
+    // flow ran just before this, so set the hearts back first — the
+    // button must save whatever formation is showing.
     const view3d = await evaluate(`(function () {
       var opened = null;
       window.open = function (url) { opened = url; return null; };
+      document.querySelector('[data-shape="heart"]').click();
       document.getElementById('view3dBtn').click();
       var parsed = null;
       try { parsed = JSON.parse(localStorage.getItem('wwPreview3D')); } catch (e) { /* not JSON */ }
