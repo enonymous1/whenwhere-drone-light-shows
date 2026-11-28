@@ -48,6 +48,14 @@ at the top of `index.html` and add a section below.
   pan moved the target from (0, 40, 0) to (−15.9, 48, −0.2), a zoom
   took the radius from 67.4m to 40.4m, an ArrowRight key moved it
   further, and reset put it back at (0, 40, 0).
+- 2026-11-27 — Fix: a tap on a pad button did almost nothing. The
+  buttons only moved the camera while held, at a per-second rate, so
+  a quick click applied a few frames and looked dead (holding for a
+  second worked — 67.4m → 39.5m — but a tap is the natural way to
+  use a button). A press now moves one step at once (zoom ×0.85 /
+  ×1.18, pan 8% of the view), and holding keeps moving after that.
+  Verified: one tap on zoom-in took the radius 67.4m → 56.4m, one
+  tap on pan-right moved the view 4.6m, one tap on pan-up 6.7m.
 
 ## Workbench layout fix + venue map + lower 3D audience view — 2026-11-27 (no version bump)
 
