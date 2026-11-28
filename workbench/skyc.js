@@ -111,6 +111,76 @@ var WhenWhereSkyc = (function () {
   var LANDING_SECONDS = 30;
 
   /**
+   * Baked-in show effects, keyed on the design's shape (design.shape):
+   * the Starburst pulses its lights, the Grand finale rotates in the
+   * picture plane. Both live in the exported show — the trajectories
+   * and the light program — so the 3D preview shows them faithfully
+   * just by sampling the show, and the .skyc flies them for real.
+   *
+   * Rotation: one full turn per 30s of hold (12 deg/s), sampled as
+   * trajectory waypoints every 1s — the same 1s granularity the CSV
+   * export samples at, so the CSV captures the rotation exactly. A
+   * rotation is a rigid move around the formation centre (0, 0,
+   * altitude) in the y-z plane, so drone-to-drone distances are
+   * preserved; the swept extent is altitude +/- the farthest drone's
+   * radius, which buildShow reports as the height range (the finale's
+   * sweep dips 1.6m below its static bottom at the default altitude,
+   * and the preview's ground warning is computed from that swept
+   * range, so a too-low altitude still warns).
+   *
+   * Pulse: the lights breathe between 40% and 100% on a 4s period,
+   * in 1s light-program steps — 1s steps keep the CSV exact too,
+   * since it samples the colour every second. No drone moves. The
+   * floor is 40% in linear light (the LEDs and the .skyc both store
+   * linear RGB): on an sRGB screen that reads as about 67%, a clear
+   * breathe that never comes close to going dark.
+   */
+  var ROTATION_PERIOD_SECONDS = 30;
+  var ROTATION_STEP_SECONDS = 1;
+  var PULSE_PERIOD_SECONDS = 4;
+  var PULSE_STEP_SECONDS = 1;
+  var PULSE_MIN = 0.4;
+
+  /**
+   * The pulse brightness factor (0.4-1.0) at `secondsIntoHold` seconds
+   * into the hold: a sine breathe, 1.0 at 1s, 0.4 at 3s, back to 1.0
+   * every 4s. Exported (see the module return) so the 3D preview can
+   * colour the Starburst the same way the light program does.
+   * @param {number} secondsIntoHold - seconds since the hold started.
+   * @returns {number} brightness factor, 0.6-1.0.
+   */
+  function pulseFactor(secondsIntoHold) {
+    return PULSE_MIN + (1 - PULSE_MIN) * (0.5 + 0.5 * Math.sin((2 * Math.PI * secondsIntoHold) / PULSE_PERIOD_SECONDS));
+  }
+
+  /**
+   * The finale's rotation angle (radians) at `secondsIntoHold` seconds
+   * into the hold: one full turn per 30s.
+   * @param {number} secondsIntoHold - seconds since the hold started.
+   * @returns {number} rotation angle in radians.
+   */
+  function rotationAngle(secondsIntoHold) {
+    return (2 * Math.PI * secondsIntoHold) / ROTATION_PERIOD_SECONDS;
+  }
+
+  /**
+   * One formation position [0, y, z] rotated around the formation
+   * centre (0, 0, altitude) in the y-z plane — the picture plane the
+   * audience sees. The audience-facing spin is clockwise.
+   * @param {number[]} pos - [0, y, z] in metres.
+   * @param {number} altitude - the show altitude in metres.
+   * @param {number} angle - rotation angle in radians.
+   * @returns {number[]} the rotated [0, y, z].
+   */
+  function rotateFormationPoint(pos, altitude, angle) {
+    var dy = pos[1];
+    var dz = pos[2] - altitude;
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+    return [0, round3(dy * c - dz * s), round3(altitude + dy * s + dz * c)];
+  }
+
+  /**
    * One sRGB channel (0-255) -> linear-light 0-255, rounded. The .skyc
    * light programs store colours in linear RGB, while the palette hex
    * values are sRGB (CSS colours), so this conversion is what makes the
@@ -378,9 +448,13 @@ var WhenWhereSkyc = (function () {
    * Build the show.json for one formation: a takeoff from a ground grid,
    * the held shape, and a landing back to the grid.
    *
-   * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
+   * @param {{ name: string, points: { x: number, y: number, c?: string }[], shape?: string }} design
    *   The formation: its name and its canvas points (c = the drone's
-   *   hex colour, as drawn; defaults to white when absent).
+   *   hex colour, as drawn; defaults to white when absent). shape is
+   *   the fleet shape key ('heart' | 'rings' | 'glass' | 'star' |
+   *   'finale') when known — the Starburst pulses its lights and the
+   *   Grand finale rotates during the hold; designs without a key
+   *   (words) hold still.
    * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
    *   spacing = the nominal drone spacing in meters (the median
@@ -396,6 +470,13 @@ var WhenWhereSkyc = (function () {
     var pts = design.points.map(function (p) {
       return { x: p.x, y: p.y, c: p.c || '#ffffff' };
     });
+    // Baked-in show effects, from the design's shape key: the
+    // Starburst pulses its lights, the Grand finale rotates. Designs
+    // without a shape key (words, and callers that don't pass one)
+    // hold still.
+    var shape = design.shape || null;
+    var rotates = shape === 'finale';
+    var pulses = shape === 'star';
     var stats = nearestNeighbourStats(pts);
     var scale = options.spacing / stats.median;
     // Enforce a minimum gap of half the nominal spacing, in canvas px,
@@ -417,10 +498,25 @@ var WhenWhereSkyc = (function () {
     });
     // The actual lowest and highest drone heights (above home level),
     // from the mapped formation — what Skybrush Live reports as the
-    // height range, not the design canvas height.
-    var heights = formation.map(function (p) { return p[2]; });
-    var minHeight = round1(Math.min.apply(null, heights));
-    var maxHeight = round1(Math.max.apply(null, heights));
+    // height range, not the design canvas height. For a rotating shape
+    // this is the SWEPT range (altitude +/- the farthest drone's
+    // radius from the formation centre), since the drones sweep that
+    // whole disc during the hold.
+    var minHeight;
+    var maxHeight;
+    if (rotates) {
+      var rMax = 0;
+      for (var ri = 0; ri < formation.length; ri++) {
+        var r = Math.hypot(formation[ri][1], formation[ri][2] - options.altitude);
+        if (r > rMax) rMax = r;
+      }
+      minHeight = round1(options.altitude - rMax);
+      maxHeight = round1(options.altitude + rMax);
+    } else {
+      var heights = formation.map(function (p) { return p[2]; });
+      minHeight = round1(Math.min.apply(null, heights));
+      maxHeight = round1(Math.max.apply(null, heights));
+    }
     // Takeoff grid on the ground, its own spacing (independent of the
     // formation). Falls back to the formation spacing when the caller
     // does not pass one.
@@ -450,13 +546,42 @@ var WhenWhereSkyc = (function () {
       var pos = formation[i];
       var slot = slotOf[i];
       var rgb = hexToRgb(p.c);
+      // The hold: for the Grand finale the formation rotates, so the
+      // hold is a waypoint every second at the rotated position (one
+      // full turn per 30s); every other shape holds still on the two
+      // static hold points. The first and last hold points are the
+      // unrotated formation when the hold is a whole number of turns,
+      // so takeoff and landing stay straight lines from the design.
+      var holdPoints = [];
+      if (rotates) {
+        for (var ht = 0; ht < options.holdSeconds; ht += ROTATION_STEP_SECONDS) {
+          holdPoints.push([takeoff + ht, rotateFormationPoint(pos, options.altitude, rotationAngle(ht)), []]);
+        }
+        holdPoints.push([takeoff + options.holdSeconds, rotateFormationPoint(pos, options.altitude, rotationAngle(options.holdSeconds)), []]);
+      } else {
+        holdPoints.push([takeoff, pos, []], [takeoff + options.holdSeconds, pos, []]);
+      }
       // Dark during takeoff and landing, the formation colour only
-      // while the shape is held.
-      var lights = encodeLightProgramSegments([
-        { rgb: [0, 0, 0], seconds: takeoff },
-        { rgb: rgb, seconds: options.holdSeconds },
-        { rgb: [0, 0, 0], seconds: land },
-      ]);
+      // while the shape is held. For the Starburst the hold is a
+      // breathing light program: 1s steps at the pulse brightness.
+      var holdSegments = [];
+      if (pulses) {
+        for (var pt = 0; pt < options.holdSeconds; pt += PULSE_STEP_SECONDS) {
+          var stepSeconds = Math.min(PULSE_STEP_SECONDS, options.holdSeconds - pt);
+          var f = pulseFactor(pt);
+          holdSegments.push({
+            rgb: [Math.round(rgb[0] * f), Math.round(rgb[1] * f), Math.round(rgb[2] * f)],
+            seconds: stepSeconds,
+          });
+        }
+      } else {
+        holdSegments.push({ rgb: rgb, seconds: options.holdSeconds });
+      }
+      var lights = encodeLightProgramSegments(
+        [{ rgb: [0, 0, 0], seconds: takeoff }]
+          .concat(holdSegments)
+          .concat([{ rgb: [0, 0, 0], seconds: land }])
+      );
       var name = 'drone-' + String(i + 1).padStart(String(pts.length).length, '0');
       return {
         settings: {
@@ -465,12 +590,7 @@ var WhenWhereSkyc = (function () {
             version: 1,
             takeoffTime: 0,
             landingTime: total,
-            points: [
-              [0, slot, []],
-              [takeoff, pos, []],
-              [takeoff + options.holdSeconds, pos, []],
-              [total, slot, []],
-            ],
+            points: [[0, slot, []]].concat(holdPoints).concat([[total, slot, []]]),
           },
           lights: { version: 1, data: base64(lights) },
           home: slot,
@@ -528,7 +648,7 @@ var WhenWhereSkyc = (function () {
    * Build the .skyc file (a ZIP holding show.json) for one formation:
    * takeoff from a ground grid, the held shape, and a landing back to
    * the grid, ready to download.
-   * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
+   * @param {{ name: string, points: { x: number, y: number, c?: string }[], shape?: string }} design
    * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
    * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number, minHeight: number, maxHeight: number, gridSpacing: number, gridWidth: number, gridDepth: number } }}
@@ -552,7 +672,7 @@ var WhenWhereSkyc = (function () {
    * sRGB values as drawn (black during takeoff/landing, the formation
    * colour while held) — the linear-RGB conversion is only for the
    * .skyc ledctrl bytecode, not for exchange files.
-   * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
+   * @param {{ name: string, points: { x: number, y: number, c?: string }[], shape?: string }} design
    * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
    * @returns {{ bytes: Uint8Array<ArrayBuffer>, filename: string, stats: { scale: number, width: number, height: number, minSpacing: number, medianSpacing: number, drones: number, totalSeconds: number, gridCols: number, gridRows: number, minHeight: number, maxHeight: number, gridSpacing: number, gridWidth: number, gridDepth: number } }}
@@ -566,9 +686,17 @@ var WhenWhereSkyc = (function () {
       var traj = drone.settings.trajectory.points;
       var rgb = hexToRgb((design.points[i] && design.points[i].c) || '#ffffff');
       var lines = ['Time_msec,x_m,y_m,z_m,R,G,B'];
+      var pulses = design.shape === 'star';
       for (var t = 0; t <= total; t++) {
         var pos = sampleTrajectory(traj, t);
-        var color = (t >= holdStart && t < holdEnd) ? rgb : [0, 0, 0];
+        var color = [0, 0, 0];
+        if (t >= holdStart && t < holdEnd) {
+          // The Starburst breathes: the colour is the pulse
+          // brightness at this second (1s steps, so the 1s sampling
+          // captures every step exactly, as the light program does).
+          var f = pulses ? pulseFactor(t - holdStart) : 1;
+          color = [Math.round(rgb[0] * f), Math.round(rgb[1] * f), Math.round(rgb[2] * f)];
+        }
         lines.push((t * 1000) + ',' + round3(pos[0]) + ',' + round3(pos[1]) + ',' + round3(pos[2]) + ',' + color[0] + ',' + color[1] + ',' + color[2]);
       }
       return { name: drone.settings.name + '.csv', data: new TextEncoder().encode(lines.join('\n') + '\n') };
@@ -610,7 +738,7 @@ var WhenWhereSkyc = (function () {
    * the same convention as the .skyc. A flat-Earth conversion is used
    * (111,320 m per degree of latitude); for a show the size of a field
    * the error is centimetres.
-   * @param {{ name: string, points: { x: number, y: number, c?: string }[] }} design
+   * @param {{ name: string, points: { x: number, y: number, c?: string }[], shape?: string }} design
    * @param {{ spacing: number, takeoffSpacing?: number, altitude: number, holdSeconds: number,
    *   title?: string, separatePoints: (pts: { x: number, y: number, c?: string }[], minDist: number) => { x: number, y: number, c?: string }[] }} options
    * @param {{ latitude: number, longitude: number, orientationDegrees?: number }} venue
@@ -708,6 +836,7 @@ var WhenWhereSkyc = (function () {
   }
 
   return {
+    pulseFactor: pulseFactor,
     srgbToLinearByte: srgbToLinearByte,
     hexToRgb: hexToRgb,
     encodeVaruint: encodeVaruint,

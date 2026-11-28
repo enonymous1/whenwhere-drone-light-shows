@@ -479,6 +479,22 @@ if (!RULES) {
     });
   }
   /**
+   * The formation on screen as a design for the exporter — name,
+   * points, and the shape key when it is one of the five fleet shapes
+   * (words have no key). The shape key is what turns on the baked-in
+   * show effects in skyc.js: the Starburst pulses its lights, the
+   * Grand finale rotates during the hold.
+   * @param {Point[]} pts - the design points.
+   * @returns {import('../types').WhenWhereSkycDesign} the design.
+   */
+  function currentDesign(pts) {
+    var design = { name: currentName, points: pts };
+    var shapeBtn = document.querySelector('.shape-btn.active');
+    var shape = shapeBtn ? shapeBtn.getAttribute('data-shape') : null;
+    if (shape && shape !== 'word') design.shape = shape;
+    return design;
+  }
+  /**
    * Reads the export settings from the sliders.
    * @returns {import('../types').WhenWhereSkycOptions}
    */
@@ -502,7 +518,7 @@ if (!RULES) {
     var pts = currentDesignPoints();
     if (!pts.length) { exportStatsEl.textContent = ''; return; }
     var opts = exportOptions();
-    var s = WhenWhereSkyc.buildShow({ name: currentName, points: pts }, opts).stats;
+    var s = WhenWhereSkyc.buildShow(currentDesign(pts), opts).stats;
     var statsText = s.drones + ' drones · ' + s.width + 'm wide · ' + s.height + 'm tall · ' + s.minHeight + '–' + s.maxHeight + 'm above ground · ' + s.gridWidth + 'm × ' + s.gridDepth + 'm takeoff grid · closest pair ' + s.minSpacing + 'm · typical spacing ' + s.medianSpacing + 'm · ' + s.totalSeconds + 's total (30s up · ' + Number(holdRange.value) + 's hold · 30s down)';
     if (s.maxHeight > RULES.maxAltitudeMeters) statsText += ' · ⚠ highest drone above the ' + RULES.maxAltitudeMeters + 'm ceiling';
     if (s.minSpacing < RULES.minDroneDistanceMeters) statsText += ' · ⚠ closest pair below the ' + RULES.minDroneDistanceMeters + 'm minimum';
@@ -548,14 +564,14 @@ if (!RULES) {
   document.getElementById('exportSkycBtn').addEventListener('click', function () {
     var pts = currentDesignPoints();
     if (!pts.length) return;
-    var out = WhenWhereSkyc.exportSkyc({ name: currentName, points: pts }, exportOptions());
+    var out = WhenWhereSkyc.exportSkyc(currentDesign(pts), exportOptions());
     downloadBytes(out.bytes, out.filename);
     exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' drones, ' + out.stats.width + 'm wide at ' + Number(altitudeRange.value) + 'm, ' + out.stats.totalSeconds + 's total (30s takeoff from a ' + out.stats.gridCols + '×' + out.stats.gridRows + ' ground grid, ' + out.stats.gridWidth + 'm × ' + out.stats.gridDepth + 'm, ' + Number(holdRange.value) + 's hold, 30s landing).';
   });
   document.getElementById('exportCsvBtn').addEventListener('click', function () {
     var pts = currentDesignPoints();
     if (!pts.length) return;
-    var out = WhenWhereSkyc.exportCsv({ name: currentName, points: pts }, exportOptions());
+    var out = WhenWhereSkyc.exportCsv(currentDesign(pts), exportOptions());
     downloadBytes(out.bytes, out.filename);
     exportNote.textContent = 'Exported ' + out.filename + ' — one CSV per drone (' + out.stats.drones + ' files), Time,x,y,z,R,G,B every second, ' + out.stats.totalSeconds + 's total.';
   });
@@ -567,7 +583,7 @@ if (!RULES) {
       exportNote.textContent = 'Enter the venue latitude and longitude above to export to Google Earth.';
       return;
     }
-    var out = WhenWhereSkyc.exportKmz({ name: currentName, points: pts }, exportOptions(), venue);
+    var out = WhenWhereSkyc.exportKmz(currentDesign(pts), exportOptions(), venue);
     downloadBytes(out.bytes, out.filename);
     exportNote.textContent = 'Exported ' + out.filename + ' — ' + out.stats.drones + ' flight paths at ' + venue.latitude + ', ' + venue.longitude + ', front facing ' + venue.orientationDegrees + '° from North. Open it in Google Earth to check clearances and sightlines.';
   });
@@ -579,13 +595,11 @@ if (!RULES) {
   document.getElementById('preview3dBtn').addEventListener('click', function () {
     var pts = currentDesignPoints();
     if (!pts.length) return;
-    // The shape key, so the 3D preview can rebuild the formation at a
-    // different drone count (the count slider). Read from the active
-    // button — words have no shape key, so the slider stays hidden.
-    var shapeBtn = document.querySelector('.shape-btn.active');
-    var shape = shapeBtn ? shapeBtn.getAttribute('data-shape') : null;
-    var design = { name: currentName, points: pts };
-    if (shape && shape !== 'word') design.shape = shape;
+    // The shape key (via currentDesign), so the 3D preview can rebuild
+    // the formation at a different drone count (the count slider) and
+    // so the baked-in effects travel with the design. Words have no
+    // shape key, so the slider stays hidden.
+    var design = currentDesign(pts);
     try {
       localStorage.setItem('wwPreview3D', JSON.stringify({ design: design, options: exportOptions() }));
     } catch (e) { /* storage blocked — the preview falls back to its demo */ }

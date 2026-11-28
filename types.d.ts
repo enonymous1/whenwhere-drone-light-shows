@@ -254,6 +254,13 @@ export interface WhenWhereSkycStats {
 export interface WhenWhereSkycDesign {
   readonly name: string;
   readonly points: Point[];
+  /**
+   * The fleet shape key ('heart' | 'rings' | 'glass' | 'star' |
+   * 'finale') when known. The Starburst pulses its lights and the
+   * Grand finale rotates during the hold; designs without a key
+   * (words) hold still.
+   */
+  readonly shape?: string;
 }
 
 /** The export settings (workbench/skyc.js). */
@@ -279,6 +286,8 @@ export interface WhenWhereKmzVenue {
 
 /** The .skyc export module (workbench/skyc.js). */
 export interface WhenWhereSkycModule {
+  /** The Starburst pulse brightness factor (0.6-1.0) at this many seconds into the hold. */
+  pulseFactor(secondsIntoHold: number): number;
   srgbToLinearByte(v: number): number;
   hexToRgb(hex: string): number[];
   encodeVaruint(n: number): number[];

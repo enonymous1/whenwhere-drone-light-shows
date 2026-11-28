@@ -759,3 +759,21 @@ at the top of `index.html` and add a section below.
   links; no JS, keyboard accessible, and the heading keeps its id
   so the sources check still finds it. Collapsed the section is
   87px tall; open it is 499px.
+
+## Baked-in show effects: Starburst pulse + Grand finale rotation — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The Starburst pulses and the Grand finale rotates, baked
+  into the show file itself (not a preview trick): the Starburst's lights
+  breathe 40–100% on a 4s period (1s light-program steps), and the Grand
+  finale turns one full revolution per 30s of hold (1s trajectory
+  waypoints). The .skyc flies them, the CSV and KMZ carry them, and the
+  3D preview shows them faithfully by sampling the show — the preview's
+  pulse uses the same pulseFactor as the light program. Rotation is a
+  rigid move around the formation centre, so drone spacing is preserved
+  (closest pair 1.491m mid-turn vs 1.5m static); the height range the
+  stats and warnings use is the SWEPT range (finale 3.7–76.3m, was
+  5.3–76.3m) and the preview's measurement box is the swept extent
+  (72.6m wide, was 71.0m). The 40% pulse floor is linear light — it
+  reads as ~67% on an sRGB screen. Hearts, rings, glass and words hold
+  still. The 2D canvases already pulsed/rotated these shapes visually;
+  now the show itself does it.

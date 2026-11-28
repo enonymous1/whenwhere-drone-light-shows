@@ -361,7 +361,13 @@ function main() {
   // changes, so the flight keeps its place.
   function buildShowState(design) {
     currentDesign = design;
-    var built = WhenWhereSkyc.buildShow(design, currentOptions);
+    // The shape key (from the saved design) rides along so the
+    // baked-in effects apply: the Starburst pulses, the Grand finale
+    // rotates. The count slider rebuilds with a fresh {name, points}
+    // design, so the key is attached here, not by the caller.
+    var designWithShape = { name: design.name, points: design.points };
+    if (shape) designWithShape.shape = shape;
+    var built = WhenWhereSkyc.buildShow(designWithShape, currentOptions);
     show = built.show;
     stats = built.stats;
     total = stats.totalSeconds;
@@ -383,13 +389,21 @@ function main() {
     // The hearts, for instance, are 70.2m wide on a 205.9m canvas.
     minBX = Infinity; maxBX = -Infinity; minBY = Infinity; maxBY = -Infinity;
     for (var b = 0; b < n; b++) {
-      var fp = trajs[b][1][1]; // Skybrush [x (front), y (left), z (up)] at the hold
-      var bx = -fp[1];
-      var by = fp[2];
-      if (bx < minBX) minBX = bx;
-      if (bx > maxBX) maxBX = bx;
-      if (by < minBY) minBY = by;
-      if (by > maxBY) maxBY = by;
+      var tpts = trajs[b];
+      for (var k = 0; k < tpts.length; k++) {
+        // Every hold waypoint, not just the first: a rotating shape
+        // sweeps a disc, so the box is the swept extent, not the
+        // starting pose. Static shapes have two identical hold points,
+        // so their box is unchanged.
+        if (tpts[k][0] < holdStart || tpts[k][0] > holdEnd) continue;
+        var fp = tpts[k][1]; // Skybrush [x (front), y (left), z (up)] at the hold
+        var bx = -fp[1];
+        var by = fp[2];
+        if (bx < minBX) minBX = bx;
+        if (bx > maxBX) maxBX = bx;
+        if (by < minBY) minBY = by;
+        if (by > maxBY) maxBY = by;
+      }
     }
     bboxW = Math.max(maxBX - minBX, 1);
     bboxH = Math.max(maxBY - minBY, 1);
@@ -717,9 +731,13 @@ function main() {
       positions[i * 3 + 2] = p[2];
       var c = colours[i];
       if (inHold) {
-        colors[i * 3] = c[0] / 255;
-        colors[i * 3 + 1] = c[1] / 255;
-        colors[i * 3 + 2] = c[2] / 255;
+        // The Starburst breathes: the same pulse factor the exported
+        // light program uses, so the preview shows the pulse the show
+        // actually flies.
+        var f = (shape === 'star') ? WhenWhereSkyc.pulseFactor(time - holdStart) : 1;
+        colors[i * 3] = (c[0] / 255) * f;
+        colors[i * 3 + 1] = (c[1] / 255) * f;
+        colors[i * 3 + 2] = (c[2] / 255) * f;
       } else {
         colors[i * 3] = dim;
         colors[i * 3 + 1] = dim * 0.92;
