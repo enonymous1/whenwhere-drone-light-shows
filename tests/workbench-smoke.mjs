@@ -27,7 +27,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const PAGE = resolve(process.argv[2] || 'workbench/index.html');
-const EXPECTED = { heart: 80, rings: 100, glass: 60, star: 200, finale: 240 };
+const EXPECTED = { heart: 80, rings: 100, glass: 60, star: 120, finale: 180 };
 
 // CHROME_PATH wins, then PATH (browser-actions/setup-chrome in CI puts
 // a binary named `chrome` on PATH), then the usual install locations.

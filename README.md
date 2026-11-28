@@ -55,8 +55,8 @@ secure additional units. The studio caption says so per design.
 | Wedding rings | 100 | uses the full opening fleet |
 | Wine glass | 60 | fits the opening fleet |
 | Your words (initials / dates) | split by stroke length, 50–100 per moment | fits the opening fleet — + splits a message into separate moments (max 6) |
-| Starburst | 200 | larger show — extra lead time |
-| Grand finale (twin rings + 12 radiating spikes) | 240 | larger show — extra lead time |
+| Starburst | 120 | larger show — extra lead time |
+| Grand finale (twin rings + 12 radiating spikes) | 180 | larger show — extra lead time |
 
 The hero says "Up to 100 synchronized drones", the packages carry fleet
 lines (Moment: 50–100 drones; Signature: up to 100 per scene, 200+
@@ -64,7 +64,7 @@ finales with extra lead time), and the "How far ahead" FAQ notes that
 200+ finales need the earliest possible word.
 
 ![Interlocking hearts — 80 drones](docs/screenshots/formation-hearts.png)
-![Grand finale — 240 drones, rotating](docs/screenshots/formation-finale.gif)
+![Grand finale — 180 drones, rotating](docs/screenshots/formation-finale.gif)
 ![Your words: LOVE — 100 drones](docs/screenshots/formation-love.png)
 
 *Three formations as drawn in the studio: interlocking hearts (rose +

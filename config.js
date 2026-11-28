@@ -23,7 +23,7 @@ var WHENWHERE_CONFIG = {
 
   // Drones per formation. The buttons and the count labels read
   // these, so they can never drift from the real counts.
-  FLEET: { heart: 80, rings: 100, glass: 60, star: 200, finale: 240 },
+  FLEET: { heart: 80, rings: 100, glass: 60, star: 120, finale: 180 },
 
   // Colours per formation (COLORS is the fallback when a shape has
   // no palette of its own).

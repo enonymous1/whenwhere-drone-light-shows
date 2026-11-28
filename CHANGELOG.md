@@ -633,3 +633,28 @@ at the top of `index.html` and add a section below.
   shipping: the FAA waivers page, the eCFR section URLs, the
   Skybrush commit (which shows the 0.2 m indoor / 0.4 m outdoor
   thresholds in code), and the guide.
+
+## Starburst and Grand finale toned down — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The Starburst and Grand finale were too large for the
+  space the 3D preview gives them, and worse: at the 40 m default
+  centre altitude their bottoms sat underground (Starburst −8 m,
+  Grand finale −13.1 m), an invalid show, not just a big picture.
+  The cause is the spacing-first mapping — picture size grows with
+  the square root of the drone count at fixed spacing, so 200/240
+  drones ballooned to 117 m and 106 m wide against the hearts' 70 m.
+  FLEET is now star 120, finale 180: both land at ~70 m wide
+  (70.2 × 57.6 m and 71 × 71 m), bottoms at 11.2 m and 5.3 m above
+  ground, buffers 58 m and 61 m — the same presence as the hearts.
+  The closest pair lands exactly at the 1.5 m rule for both (the
+  finale was already there). Button labels come from FLEET at
+  runtime; the hardcoded fallbacks, both smoke tests' EXPECTED, and
+  build.py's two hardcoded count tuples are updated to match. The
+  finale GIF was re-rendered from the live page with the documented
+  recipe (capture-assembly.mjs + Pillow, 15 frames, 640×459) and the
+  README caption now says 180 drones. The studio intro no longer
+  says "the two marked 200+" — it names the Starburst and Grand
+  finale instead (content.json, docs/content.csv, and the index.html
+  fallback; the content Sheet needs the same edit). The packages'
+  "200+ finales" lines are untouched: that's the offering, not the
+  demo size.

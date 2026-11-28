@@ -128,7 +128,7 @@ def _validate_built_html(html):
     # config.js, not a literal "80 drones" string, which appears in
     # neither.
     for key, count in (("heart", 80), ("rings", 100), ("glass", 60),
-                       ("star", 200), ("finale", 240)):
+                       ("star", 120), ("finale", 180)):
         assert f'data-fleet="{key}"' in html, f"fleet button missing for {key}"
     assert '<script src="config.js">' in html, "index.html does not load config.js"
     assert '<script src="rules.js">' in html, "index.html does not load rules.js"
@@ -154,7 +154,7 @@ def _validate_built_html(html):
     assert config.is_file(), "config.js missing"
     config_text = config.read_text(encoding="utf-8")
     for key, count in (("heart", 80), ("rings", 100), ("glass", 60),
-                       ("star", 200), ("finale", 240)):
+                       ("star", 120), ("finale", 180)):
         assert f"{key}: {count}" in config_text, f"FLEET count missing for {key}"
     studio = BASE / "studio.js"
     assert studio.is_file(), "studio.js missing"

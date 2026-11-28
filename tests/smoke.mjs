@@ -23,7 +23,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const PAGE = resolve(process.argv[2] || 'index.html');
-const EXPECTED = { heart: 80, rings: 100, glass: 60, star: 200, finale: 240 };
+const EXPECTED = { heart: 80, rings: 100, glass: 60, star: 120, finale: 180 };
 const WORDS = { LOVE: 100, 'A B C': 75, 2027: 100 };
 // 'E + J' is no longer one word: since v1.5.0 '+' splits a message into
 // separate moments, so 'E + J' is two slides (E, then J) and the first
