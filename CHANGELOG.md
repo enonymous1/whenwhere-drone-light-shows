@@ -32,6 +32,23 @@ at the top of `index.html` and add a section below.
   makes the studio initialise just slow enough that the click landed
   before the shape handlers attached.
 
+## 3D preview manual controls — 2026-11-27 (no version bump)
+
+- 2026-11-27 — The 3D preview is fully steerable. Drag orbits as
+  before; right-drag (or hold Shift and drag) now moves the view
+  instead, scrolling or pinching zooms, and an on-screen pad at the
+  bottom right of the sky has a D-pad (move the view up/down/left/
+  right), zoom + / −, and a reset button — holding a button keeps
+  moving, a tap moves a step. Keyboard works too: arrow keys move
+  the view, + / − zoom, 0 resets to the audience view, Space plays
+  or pauses (ignored while typing in a field, so the arrows still
+  scrub the timeline when it has focus). The pan moves the picture
+  in screen space, so it feels the same at any zoom, and the camera
+  is still clamped to eye height at a low angle. Verified live: a
+  pan moved the target from (0, 40, 0) to (−15.9, 48, −0.2), a zoom
+  took the radius from 67.4m to 40.4m, an ArrowRight key moved it
+  further, and reset put it back at (0, 40, 0).
+
 ## Workbench layout fix + venue map + lower 3D audience view — 2026-11-27 (no version bump)
 
 - 2026-11-27 — The workbench's sticky stage is gone. It was taller

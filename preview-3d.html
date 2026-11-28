@@ -27,13 +27,38 @@
     .preview-links{margin-top:20px;display:flex;gap:18px;flex-wrap:wrap}
     .preview-links a{color:var(--gold)}
     #scene .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#a9b2d8;background:#05070f}
+    .scene-controls{position:absolute;right:14px;bottom:14px;display:flex;gap:10px;align-items:flex-end;z-index:5}
+    .scene-controls button{width:38px;height:38px;border:1px solid rgba(255,255,255,.28);background:rgba(5,7,15,.68);color:#eef1ff;font-family:inherit;font-size:1.15rem;font-weight:600;border-radius:10px;cursor:pointer;line-height:1}
+    .scene-controls button:hover{background:rgba(5,7,15,.92);border-color:var(--gold-bright)}
+    .scene-controls button:active{background:var(--gold-bright);color:#191203}
+    .scene-controls-zoom{display:flex;flex-direction:column;gap:6px}
+    .scene-controls-pan{display:grid;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,38px);gap:6px}
+    .scene-controls-pan .pan-up{grid-column:2;grid-row:1}
+    .scene-controls-pan .pan-left{grid-column:1;grid-row:2}
+    .scene-controls-pan .pan-reset{grid-column:2;grid-row:2;font-size:.95rem}
+    .scene-controls-pan .pan-right{grid-column:3;grid-row:2}
+    .scene-controls-pan .pan-down{grid-column:2;grid-row:3}
   </style>
 </head>
 <body>
   <main class="preview-wrap">
     <h1 id="previewTitle">3D Preview</h1>
     <p class="sub" id="previewStats"></p>
-    <div id="scene"><div class="loading" id="sceneLoading">Loading the night sky…</div></div>
+    <div id="scene"><div class="loading" id="sceneLoading">Loading the night sky…</div>
+      <div class="scene-controls" aria-label="3D view controls">
+        <div class="scene-controls-pan" role="group" aria-label="Move the view">
+          <button type="button" class="pan-up" data-pan="up" aria-label="Move the view up">↑</button>
+          <button type="button" class="pan-left" data-pan="left" aria-label="Move the view left">←</button>
+          <button type="button" class="pan-reset" id="resetViewBtn" aria-label="Reset the view">⌂</button>
+          <button type="button" class="pan-right" data-pan="right" aria-label="Move the view right">→</button>
+          <button type="button" class="pan-down" data-pan="down" aria-label="Move the view down">↓</button>
+        </div>
+        <div class="scene-controls-zoom" role="group" aria-label="Zoom">
+          <button type="button" id="zoomInBtn" aria-label="Zoom in">+</button>
+          <button type="button" id="zoomOutBtn" aria-label="Zoom out">−</button>
+        </div>
+      </div>
+    </div>
     <div class="transport" role="group" aria-label="Show playback">
       <button type="button" id="playBtn" class="btn">Pause</button>
       <input id="timeRange" type="range" min="0" max="90" step="0.1" value="0" aria-label="Show time" />
@@ -45,7 +70,7 @@
       </span>
     </div>
     <p class="preview-note"><label><input type="checkbox" id="dimToggle" checked /> Show the drones dim during takeoff and landing</label> — their show lights are off then, so they fly dark in reality. The dim dots are just so you can follow them up; they light up in full colour when the picture forms.</p>
-    <p class="preview-note">Drag the sky to look around — drag down for the view from the ground, where the audience stands. Scroll or pinch to zoom.</p>
+    <p class="preview-note">Drag the sky to look around — drag down for the view from the ground, where the audience stands. Right-drag (or hold Shift and drag) to move the view; scroll or pinch to zoom. Arrow keys move the view, + and − zoom, 0 resets it. The buttons at the bottom right of the sky do the same.</p>
     <p class="preview-links"><a href="workbench/index.html">Back to the Formation Workbench</a><a href="index.html">Back to the drone light shows page</a></p>
   </main>
   <script src="config.js"></script>

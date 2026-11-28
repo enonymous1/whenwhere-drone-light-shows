@@ -564,7 +564,10 @@ crossings.
   camera (Audience / Top / Side), and the drones shown dim during
   takeoff and landing so the climb can be followed — their show
   lights are off then, and they light up in full colour when the
-  picture forms. The studio preview
+  picture forms. The view is fully steerable: drag to orbit,
+  right-drag (or Shift-drag) to move it, scroll or pinch to zoom, or
+  use the on-screen pad (arrow keys move it, + / − zoom, 0 resets)
+  at the bottom right of the sky. The studio preview
   shows the same rules as a compliance line under the canvas: the
   formation as a real show at 3m spacing and 40m centre altitude, with
   its highest drone and closest pair, and whether it sits inside the

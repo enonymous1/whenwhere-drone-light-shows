@@ -172,10 +172,20 @@ export interface WhenWherePreview3d {
   readonly drones: number;
   /** The show's total length in seconds. */
   readonly totalSeconds: number;
+  /** The orbit target (the point the camera looks at), [x, y, z]. */
+  readonly target: number[];
+  /** The camera's distance from the target, in metres. */
+  readonly radius: number;
   setTime(v: number): void;
   setPlaying(p: boolean): void;
   /** A drone's Three.js position [-y, z, x] at time t (seconds). */
   sampleDrone(i: number, t: number): number[];
+  /** Move the picture on screen by (dx, dy) pixels (right / down). */
+  panBy(dxPx: number, dyPx: number): void;
+  /** Multiply the camera's distance by factor (smaller = closer). */
+  zoomBy(factor: number): void;
+  /** Back to the audience view, centred on the picture. */
+  resetView(): void;
 }
 
 /** The workbench page's current design state (workbench/workbench.js). */

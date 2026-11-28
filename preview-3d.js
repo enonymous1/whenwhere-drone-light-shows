@@ -216,14 +216,52 @@ function main() {
     b.addEventListener('click', function () { setView(b.getAttribute('data-view')); });
   });
 
+  // ---- Manual view control: pan, zoom, reset. ----
+  // How many metres one screen pixel is at the target's distance,
+  // so a drag or a button press moves the picture by the same amount
+  // on screen whatever the zoom.
+  function metersPerPixel() {
+    return (2 * orbit.radius * Math.tan((camera.fov * Math.PI / 180) / 2)) / container.clientHeight;
+  }
+  // Move the picture on screen by (dx, dy) pixels: positive dx moves
+  // it right, positive dy moves it down — the drag convention, so
+  // the content follows the pointer (and the on-screen arrows and
+  // the arrow keys move it the way they point).
+  function panBy(dxPx, dyPx) {
+    var mpp = metersPerPixel();
+    var forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    var worldUp = new THREE.Vector3(0, 1, 0);
+    var right = new THREE.Vector3().crossVectors(forward, worldUp);
+    if (right.lengthSq() < 1e-6) right.set(1, 0, 0);
+    right.normalize();
+    var up = new THREE.Vector3().crossVectors(right, forward).normalize();
+    target.addScaledVector(right, -dxPx * mpp);
+    target.addScaledVector(up, dyPx * mpp);
+  }
+  function zoomBy(factor) {
+    orbit.radius = Math.max(25, Math.min(900, orbit.radius * factor));
+  }
+  // Back to the audience view, centred on the picture.
+  function resetView() {
+    target.set(0, loaded.options.altitude, 0);
+    goal = { theta: 0, phi: 1.55, radius: fitRadius };
+    document.querySelectorAll('.views button').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-view') === 'audience' ? 'true' : 'false');
+    });
+  }
+
   // Drag to orbit, wheel to zoom, two-finger pinch to zoom.
+  // Right-drag (or Shift-drag) moves the view instead of orbiting.
   var canvas = renderer.domElement;
   var pointers = new Map();
   var lastPinch = 0;
+  var dragMode = 'orbit';
   canvas.addEventListener('pointerdown', function (e) {
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     goal = null;
+    dragMode = (e.button === 2 || e.shiftKey) ? 'pan' : 'orbit';
     if (pointers.size === 2) {
       var pts = Array.from(pointers.values());
       lastPinch = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -234,11 +272,12 @@ function main() {
     var prev = pointers.get(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) {
-      orbit.theta -= (e.clientX - prev.x) * 0.005;
-      // The low end (1.85) is below the picture's centre, so the view
-      // can be dragged down to the ground — the camera is clamped to
-      // eye height in applyOrbit, so it looks up instead of sinking.
-      orbit.phi = Math.max(0.08, Math.min(1.85, orbit.phi - (e.clientY - prev.y) * 0.005));
+      if (dragMode === 'pan') {
+        panBy(e.clientX - prev.x, e.clientY - prev.y);
+      } else {
+        orbit.theta -= (e.clientX - prev.x) * 0.005;
+        orbit.phi = Math.max(0.08, Math.min(1.85, orbit.phi - (e.clientY - prev.y) * 0.005));
+      }
     } else if (pointers.size === 2) {
       var pts = Array.from(pointers.values());
       var d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -246,14 +285,56 @@ function main() {
       lastPinch = d;
     }
   });
-  function endPointer(e) { pointers.delete(e.pointerId); lastPinch = 0; }
+  function endPointer(e) { pointers.delete(e.pointerId); lastPinch = 0; dragMode = 'orbit'; }
   canvas.addEventListener('pointerup', endPointer);
   canvas.addEventListener('pointercancel', endPointer);
+  // No context menu on right-drag: the right button pans instead.
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   canvas.addEventListener('wheel', function (e) {
     e.preventDefault();
     goal = null;
     orbit.radius = Math.max(25, Math.min(900, orbit.radius * (1 + e.deltaY * 0.001)));
   }, { passive: false });
+
+  // On-screen controls (the pad at the bottom right of the sky).
+  // Holding a button keeps moving: the flags are read every frame,
+  // so the motion is smooth, and a tap still moves a step.
+  var held = { zoomIn: false, zoomOut: false, up: false, down: false, left: false, right: false };
+  function bindHold(el, key) {
+    if (!el) return;
+    el.addEventListener('pointerdown', function (e) { e.preventDefault(); held[key] = true; });
+  }
+  bindHold(document.getElementById('zoomInBtn'), 'zoomIn');
+  bindHold(document.getElementById('zoomOutBtn'), 'zoomOut');
+  document.querySelectorAll('[data-pan]').forEach(function (b) {
+    bindHold(b, b.getAttribute('data-pan'));
+  });
+  // Any release anywhere stops every held button (so a drag off a
+  // button cannot leave the view drifting).
+  window.addEventListener('pointerup', function () { for (var k in held) held[k] = false; });
+  window.addEventListener('pointercancel', function () { for (var k in held) held[k] = false; });
+  document.getElementById('resetViewBtn').addEventListener('click', resetView);
+
+  // Keyboard: arrows move the view, + / - zoom, 0 resets, Space
+  // plays/pauses. Ignored while typing in a field (so the arrows
+  // still scrub the timeline when it has focus), and Space is
+  // ignored on a button (so it does not both click it and pause).
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    var step = container.clientHeight * 0.08; // 8% of the view per press
+    var handled = true;
+    if (e.key === 'ArrowUp') panBy(0, -step);
+    else if (e.key === 'ArrowDown') panBy(0, step);
+    else if (e.key === 'ArrowLeft') panBy(-step, 0);
+    else if (e.key === 'ArrowRight') panBy(step, 0);
+    else if (e.key === '+' || e.key === '=') zoomBy(0.85);
+    else if (e.key === '-' || e.key === '_') zoomBy(1.18);
+    else if (e.key === '0') resetView();
+    else if (e.key === ' ' && tag !== 'BUTTON') setPlaying(!playing);
+    else handled = false;
+    if (handled) e.preventDefault();
+  });
 
   // ---- Timeline: play / pause / scrub, looping. ----
   var timeRange = document.getElementById('timeRange');
@@ -325,6 +406,14 @@ function main() {
       timeRange.value = String(t);
       updateTimeLabel();
     }
+    // Held on-screen buttons: zoom and pan keep moving while held.
+    if (held.zoomIn) zoomBy(Math.exp(-0.5 * dt));
+    if (held.zoomOut) zoomBy(Math.exp(0.5 * dt));
+    var panRate = container.clientHeight * 0.4; // px per second
+    if (held.up) panBy(0, -panRate * dt);
+    if (held.down) panBy(0, panRate * dt);
+    if (held.left) panBy(-panRate * dt, 0);
+    if (held.right) panBy(panRate * dt, 0);
     if (goal) {
       orbit.theta += (goal.theta - orbit.theta) * 0.12;
       orbit.phi += (goal.phi - orbit.phi) * 0.12;
@@ -346,9 +435,14 @@ function main() {
     get playing() { return playing; },
     get drones() { return n; },
     get totalSeconds() { return total; },
+    get target() { return [target.x, target.y, target.z]; },
+    get radius() { return orbit.radius; },
     setTime: function (v) { t = v; timeRange.value = String(v); updateTimeLabel(); },
     setPlaying: setPlaying,
     sampleDrone: sampleDrone,
+    panBy: panBy,
+    zoomBy: zoomBy,
+    resetView: resetView,
   };
 }
 
