@@ -196,8 +196,14 @@ export interface WhenWherePreview3d {
   readonly cameraLabel: string;
   /** The safety-buffer circle's radius, in metres. */
   readonly bufferRadius: number;
+  /** The formation's shape key ('heart' | 'rings' | 'glass' | 'star' | 'finale'), or null for words and old saves. */
+  readonly shape: string | null;
+  /** The underground warning text, or '' when the formation clears the ground. */
+  readonly countWarning: string;
   setTime(v: number): void;
   setPlaying(p: boolean): void;
+  /** Rebuild the show at a different drone count (40–240, snapped to 10). No-op for words. */
+  setCount(n: number): void;
   /** A drone's Three.js position [-y, z, x] at time t (seconds). */
   sampleDrone(i: number, t: number): number[];
   /** Move the picture on screen by (dx, dy) pixels (right / down). */

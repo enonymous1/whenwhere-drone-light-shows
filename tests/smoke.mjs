@@ -252,11 +252,11 @@ async function main() {
       document.getElementById('view3dBtn').click();
       var parsed = null;
       try { parsed = JSON.parse(localStorage.getItem('wwPreview3D')); } catch (e) { /* not JSON */ }
-      return JSON.stringify({ btn: !!document.getElementById('view3dBtn'), opened: opened, name: parsed && parsed.design && parsed.design.name, points: parsed && parsed.design && parsed.design.points && parsed.design.points.length, spacing: parsed && parsed.options && parsed.options.spacing, altitude: parsed && parsed.options && parsed.options.altitude });
+      return JSON.stringify({ btn: !!document.getElementById('view3dBtn'), opened: opened, name: parsed && parsed.design && parsed.design.name, points: parsed && parsed.design && parsed.design.points && parsed.design.points.length, shape: parsed && parsed.design && parsed.design.shape, spacing: parsed && parsed.options && parsed.options.spacing, altitude: parsed && parsed.options && parsed.options.altitude });
     })()`);
     const view3dObj = JSON.parse(view3d);
-    if (!(view3dObj.btn === true && view3dObj.opened === 'preview-3d.html' && view3dObj.name === 'Interlocking hearts' && view3dObj.points === 80 && view3dObj.spacing === 3 && view3dObj.altitude === 40)) {
-      failures.push(`View in 3D button: expected it to save the hearts (80 pts, 3m, 40m) and open preview-3d.html, got ${view3d}`);
+    if (!(view3dObj.btn === true && view3dObj.opened === 'preview-3d.html' && view3dObj.name === 'Interlocking hearts' && view3dObj.points === 80 && view3dObj.shape === 'heart' && view3dObj.spacing === 3 && view3dObj.altitude === 40)) {
+      failures.push(`View in 3D button: expected it to save the hearts (80 pts, shape heart, 3m, 40m) and open preview-3d.html, got ${view3d}`);
     }
     const errors = await evaluate('window.__errors');
     if (errors.length) failures.push(`page JS errors: ${errors.join(' | ')}`);

@@ -467,10 +467,10 @@ async function main() {
       var saved = localStorage.getItem('wwPreview3D');
       var parsed = null;
       try { parsed = JSON.parse(saved); } catch (e) { /* not JSON */ }
-      return JSON.stringify({ btn: !!document.getElementById('preview3dBtn'), opened: opened, name: parsed && parsed.design && parsed.design.name, points: parsed && parsed.design && parsed.design.points && parsed.design.points.length, spacing: parsed && parsed.options && parsed.options.spacing, altitude: parsed && parsed.options && parsed.options.altitude });
+      return JSON.stringify({ btn: !!document.getElementById('preview3dBtn'), opened: opened, name: parsed && parsed.design && parsed.design.name, points: parsed && parsed.design && parsed.design.points && parsed.design.points.length, shape: parsed && parsed.design && parsed.design.shape, spacing: parsed && parsed.options && parsed.options.spacing, altitude: parsed && parsed.options && parsed.options.altitude });
     })()`);
     const previewBtnObj = JSON.parse(previewBtn);
-    check('3D preview button saves the formation + export settings for the preview page', previewBtnObj.btn === true && previewBtnObj.opened === '../preview-3d.html' && previewBtnObj.name === 'Interlocking hearts' && previewBtnObj.points === 80 && previewBtnObj.spacing === 3 && previewBtnObj.altitude === 40);
+    check('3D preview button saves the formation + export settings for the preview page', previewBtnObj.btn === true && previewBtnObj.opened === '../preview-3d.html' && previewBtnObj.name === 'Interlocking hearts' && previewBtnObj.points === 80 && previewBtnObj.shape === 'heart' && previewBtnObj.spacing === 3 && previewBtnObj.altitude === 40);
     // The venue map: "Find on map" (no address) opens the modal on
     // the Spotsylvania default, and "Use this location" writes the
     // latitude/longitude into the venue fields and enables the

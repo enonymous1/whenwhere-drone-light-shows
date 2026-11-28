@@ -20,6 +20,14 @@
 // (-y, z, x): the formation is a vertical plane at z = 0, the
 // audience stands at +z, and the picture reads left-to-right the
 // same way as the 2D canvas.
+//
+// The drone count slider (shown when the loaded design is one of the
+// five built-in shapes) rebuilds the show at that count, live: the
+// formation is regenerated from its shape function, the takeoff grid,
+// measurements, safety buffer and camera fit all follow, and a
+// warning appears when the bottom drones drop below ground — the
+// count at which a shape stops fitting is exactly what the slider
+// is for. Words have no slider: a word's count comes from its text.
 import * as THREE from './vendor/three/three.module.min.js';
 
 var PREVIEW_KEY = 'wwPreview3D';
@@ -27,16 +35,27 @@ var PREVIEW_KEY = 'wwPreview3D';
 // landing), so the climb can still be followed. 0 = fly dark, as
 // the real show does.
 var DIM = 0.12;
+// The count slider's bounds: below the smallest fleet design (60
+// drones) and above the old 240-drone finale, so a shape can be seen
+// both sparse and blown up. Every fleet count is a multiple of 10.
+var COUNT_MIN = 40;
+var COUNT_MAX = 240;
+var COUNT_STEP = 10;
+// The shapes the count slider can rebuild, by their saved key.
+var SHAPE_KEYS = ['heart', 'rings', 'glass', 'star', 'finale'];
 
-function loadDesign() {
+function loadDesign(GEO) {
   var saved = null;
   try {
     var raw = localStorage.getItem(PREVIEW_KEY);
     if (raw) saved = JSON.parse(raw);
   } catch (e) { /* corrupt saved data — fall back to the demo */ }
-  var GEO = WhenWhereGeometry.create(900, 732, WHENWHERE_CONFIG.PALETTES);
   if (saved && saved.design && Array.isArray(saved.design.points) && saved.design.points.length
       && saved.options && typeof saved.options.spacing === 'number') {
+    // The shape key, when the sender knew it — the count slider needs
+    // it to rebuild the formation. Words and old saves have none.
+    var shape = (saved.design.shape && SHAPE_KEYS.indexOf(saved.design.shape) !== -1)
+      ? saved.design.shape : null;
     return {
       design: saved.design,
       options: {
@@ -46,12 +65,14 @@ function loadDesign() {
         holdSeconds: saved.options.holdSeconds,
         separatePoints: GEO.separatePoints,
       },
+      shape: shape,
       fromSaved: true,
     };
   }
   return {
     design: { name: 'Interlocking hearts', points: GEO.heartPair(WHENWHERE_CONFIG.FLEET.heart) },
     options: { spacing: 3, takeoffSpacing: 3, altitude: 40, holdSeconds: 30, separatePoints: GEO.separatePoints },
+    shape: 'heart',
     fromSaved: false,
   };
 }
@@ -82,46 +103,27 @@ function makeGlowTexture() {
 }
 
 function main() {
-  var loaded = loadDesign();
-  var built = WhenWhereSkyc.buildShow(loaded.design, loaded.options);
-  var show = built.show;
-  var stats = built.stats;
-  var total = stats.totalSeconds;
-  var holdStart = 30;
-  var holdEnd = 30 + loaded.options.holdSeconds;
-  var drones = show.swarm.drones;
-  var n = drones.length;
-
-  // Per-drone trajectory waypoints and formation colour (sRGB 0-255).
-  var trajs = drones.map(function (d) { return d.settings.trajectory.points; });
-  var colours = loaded.design.points.map(function (p) {
-    return WhenWhereSkyc.hexToRgb((p && p.c) || '#ffffff');
-  });
-
-  // The formation's actual bounding box, from the trajectory points
-  // at the hold (Skybrush [x, y, z] -> Three.js [-y, z, x]). This is
-  // the picture as it flies — NOT the design canvas (stats.width /
-  // stats.height), which is the full area the design could occupy.
-  // The hearts, for instance, are 70.2m wide on a 205.9m canvas.
-  var minBX = Infinity, maxBX = -Infinity, minBY = Infinity, maxBY = -Infinity;
-  for (var b = 0; b < n; b++) {
-    var fp = trajs[b][1][1]; // Skybrush [x (front), y (left), z (up)] at the hold
-    var bx = -fp[1];
-    var by = fp[2];
-    if (bx < minBX) minBX = bx;
-    if (bx > maxBX) maxBX = bx;
-    if (by < minBY) minBY = by;
-    if (by > maxBY) maxBY = by;
-  }
-  var bboxW = Math.max(maxBX - minBX, 1);
-  var bboxH = Math.max(maxBY - minBY, 1);
+  var GEO = WhenWhereGeometry.create(900, 732, WHENWHERE_CONFIG.PALETTES);
+  var loaded = loadDesign(GEO);
+  var SHAPE_FNS = {
+    heart: GEO.heartPair, rings: GEO.ringsPts, glass: GEO.glassPts,
+    star: GEO.starPts, finale: GEO.finalePts,
+  };
+  var shape = loaded.shape;
   function round1(v) { return Math.round(v * 10) / 10; }
+
+  // ---- Show state: rebuilt by buildShowState whenever the count changes. ----
+  var show, stats, total, holdStart, holdEnd, drones, n;
+  var trajs, colours;
+  var minBX, maxBX, minBY, maxBY, bboxW, bboxH;
+  var bufferRadius, fitRadius;
+  var positions, colors, droneGeo;
+  var measureLabels = [];
+  var currentDesign = loaded.design;
 
   var titleEl = document.getElementById('previewTitle');
   var statsEl = document.getElementById('previewStats');
   titleEl.textContent = '3D Preview — ' + loaded.design.name;
-  statsEl.textContent = stats.drones + ' drones · ' + round1(bboxW) + 'm wide · ' + round1(bboxH) + 'm tall · ' + stats.minHeight + '–' + stats.maxHeight + 'm above ground · ' + fmtTime(total) + ' total'
-    + (loaded.fromSaved ? '' : ' · demo formation — open it from the workbench or the studio to preview your design');
 
   var container = document.getElementById('scene');
   var renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -136,6 +138,8 @@ function main() {
   scene.background = new THREE.Color(0x05070f);
 
   var camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 5000);
+  var halfFovTan = Math.tan((camera.fov * Math.PI / 180) / 2);
+  var aspect = container.clientWidth / container.clientHeight;
 
   // ---- Night sky: stars on a large sphere, upper hemisphere only. ----
   var starCount = 1200;
@@ -168,11 +172,9 @@ function main() {
   scene.add(grid);
 
   // ---- Drones: one Points cloud, positions + colours per frame. ----
-  var positions = new Float32Array(n * 3);
-  var colors = new Float32Array(n * 3);
-  var droneGeo = new THREE.BufferGeometry();
-  droneGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  droneGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  // The geometry is swapped by buildShowState whenever the count
+  // changes (a different count means different-sized arrays); the
+  // Points object itself stays in the scene.
   var droneMat = new THREE.PointsMaterial({
     size: 4.2,
     map: makeGlowTexture(),
@@ -182,35 +184,9 @@ function main() {
     blending: THREE.AdditiveBlending,
     sizeAttenuation: true,
   });
-  var dronePoints = new THREE.Points(droneGeo, droneMat);
+  var dronePoints = new THREE.Points(new THREE.BufferGeometry(), droneMat);
   dronePoints.frustumCulled = false;
   scene.add(dronePoints);
-
-  // ---- Camera: orbit around the formation centre. ----
-  // The formation is centred on the show altitude, so the target is
-  // the middle of the picture, not the ground. The distance fits the
-  // formation's actual bounding box (from the trajectory points at
-  // the hold), not the design canvas — the hearts span far less than
-  // the full canvas, and fitting the canvas leaves them small.
-  var target = new THREE.Vector3(0, loaded.options.altitude, 0);
-  var halfFovTan = Math.tan((camera.fov * Math.PI / 180) / 2);
-  var aspect = container.clientWidth / container.clientHeight;
-  var MMARGIN = 10; // how far the dimension lines sit off the picture
-  // Safety-buffer radius: the formation's half-width plus the
-  // altitude-scaled buffer — FAA waiver structures widen the
-  // restricted / free-fall area by at least 10 m for every 100 ft
-  // of show altitude. The rules file owns the rate; fall back to
-  // 10/30.48 if it didn't load.
-  var bufferRate = (typeof WHENWHERE_RULES_EFFECTIVE !== 'undefined' && WHENWHERE_RULES_EFFECTIVE.bufferMetersPerAltitudeMeters) || (10 / 30.48);
-  var bufferRadius = bboxW / 2 + stats.maxHeight * bufferRate;
-  // Fit the formation plus the measurement lines around it (and the
-  // ground below, so the takeoff grid is in frame), so the dimensions
-  // are visible when the measurements are on. The vertical span runs
-  // from the ground to the top dimension line; the width also covers
-  // the buffer circle.
-  var fitH = (maxBY + MMARGIN) - 0;
-  var fitW = Math.max(bboxW + 2 * MMARGIN, 2 * bufferRadius);
-  var fitRadius = Math.max(fitH / (2 * halfFovTan), fitW / (2 * halfFovTan * aspect)) * 1.15;
 
   // ---- Measurements: dashed dimension lines + labels. ----
   // Width across the top, height down the left, the centre altitude
@@ -219,6 +195,15 @@ function main() {
   // sky (where it grows to) can both be read off the picture. Each
   // line is a colour of its own, and the labels are HTML (crisp
   // text) projected from the same anchors every frame.
+  var MMARGIN = 10; // how far the dimension lines sit off the picture
+  var SIGHT_LEN = 300, SIGHT_STEP = 50;
+  var BUFFER_SEG = 96;
+  // Safety-buffer rate: the formation's half-width plus the
+  // altitude-scaled buffer — FAA waiver structures widen the
+  // restricted / free-fall area by at least 10 m for every 100 ft
+  // of show altitude. The rules file owns the rate; fall back to
+  // 10/30.48 if it didn't load.
+  var bufferRate = (typeof WHENWHERE_RULES_EFFECTIVE !== 'undefined' && WHENWHERE_RULES_EFFECTIVE.bufferMetersPerAltitudeMeters) || (10 / 30.48);
   var measureGroup = new THREE.Group();
   scene.add(measureGroup);
   function dashedLine(points, color) {
@@ -235,59 +220,35 @@ function main() {
       : [new THREE.Vector3(cx, cy - h, cz), new THREE.Vector3(cx, cy + h, cz)];
     return dashedLine(pts, color);
   }
-  var centreY = (minBY + maxBY) / 2;
-  var altTop = loaded.options.altitude;
-  // Width: across the top of the picture, gold.
-  var widthY = maxBY + MMARGIN;
-  measureGroup.add(dashedLine([new THREE.Vector3(minBX, widthY, 0), new THREE.Vector3(maxBX, widthY, 0)], 0xffc94d));
-  measureGroup.add(tick(minBX, widthY, 0, false, 0xffc94d));
-  measureGroup.add(tick(maxBX, widthY, 0, false, 0xffc94d));
-  // Height: down the left side, cyan.
-  var heightX = minBX - MMARGIN;
-  measureGroup.add(dashedLine([new THREE.Vector3(heightX, minBY, 0), new THREE.Vector3(heightX, maxBY, 0)], 0x8fd8ff));
-  measureGroup.add(tick(heightX, minBY, 0, true, 0x8fd8ff));
-  measureGroup.add(tick(heightX, maxBY, 0, true, 0x8fd8ff));
-  // Centre altitude: ground to the picture's centre, green, at the right.
-  var altX = maxBX + MMARGIN;
-  measureGroup.add(dashedLine([new THREE.Vector3(altX, 0, 0), new THREE.Vector3(altX, altTop, 0)], 0x7dffcb));
-  measureGroup.add(tick(altX, 0, 0, true, 0x7dffcb));
-  measureGroup.add(tick(altX, altTop, 0, true, 0x7dffcb));
-  // Takeoff grid: the footprint on the ground, white/grey.
-  var gw = (stats.gridWidth || 0) / 2, gd = (stats.gridDepth || 0) / 2;
-  var gy = 0.15; // just above the ground, so it is not z-fighting
-  if (gw > 0 && gd > 0) {
-    measureGroup.add(dashedLine([
-      new THREE.Vector3(-gw, gy, -gd), new THREE.Vector3(gw, gy, -gd),
-      new THREE.Vector3(gw, gy, gd), new THREE.Vector3(-gw, gy, gd),
-      new THREE.Vector3(-gw, gy, -gd),
-    ], 0xd5d9ea));
-  }
-  // Sightline: a straight line out from the takeoff grid towards the
-  // audience (and past them), so the viewing distance can be read
-  // off. Orange, dashed, with a tick and a label every 50 m,
-  // measured from the takeoff grid's centre. The audience stands at
-  // +z, so the line runs that way.
-  var SIGHT_LEN = 300, SIGHT_STEP = 50;
-  var sightColor = 0xff9f43;
-  if (gw > 0 && gd > 0) {
-    measureGroup.add(dashedLine([new THREE.Vector3(0, gy, gd), new THREE.Vector3(0, gy, SIGHT_LEN)], sightColor));
-    for (var sd = SIGHT_STEP; sd <= SIGHT_LEN; sd += SIGHT_STEP) {
-      measureGroup.add(tick(0, gy, sd, true, sightColor));
+  function clearGroup(group) {
+    for (var i = group.children.length - 1; i >= 0; i--) {
+      var child = group.children[i];
+      group.remove(child);
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
     }
   }
-  // Safety buffer: the clear ground around the show that must stay
-  // free of uninvolved people and obstacles. A red dashed circle on
-  // the ground, centred on the takeoff grid — the formation's
-  // half-width plus the altitude-scaled buffer (see bufferRadius).
-  // It runs through the sightline, so the viewing distance and the
-  // keep-clear zone can be read together.
-  var bufferPts = [];
-  var BUFFER_SEG = 96;
-  for (var bi = 0; bi <= BUFFER_SEG; bi++) {
-    var ba = (bi / BUFFER_SEG) * Math.PI * 2;
-    bufferPts.push(new THREE.Vector3(Math.cos(ba) * bufferRadius, gy, Math.sin(ba) * bufferRadius));
+  var measureLabelsEl = document.getElementById('measureLabels');
+  function makeLabel(cls, text) {
+    var d = document.createElement('div');
+    d.className = 'measure-label ' + cls;
+    d.textContent = text;
+    measureLabelsEl.appendChild(d);
+    return d;
   }
-  measureGroup.add(dashedLine(bufferPts, 0xff5a5a));
+  // The camera's distance label: it follows the white stem below the
+  // camera, and its text is the camera's ground distance from the
+  // takeoff grid's centre, updated every frame. Created once — the
+  // measurement labels are rebuilt on every count change, this one
+  // is not.
+  var camLabelEl = makeLabel('white', '');
+  function clearLabels() {
+    var kids = measureLabelsEl.children;
+    for (var i = kids.length - 1; i >= 0; i--) {
+      if (kids[i] !== camLabelEl) measureLabelsEl.removeChild(kids[i]);
+    }
+    measureLabels = [];
+  }
   // Camera marker: a white stem on the ground directly below the
   // camera, so where the viewer is standing can be read off the
   // sightline. Its label (updated every frame) gives the camera's
@@ -298,42 +259,6 @@ function main() {
   camDot.position.set(0, 8, 0);
   camMarker.add(camDot);
   scene.add(camMarker);
-  var measureLabelsEl = document.getElementById('measureLabels');
-  function makeLabel(cls, text) {
-    var d = document.createElement('div');
-    d.className = 'measure-label ' + cls;
-    d.textContent = text;
-    measureLabelsEl.appendChild(d);
-    return d;
-  }
-  var measureLabels = [
-    { el: makeLabel('gold', round1(bboxW) + ' m wide'), anchor: new THREE.Vector3((minBX + maxBX) / 2, widthY, 0) },
-    { el: makeLabel('cyan', round1(bboxH) + ' m tall'), anchor: new THREE.Vector3(heightX, centreY, 0) },
-    { el: makeLabel('green', altTop + ' m centre · ' + round1(minBY) + '–' + round1(maxBY) + ' m above ground'), anchor: new THREE.Vector3(altX, altTop / 2, 0) },
-  ];
-  if (gw > 0 && gd > 0) {
-    measureLabels.push({ el: makeLabel('grey', 'Takeoff grid ' + stats.gridWidth + ' m × ' + stats.gridDepth + ' m'), anchor: new THREE.Vector3(0, gy, -gd) });
-    for (var sd2 = SIGHT_STEP; sd2 <= SIGHT_LEN; sd2 += SIGHT_STEP) {
-      measureLabels.push({ el: makeLabel('orange', sd2 + ' m'), anchor: new THREE.Vector3(0, gy, sd2) });
-    }
-  }
-  measureLabels.push({ el: makeLabel('red', 'Safety buffer — keep clear · ' + Math.round(bufferRadius) + ' m radius'), anchor: new THREE.Vector3(-bufferRadius, gy, 0) });
-  // The camera's distance label: it follows the white stem below
-  // the camera, and its text is the camera's ground distance from
-  // the takeoff grid's centre, updated every frame.
-  var camLabelEl = makeLabel('white', '');
-  function updateCamMarker() {
-    var cx = camera.position.x, cz = camera.position.z;
-    camMarker.position.set(cx, 0, cz);
-    camMarker.visible = measureOn;
-    var dist = Math.round(Math.hypot(cx, cz));
-    camLabelEl.textContent = 'Camera · ' + dist + ' m from the takeoff grid';
-    var w = container.clientWidth, h = container.clientHeight;
-    var v = new THREE.Vector3(cx, 9, cz).project(camera);
-    camLabelEl.style.left = ((v.x * 0.5 + 0.5) * w) + 'px';
-    camLabelEl.style.top = ((-v.y * 0.5 + 0.5) * h) + 'px';
-    camLabelEl.style.display = (measureOn && v.z < 1) ? '' : 'none';
-  }
   var measureOn = true;
   function setMeasurements(on) {
     measureOn = on;
@@ -352,8 +277,211 @@ function main() {
       item.el.style.display = visible ? '' : 'none';
     });
   }
-  var orbit = { theta: 0, phi: 1.55, radius: fitRadius };
+  function updateCamMarker() {
+    var cx = camera.position.x, cz = camera.position.z;
+    camMarker.position.set(cx, 0, cz);
+    camMarker.visible = measureOn;
+    var dist = Math.round(Math.hypot(cx, cz));
+    camLabelEl.textContent = 'Camera · ' + dist + ' m from the takeoff grid';
+    var w = container.clientWidth, h = container.clientHeight;
+    var v = new THREE.Vector3(cx, 9, cz).project(camera);
+    camLabelEl.style.left = ((v.x * 0.5 + 0.5) * w) + 'px';
+    camLabelEl.style.top = ((-v.y * 0.5 + 0.5) * h) + 'px';
+    camLabelEl.style.display = (measureOn && v.z < 1) ? '' : 'none';
+  }
+
+  // ---- Camera: orbit around the formation centre. ----
+  // The formation is centred on the show altitude, so the target is
+  // the middle of the picture, not the ground.
+  var target = new THREE.Vector3(0, loaded.options.altitude, 0);
+  var orbit = { theta: 0, phi: 1.55, radius: 100 };
   var goal = null;
+
+  // ---- Count slider: the palette the regenerated points cycle. ----
+  // The workbench colours each dot when the formation is set (the
+  // palette in force, override included), so the saved points carry
+  // the colours. Fresh points from a shape function carry none
+  // (except heartPair, which colours its own), so the slider
+  // re-applies the loaded design's colours in first-appearance
+  // order — the palette, as saved. Fixed at load, so it cannot drift
+  // as the count is dragged back and forth.
+  var countPalette = null;
+  if (shape && shape !== 'heart') {
+    countPalette = [];
+    loaded.design.points.forEach(function (p) {
+      var c = (p && p.c) || '#ffffff';
+      if (countPalette.indexOf(c) === -1) countPalette.push(c);
+    });
+    if (!countPalette.length) countPalette = ['#ffffff'];
+  }
+  function colourPoints(pts) {
+    if (!countPalette) return; // hearts colour themselves
+    pts.forEach(function (p, i) { p.c = countPalette[i % countPalette.length]; });
+  }
+  var countRow = document.getElementById('countRow');
+  var countRange = document.getElementById('countRange');
+  var countValue = document.getElementById('countValue');
+  var countWarning = document.getElementById('countWarning');
+  function updateCountWarning() {
+    if (stats && stats.minHeight < 0) {
+      countWarning.textContent = '⚠ The bottom drones sit below ground at this count — lower the count, or raise the centre altitude back in the workbench.';
+      countWarning.hidden = false;
+    } else {
+      countWarning.hidden = true;
+    }
+  }
+
+  // ---- buildShowState: (re)build everything the show defines. ----
+  // Called once at load and again whenever the count slider changes.
+  // The show is built with the same WhenWhereSkyc.buildShow the .skyc
+  // export uses, so the 3D picture is the same show that flies. The
+  // timeline's time and playing state are untouched — only the show
+  // changes, so the flight keeps its place.
+  function buildShowState(design) {
+    currentDesign = design;
+    var built = WhenWhereSkyc.buildShow(design, loaded.options);
+    show = built.show;
+    stats = built.stats;
+    total = stats.totalSeconds;
+    holdStart = 30;
+    holdEnd = 30 + loaded.options.holdSeconds;
+    drones = show.swarm.drones;
+    n = drones.length;
+
+    // Per-drone trajectory waypoints and formation colour (sRGB 0-255).
+    trajs = drones.map(function (d) { return d.settings.trajectory.points; });
+    colours = design.points.map(function (p) {
+      return WhenWhereSkyc.hexToRgb((p && p.c) || '#ffffff');
+    });
+
+    // The formation's actual bounding box, from the trajectory points
+    // at the hold (Skybrush [x, y, z] -> Three.js [-y, z, x]). This is
+    // the picture as it flies — NOT the design canvas (stats.width /
+    // stats.height), which is the full area the design could occupy.
+    // The hearts, for instance, are 70.2m wide on a 205.9m canvas.
+    minBX = Infinity; maxBX = -Infinity; minBY = Infinity; maxBY = -Infinity;
+    for (var b = 0; b < n; b++) {
+      var fp = trajs[b][1][1]; // Skybrush [x (front), y (left), z (up)] at the hold
+      var bx = -fp[1];
+      var by = fp[2];
+      if (bx < minBX) minBX = bx;
+      if (bx > maxBX) maxBX = bx;
+      if (by < minBY) minBY = by;
+      if (by > maxBY) maxBY = by;
+    }
+    bboxW = Math.max(maxBX - minBX, 1);
+    bboxH = Math.max(maxBY - minBY, 1);
+
+    statsEl.textContent = stats.drones + ' drones · ' + round1(bboxW) + 'm wide · ' + round1(bboxH) + 'm tall · ' + stats.minHeight + '–' + stats.maxHeight + 'm above ground · ' + fmtTime(total) + ' total'
+      + (loaded.fromSaved ? '' : ' · demo formation — open it from the workbench or the studio to preview your design');
+
+    // Fresh drone arrays for this count, on a new geometry.
+    positions = new Float32Array(n * 3);
+    colors = new Float32Array(n * 3);
+    var newGeo = new THREE.BufferGeometry();
+    newGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    newGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    if (droneGeo) droneGeo.dispose();
+    droneGeo = newGeo;
+    dronePoints.geometry = droneGeo;
+
+    // Fit the formation plus the measurement lines around it (and the
+    // ground below, so the takeoff grid is in frame), so the dimensions
+    // are visible when the measurements are on. The vertical span runs
+    // from the ground to the top dimension line; the width also covers
+    // the buffer circle.
+    var altTop = loaded.options.altitude;
+    bufferRadius = bboxW / 2 + stats.maxHeight * bufferRate;
+    var fitH = (maxBY + MMARGIN) - 0;
+    var fitW = Math.max(bboxW + 2 * MMARGIN, 2 * bufferRadius);
+    fitRadius = Math.max(fitH / (2 * halfFovTan), fitW / (2 * halfFovTan * aspect)) * 1.15;
+
+    // Measurements, rebuilt for this count: width across the top of
+    // the picture (gold), height down the left (cyan), the centre
+    // altitude from the ground (green), the takeoff grid's footprint
+    // on the ground (white/grey), the sightline out towards the
+    // audience with a mark every 50 m (orange), and the safety-buffer
+    // circle — the clear ground around the show (red).
+    clearGroup(measureGroup);
+    var centreY = (minBY + maxBY) / 2;
+    // Width: across the top of the picture, gold.
+    var widthY = maxBY + MMARGIN;
+    measureGroup.add(dashedLine([new THREE.Vector3(minBX, widthY, 0), new THREE.Vector3(maxBX, widthY, 0)], 0xffc94d));
+    measureGroup.add(tick(minBX, widthY, 0, false, 0xffc94d));
+    measureGroup.add(tick(maxBX, widthY, 0, false, 0xffc94d));
+    // Height: down the left side, cyan.
+    var heightX = minBX - MMARGIN;
+    measureGroup.add(dashedLine([new THREE.Vector3(heightX, minBY, 0), new THREE.Vector3(heightX, maxBY, 0)], 0x8fd8ff));
+    measureGroup.add(tick(heightX, minBY, 0, true, 0x8fd8ff));
+    measureGroup.add(tick(heightX, maxBY, 0, true, 0x8fd8ff));
+    // Centre altitude: ground to the picture's centre, green, at the right.
+    var altX = maxBX + MMARGIN;
+    measureGroup.add(dashedLine([new THREE.Vector3(altX, 0, 0), new THREE.Vector3(altX, altTop, 0)], 0x7dffcb));
+    measureGroup.add(tick(altX, 0, 0, true, 0x7dffcb));
+    measureGroup.add(tick(altX, altTop, 0, true, 0x7dffcb));
+    // Takeoff grid: the footprint on the ground, white/grey.
+    var gw = (stats.gridWidth || 0) / 2, gd = (stats.gridDepth || 0) / 2;
+    var gy = 0.15; // just above the ground, so it is not z-fighting
+    if (gw > 0 && gd > 0) {
+      measureGroup.add(dashedLine([
+        new THREE.Vector3(-gw, gy, -gd), new THREE.Vector3(gw, gy, -gd),
+        new THREE.Vector3(gw, gy, gd), new THREE.Vector3(-gw, gy, gd),
+        new THREE.Vector3(-gw, gy, -gd),
+      ], 0xd5d9ea));
+    }
+    // Sightline: a straight line out from the takeoff grid towards the
+    // audience (and past them), so the viewing distance can be read
+    // off. Orange, dashed, with a tick and a label every 50 m,
+    // measured from the takeoff grid's centre. The audience stands at
+    // +z, so the line runs that way.
+    var sightColor = 0xff9f43;
+    if (gw > 0 && gd > 0) {
+      measureGroup.add(dashedLine([new THREE.Vector3(0, gy, gd), new THREE.Vector3(0, gy, SIGHT_LEN)], sightColor));
+      for (var sd = SIGHT_STEP; sd <= SIGHT_LEN; sd += SIGHT_STEP) {
+        measureGroup.add(tick(0, gy, sd, true, sightColor));
+      }
+    }
+    // Safety buffer: the clear ground around the show that must stay
+    // free of uninvolved people and obstacles. A red dashed circle on
+    // the ground, centred on the takeoff grid — the formation's
+    // half-width plus the altitude-scaled buffer (see bufferRadius).
+    // It runs through the sightline, so the viewing distance and the
+    // keep-clear zone can be read together.
+    var bufferPts = [];
+    for (var bi = 0; bi <= BUFFER_SEG; bi++) {
+      var ba = (bi / BUFFER_SEG) * Math.PI * 2;
+      bufferPts.push(new THREE.Vector3(Math.cos(ba) * bufferRadius, gy, Math.sin(ba) * bufferRadius));
+    }
+    measureGroup.add(dashedLine(bufferPts, 0xff5a5a));
+
+    // Labels, rebuilt for this count (the camera label is not one of
+    // these — it is created once and survives the rebuild).
+    clearLabels();
+    measureLabels = [
+      { el: makeLabel('gold', round1(bboxW) + ' m wide'), anchor: new THREE.Vector3((minBX + maxBX) / 2, widthY, 0) },
+      { el: makeLabel('cyan', round1(bboxH) + ' m tall'), anchor: new THREE.Vector3(heightX, centreY, 0) },
+      { el: makeLabel('green', altTop + ' m centre · ' + round1(minBY) + '–' + round1(maxBY) + ' m above ground'), anchor: new THREE.Vector3(altX, altTop / 2, 0) },
+    ];
+    if (gw > 0 && gd > 0) {
+      measureLabels.push({ el: makeLabel('grey', 'Takeoff grid ' + stats.gridWidth + ' m × ' + stats.gridDepth + ' m'), anchor: new THREE.Vector3(0, gy, -gd) });
+      for (var sd2 = SIGHT_STEP; sd2 <= SIGHT_LEN; sd2 += SIGHT_STEP) {
+        measureLabels.push({ el: makeLabel('orange', sd2 + ' m'), anchor: new THREE.Vector3(0, gy, sd2) });
+      }
+    }
+    measureLabels.push({ el: makeLabel('red', 'Safety buffer — keep clear · ' + Math.round(bufferRadius) + ' m radius'), anchor: new THREE.Vector3(-bufferRadius, gy, 0) });
+
+    // Re-fit the camera on the new show, centred on the picture: a
+    // count change is a new show, so the view starts from the
+    // audience fit again (any pan or zoom is reset with it).
+    target.set(0, loaded.options.altitude, 0);
+    orbit.radius = fitRadius;
+    goal = null;
+    updateCountWarning();
+  }
+
+  // First build: the show as loaded (or the hearts demo).
+  buildShowState(loaded.design);
+
   function applyOrbit() {
     var sp = Math.sin(orbit.phi);
     camera.position.set(
@@ -614,6 +742,34 @@ function main() {
   applyOrbit();
   renderer.setAnimationLoop(frame);
 
+  // ---- Drone count slider: rebuild the show at a new count. ----
+  // Only for the five built-in shapes — words have no shape key, so
+  // the row stays hidden for them (and for old saves). The readout
+  // updates at once while dragging; the rebuild is debounced so the
+  // drag stays smooth. The timeline keeps its time and playing state.
+  function setCount(count) {
+    if (!shape || !SHAPE_FNS[shape]) return;
+    count = Math.max(COUNT_MIN, Math.min(COUNT_MAX, count));
+    count = Math.round(count / COUNT_STEP) * COUNT_STEP;
+    countRange.value = String(count);
+    countValue.textContent = String(count);
+    var pts = SHAPE_FNS[shape](count);
+    colourPoints(pts);
+    buildShowState({ name: loaded.design.name, points: pts });
+  }
+  if (shape && SHAPE_FNS[shape]) {
+    countRow.hidden = false;
+    countRange.value = String(stats.drones);
+    countValue.textContent = String(stats.drones);
+    var rebuildTimer = null;
+    countRange.addEventListener('input', function () {
+      var count = Number(countRange.value);
+      countValue.textContent = String(count);
+      if (rebuildTimer) clearTimeout(rebuildTimer);
+      rebuildTimer = setTimeout(function () { setCount(count); }, 150);
+    });
+  }
+
   // Exposed for tests: the show, the current time, and the camera.
   window.WHENWHERE = window.WHENWHERE || {};
   window.WHENWHERE.preview3d = {
@@ -628,8 +784,11 @@ function main() {
     get cameraDistance() { return Math.round(Math.hypot(camera.position.x, camera.position.z)); },
     get cameraLabel() { return camLabelEl.textContent; },
     get bufferRadius() { return Math.round(bufferRadius); },
+    get shape() { return shape; },
+    get countWarning() { return countWarning.hidden ? '' : countWarning.textContent; },
     setTime: function (v) { t = v; timeRange.value = String(v); updateTimeLabel(); },
     setPlaying: setPlaying,
+    setCount: setCount,
     sampleDrone: sampleDrone,
     panBy: panBy,
     zoomBy: zoomBy,

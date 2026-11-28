@@ -323,9 +323,16 @@
         document.getElementById('view3dBtn').addEventListener('click', function () {
           var pts = drones.map(function (d) { return { x: d.tx, y: d.ty, c: d.c }; });
           if (!pts.length) return;
+          // The shape key, so the 3D preview can rebuild the formation
+          // at a different drone count (the count slider). Words have
+          // no shape key, so the slider stays hidden for them.
+          var shapeBtn = document.querySelector('.shape-btn.active');
+          var shape = shapeBtn ? shapeBtn.getAttribute('data-shape') : null;
+          var design = { name: currentName, points: pts };
+          if (shape && shape !== 'word') design.shape = shape;
           try {
             localStorage.setItem('wwPreview3D', JSON.stringify({
-              design: { name: currentName, points: pts },
+              design: design,
               options: { spacing: 3, takeoffSpacing: 3, altitude: 40, holdSeconds: 30 },
             }));
           } catch (e) { /* storage blocked — the preview falls back to its demo */ }

@@ -658,3 +658,27 @@ at the top of `index.html` and add a section below.
   fallback; the content Sheet needs the same edit). The packages'
   "200+ finales" lines are untouched: that's the offering, not the
   demo size.
+
+## Drone count slider in the 3D preview — 2026-11-28 (no version bump)
+
+- 2026-11-28 — The 3D preview gained a drone count slider under the
+  transport bar (40–240, step 10 — below the smallest fleet design
+  and above the old 240-drone finale). Dragging it rebuilds the show
+  live at that count: the formation is regenerated from its shape
+  function, the takeoff grid, measurements, safety buffer and camera
+  fit all follow, and the timeline keeps its time and playing state.
+  A warning appears when the bottom drones drop below ground ("lower
+  the count, or raise the centre altitude back in the workbench") —
+  the count at which a shape stops fitting is exactly what the slider
+  is for. The preview's one-shot scene build is now a rebuildable
+  buildShowState (drone geometry swapped, measurement lines and
+  labels cleared and rebuilt, camera re-fit); the show state lives in
+  closure variables the frame loop reads at call time, so nothing
+  else changed. The shape key now travels in the saved payload
+  (design.shape, read from the active button in both the workbench
+  and the studio "Preview in 3D" handlers), and both smoke tests
+  assert it. Words have no slider — a word's count comes from its
+  text — and old saves without a shape key simply hide the row. The
+  regenerated points are recoloured from the loaded design's colours
+  in first-appearance order, so a palette override survives the drag;
+  hearts colour themselves (heartPair sets p.c) and are left alone.
